@@ -33,9 +33,7 @@ CHOOSE_RANDOM_PLAN = False       # if False, only the best plan (cheapest) is se
 
 ########################################################################################################################
 # Goals
-# "pick_cool_simple",
-#          "pick_heat_simple",
-#          "pick_clean_simple",
+
 GOALS = ["pick_slice_then_place_in_recep"]
 
 GOALS_VALID = {"cool_simple": {"Kitchen"},
@@ -52,23 +50,6 @@ GOALS_VALID = {"cool_simple": {"Kitchen"},
                "pick_slice_then_place_in_recep": {"Kitchen"},
                "pick_and_place_with_movable_recep": {"Kitchen", "LivingRoom", "Bedroom"}
                }
-#  "locate_simple": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"}
-
-# GOALS = ["pick_and_place",
-#          "pick_two_obj_and_place",
-#          "look_at_obj_in_light",
-#          "pick_clean_then_place_in_recep",
-#          "pick_heat_then_place_in_recep",
-#          "pick_cool_then_place_in_recep",
-#          "pick_and_place_with_movable_recep"]
-
-# GOALS_VALID = {"pick_and_place": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"},
-#                "pick_two_obj_and_place": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"},
-#                "look_at_obj_in_light": {"LivingRoom", "Bedroom"},
-#                "pick_clean_then_place_in_recep": {"Kitchen", "Bathroom"},
-#                "pick_heat_then_place_in_recep": {"Kitchen"},
-#                "pick_cool_then_place_in_recep": {"Kitchen"},
-#                "pick_and_place_with_movable_recep": {"Kitchen", "LivingRoom", "Bedroom"}}
 
 pddl_goal_type = "pick_and_place"  # default goal type
 
@@ -124,8 +105,8 @@ RENDER_OBJECT_IMAGE = True
 MAX_DEPTH = 5000
 STEPS_AHEAD = 5
 SCENE_PADDING = STEPS_AHEAD * 3
-SCREEN_WIDTH = DETECTION_SCREEN_WIDTH = 300
-SCREEN_HEIGHT = DETECTION_SCREEN_HEIGHT = 300
+SCREEN_WIDTH = DETECTION_SCREEN_WIDTH = 600
+SCREEN_HEIGHT = DETECTION_SCREEN_HEIGHT = 600
 MIN_VISIBLE_PIXELS = 10
 
 # (400) / (600*600) ~ 0.13% area of image

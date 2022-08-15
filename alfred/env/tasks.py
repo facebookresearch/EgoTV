@@ -19,7 +19,7 @@ class BaseTask(object):
         self.max_episode_length = max_episode_length
         self.reward_type = reward_type
         self.step_num = 0
-        self.num_subgoals = self.get_num_subgoals(self.traj['plan']['high_pddl']) 
+        self.num_subgoals = self.get_num_subgoals(self.traj['plan']['high_pddl'])
         self.goal_finished = False
 
         # internal states
@@ -64,7 +64,7 @@ class BaseTask(object):
         if last_action['planner_action']['action'] == 'End':
             return len(high_pddl) - 1  # ignore NoOp/End action
         else:
-            return len(high_pddl) 
+            return len(high_pddl)
 
     def goal_satisfied(self, state):
         '''

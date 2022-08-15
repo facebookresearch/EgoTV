@@ -46,13 +46,6 @@ goal_to_required_variables = {"cool_simple": {"pickup", "scene"},
                               "look_at_obj_in_light": {"pickup", "receptacle", "scene"}
                               }
 
-# goal_to_required_variables = {"cool_simple": {"pickup", "receptacle", "scene"},
-#                               "heat_simple": {"pickup", "receptacle", "scene"},
-#                               "clean_simple": {"pickup", "receptacle", "scene"},
-#                               "toggle_simple": {"pickup", "receptacle", "scene"}}
-# "locate_simple": {"scene"}  # TODO: modify the succ_traj dataframe
-# slice_simple": {"pickup", "scene"}
-
 goal_to_pickup_type = {'heat_simple': 'Heatable',
                        'cool_simple': 'Coolable',
                        'clean_simple': 'Cleanable',
@@ -63,29 +56,11 @@ goal_to_pickup_type = {'heat_simple': 'Heatable',
                        'pick_slice_then_place_in_recep': 'Sliceable'}
 
 goal_to_receptacle_type = {'look_at_obj_in_light': "Toggleable"}
-# 'slice_simple': 'Sliceable'  #TODO: have to define an extra variable SlicingType in constants.py
 
 goal_to_invalid_receptacle = {'pick_heat_then_place_in_recep': {'Microwave'},
                               'pick_cool_then_place_in_recep': {'Fridge'},
                               'pick_clean_then_place_in_recep': {'SinkBasin'},
                               'pick_two_obj_and_place': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'}}
-
-
-# goal_to_required_variables = {"pick_and_place_simple": {"pickup", "receptacle", "scene"},
-#                               "pick_two_obj_and_place": {"pickup", "receptacle", "scene"},
-#                               "look_at_obj_in_light": {"pickup", "receptacle", "scene"},
-#                               "pick_clean_then_place_in_recep": {"pickup", "receptacle", "scene"},
-#                               "pick_heat_then_place_in_recep": {"pickup", "receptacle", "scene"},
-#                               "pick_cool_then_place_in_recep": {"pickup", "receptacle", "scene"},
-#                               "pick_and_place_with_movable_recep": {"pickup", "movable", "receptacle", "scene"}}
-# goal_to_pickup_type = {'pick_heat_then_place_in_recep': 'Heatable',
-#                        'pick_cool_then_place_in_recep': 'Coolable',
-#                        'pick_clean_then_place_in_recep': 'Cleanable'}
-# goal_to_receptacle_type = {'look_at_obj_in_light': "Toggleable"}
-# goal_to_invalid_receptacle = {'pick_heat_then_place_in_recep': {'Microwave'},
-#                               'pick_cool_then_place_in_recep': {'Fridge'},
-#                               'pick_clean_then_place_in_recep': {'SinkBasin'},
-#                               'pick_two_obj_and_place': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'}}
 
 scene_id_to_objs = {}
 obj_to_scene_ids = {}
