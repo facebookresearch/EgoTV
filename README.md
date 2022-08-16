@@ -1,6 +1,6 @@
 # Vision Langauge Grounding
 
-## To set-up the dataset
+## To set-up the AI2-THOR environment
 
 ### Clone the repository
 ```
