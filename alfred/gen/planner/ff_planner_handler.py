@@ -203,7 +203,7 @@ class PlanParser(object):
     def get_plan(self):
         parsed_plans = self.process_pool.map(get_plan_async, zip([self.domain] * 3, [self.problem_id] * 3, range(3, 6)))
         if constants.CHOOSE_RANDOM_PLAN:
-            return parsed_plans[random.randint(0, len(parsed_plans))]
+            return parsed_plans[random.randint(0, len(parsed_plans)-1)]
         else:
             return self.find_best_plan(parsed_plans)
 

@@ -252,7 +252,8 @@ class TaskGameState(PlannedGameState):
             requires_slicing = False
 
         # choose a movable receptacle
-        if "movable_recep" in constants.pddl_goal_type:
+        # if "movable_recep" in constants.pddl_goal_type:
+        if "stack" in constants.pddl_goal_type:
             val_movable_receps = [o for o in self.env.last_event.metadata['objects']
                                   if (o['objectType'] in constants.MOVABLE_RECEPTACLES_SET) and
                                   (self.rand_chosen_object_class in constants.VAL_RECEPTACLE_OBJECTS[o['objectType']])]

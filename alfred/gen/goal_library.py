@@ -10,7 +10,7 @@
 gdict = {}
 
 ###############################################
-# PHASE 1: basic skills
+# LEVEL 1: basic skills
 ###############################################
 
 # basic pick and cool (e.g: "cool an apple")
@@ -178,7 +178,7 @@ gdict["toggle_simple"] = \
 }
 
 # basic pick and place (e.g: "put the apple in the microwave")
-gdict["pick_and_place"] = \
+gdict["place_simple"] = \
 {
     'pddl' :
     '''
@@ -201,15 +201,15 @@ gdict["pick_and_place"] = \
     )
     ''',
     'templates': ['put a {obj} in {recep}',
-                   'put some {obj} on {recep}']
+                   'put some {obj} in {recep}']
 }
 
-###############################################
-# PHASE 2: state changes and quantifiers
-###############################################
+####################################################################################
+# LEVEL 2: composition of basic skills and interactions with objects + quantifiers
+####################################################################################
 
-# pick and place object, but clean the object in the sink first
-gdict["pick_clean_then_place_in_recep"] = \
+# pick, clean (in sink), place object
+gdict["clean_and_place"] = \
 {
     'pddl' :
     '''
@@ -233,15 +233,12 @@ gdict["pick_clean_then_place_in_recep"] = \
         )
     )
     ''',
-    'templates': ['put a clean {obj} in {recep}',
-                   'clean some {obj} and put it in {recep}']
-
-
+    'templates': ['place a clean {obj} in {recep}']
 }
 
 
-# pick and place object, but heat the object in the microwave first
-gdict["pick_heat_then_place_in_recep"] = \
+# pick, heat (in microwave), place object
+gdict["heat_and_place"] = \
 {
     'pddl':
     '''
@@ -265,13 +262,12 @@ gdict["pick_heat_then_place_in_recep"] = \
         )
     )
     ''',
-    'templates': ['put a hot {obj} in {recep}',
-                   'heat some {obj} and put it in {recep}']
+    'templates': ['place a hot {obj} in {recep}']
 }
 
 
-# pick and place object, but cool the object (if it's not already cold) in the fridge first
-gdict["pick_cool_then_place_in_recep"] = \
+# pick, cool (in refrigerator if not already cool), place object
+gdict["cool_and_place"] = \
 {
     'pddl':
     '''
@@ -295,12 +291,11 @@ gdict["pick_cool_then_place_in_recep"] = \
         )
     )
     ''',
-    'templates': ['put a cool {obj} in {recep}',
-                   'cool some {obj} and put it in {recep}']
+    'templates': ['place a cool {obj} in {recep}']
 }
 
-# pick and place object, but cool the object (if it's not already cold) in the fridge first
-gdict["pick_slice_then_place_in_recep"] = \
+# slice, place object
+gdict["slice_and_place"] = \
 {
     'pddl':
     '''
@@ -324,12 +319,12 @@ gdict["pick_slice_then_place_in_recep"] = \
         )
     )
     ''',
-    'templates': ['slice some {obj} and put it in {recep}']
+    'templates': ['place a sliced {obj} in {recep}']
 }
 
 
 # pick two instances of an object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
-gdict["pick_two_obj_and_place"] = \
+gdict["place_2"] = \
     {
         'pddl':
             '''
@@ -359,47 +354,13 @@ gdict["pick_two_obj_and_place"] = \
                 )
             )
             ''',
-        'templates': ['put two {obj} in {recep}',
-                      'find two {obj} and put them in {recep}']
+        'templates': ['put two {obj}s in {recep}',
+                      'find two {obj}s and put them in {recep}']
     }
 
 
-
-# toggle the state of a toggleable object (e.g: "toggle the lightswitch")
-gdict["look_at_obj_in_light"] = \
-{
-    'pddl':
-    '''
-        (:goal
-             (and
-                 (exists (?ot # object 
-                          ?a # agent 
-                          ?l # location)
-                     (and
-                         (objectType ?ot {toggle}Type)
-                         (toggleable ?ot)
-                         (isToggled ?ot) 
-                         (objectAtLocation ?ot ?l)
-                         (atLocation ?a ?l)
-                     )
-                 )
-                 (exists (?o # object
-                          ?a # agent)
-                     (and 
-                         (objectType ?o {obj}Type)
-                         (holds ?a ?o)
-                     )
-                 )
-             )
-        )
-    )
-    ''',
-    'templates': ['look at {obj} under the {toggle}',
-                  'examine the {obj} with the {toggle}']
-}
-
 # pick and place with a movable receptacle (e.g: "put a apple in a bowl inside the microwave")
-gdict["pick_and_place_with_movable_recep"] = \
+gdict["stack_and_place"] = \
     {
         'pddl':
             '''
@@ -430,19 +391,167 @@ gdict["pick_and_place_with_movable_recep"] = \
                 )
             )
             ''',
-        'templates': ['put {obj} in a {mrecep} and then put them in {recep}',
-                      'put a {mrecep} of {obj} in {recep}',
+        'templates': ['put a {mrecep} of {obj} in {recep}',
                       'put {obj} {mrecep} in {recep}']
     }
 
 
-###############################################
-# PHASE 3 long horizon tasks (in development)
-###############################################
+##########################################################################
+# LEVEL 3: complex composition of basic skills and interactions with objects
+##########################################################################
+
+# pick, heat, place with movable receptacle
+gdict["heat_stack_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (and 
+                                (receptacleType ?r {recep}Type)
+                                (exists (?o # object)
+                                    (and
+                                        (objectType ?o {obj}Type)
+                                        (heatable ?o)
+                                        (isHot ?o)
+                                        (exists (?mo # object)
+                                            (and
+                                                (objectType ?mo {mrecep}Type)
+                                                (isReceptacleObject ?mo)
+                                                (inReceptacleObject ?o ?mo)
+                                                (inReceptacle ?mo ?r)
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['place a hot {obj} {mrecep} in {recep}']
+    }
+
+# pick, cool, place with movable receptacle
+gdict["cool_stack_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (and 
+                                (receptacleType ?r {recep}Type)
+                                (exists (?o # object)
+                                    (and
+                                        (objectType ?o {obj}Type)
+                                        (coolable ?o)
+                                        (isCool ?o)
+                                        (exists (?mo # object)
+                                            (and
+                                                (objectType ?mo {mrecep}Type)
+                                                (isReceptacleObject ?mo)
+                                                (inReceptacleObject ?o ?mo)
+                                                (inReceptacle ?mo ?r)
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['place a cool {obj} {mrecep} in {recep}']
+    }
+
+# pick, clean, place with movable receptacle
+gdict["clean_stack_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (and 
+                                (receptacleType ?r {recep}Type)
+                                (exists (?o # object)
+                                    (and
+                                        (objectType ?o {obj}Type)
+                                        (cleanable ?o)
+                                        (isClean ?o)
+                                        (exists (?mo # object)
+                                            (and
+                                                (objectType ?mo {mrecep}Type)
+                                                (isReceptacleObject ?mo)
+                                                (inReceptacleObject ?o ?mo)
+                                                (inReceptacle ?mo ?r)
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['place a clean {obj} {mrecep} in {recep}']
+    }
 
 
-# pick, slice, and place object, but clean the object in the sink first
-gdict["pick_clean_then_place_in_recep_slice"] = \
+# slice, place with movable receptacle
+gdict["slice_stack_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (and 
+                                (receptacleType ?r {recep}Type)
+                                (exists (?o # object)
+                                    (and
+                                        (objectType ?o {obj}Type)
+                                        (sliceable ?o)
+                                        (isSliced ?o)
+                                        (exists (?mo # object)
+                                            (and
+                                                (objectType ?mo {mrecep}Type)
+                                                (isReceptacleObject ?mo)
+                                                (inReceptacleObject ?o ?mo)
+                                                (inReceptacle ?mo ?r)
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['place a sliced {obj} {mrecep} in {recep}']
+    }
+
+
+# pick, clean, slice, and place object
+gdict["clean_slice_and_place"] = \
     {
         'pddl':
             '''
@@ -468,13 +577,12 @@ gdict["pick_clean_then_place_in_recep_slice"] = \
                 )
             )
             ''',
-        'templates': ['put a clean slice of {obj} in {recep}',
-                      'clean some sliced {obj} and put it in {recep}']
+        'templates': ['place a clean sliced {obj} in {recep}']
 
     }
 
-# pick, slice, and place object, but heat the object in the microwave first
-gdict["pick_heat_then_place_in_recep_slice"] = \
+# pick, heat, slice & place
+gdict["heat_slice_and_place"] = \
     {
         'pddl':
             '''
@@ -500,12 +608,11 @@ gdict["pick_heat_then_place_in_recep_slice"] = \
                 )
             )
             ''',
-        'templates': ['put a hot slice of {obj} in {recep}',
-                      'heat some sliced {obj} and put it in {recep}']
+        'templates': ['place a hot sliced {obj} in {recep}']
     }
 
-# pick, slice, and place object, but cool the object (if it's not already cold) in the fridge first
-gdict["pick_cool_then_place_in_recep_slice"] = \
+# pick, cool, slice & place
+gdict["cool_slice_and_place"] = \
     {
         'pddl':
             '''
@@ -531,8 +638,7 @@ gdict["pick_cool_then_place_in_recep_slice"] = \
                 )
             )
             ''',
-        'templates': ['put a cool slice of {obj} in {recep}',
-                      'cool some sliced {obj} and put it in {recep}']
+        'templates': ['place a cool sliced {obj} in {recep}']
     }
 
 # pick two instances of a sliced object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
@@ -575,6 +681,11 @@ gdict["pick_two_obj_and_place_slice"] = \
                       'find two sliced {obj} and put them in {recep}']
     }
 
+
+###############################################
+# LEVEL 4 long horizon tasks
+###############################################
+
 # toggle the state of a toggleable object (e.g: "toggle the lightswitch") while holding another, sliced one.
 gdict["look_at_obj_in_light_slice"] = \
     {
@@ -608,75 +719,6 @@ gdict["look_at_obj_in_light_slice"] = \
             ''',
         'templates': ['look at sliced {obj} under the {toggle}',
                       'examine the sliced {obj} with the {toggle}']
-    }
-
-# pick, slice, and place with a movable receptacle (e.g: "put a apple in a bowl inside the microwave")
-gdict["pick_and_place_with_movable_recep_slice"] = \
-    {
-        'pddl':
-            '''
-                (:goal
-                    (and
-                        (exists (?r # receptacle)
-                            (and 
-                                (receptacleType ?r {recep}Type)
-                                (exists (?o # object)
-                                    (and
-                                        (objectType ?o {obj}Type)
-                                        (exists (?mo # object)
-                                            (and
-                                                (sliceable ?o)
-                                                (isSliced ?o)
-                                                (objectType ?mo {mrecep}Type)
-                                                (isReceptacleObject ?mo)
-                                                (inReceptacleObject ?o ?mo)
-                                                (inReceptacle ?mo ?r)
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                        (forall (?re # receptacle)
-                            (not (opened ?re))
-                        )
-                    )
-                )
-            )
-            ''',
-        'templates': ['put sliced {obj} in a {mrecep} and then put them in {recep}',
-                      'put a {mrecep} of sliced {obj} in {recep}',
-                      'put sliced {obj} {mrecep} in {recep}']
-    }
-
-# pick, slice, and place.
-gdict["pick_and_place_simple_slice"] = \
-    {
-        'pddl':
-            '''
-                (:goal
-                    (and
-                        (exists (?r # receptacle)
-                            (exists (?o # object
-                                     ?ko # object)
-                                (and 
-                                    (sliceable ?o)
-                                    (isSliced ?o)
-                                    (objectType ?o {obj}Type) 
-                                    (inReceptacle ?o ?r) 
-                                    (receptacleType ?r {recep}Type)
-                                )
-                            )
-                        )
-                        (forall (?re # receptacle)
-                            (not (opened ?re))
-                        )
-                    )
-                )
-            )
-            ''',
-        'templates': ['slice {obj} and put in {recep}',
-                      'put sliced {obj} in {recep}']
     }
 
 

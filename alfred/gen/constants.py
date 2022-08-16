@@ -34,24 +34,31 @@ CHOOSE_RANDOM_PLAN = False       # if False, only the best plan (cheapest) is se
 ########################################################################################################################
 # Goals
 
-GOALS = ["pick_slice_then_place_in_recep"]
+GOALS = ["cool_simple"]
 
-GOALS_VALID = {"cool_simple": {"Kitchen"},
-               "heat_simple": {"Kitchen"},
-               "clean_simple": {"Kitchen", "Bathroom"},
-               "toggle_simple": {"LivingRoom", "Bedroom"},
-               "slice_simple": {"Kitchen"},
-               "pick_and_place": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"},
-               "pick_two_obj_and_place": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"},
-               "look_at_obj_in_light": {"LivingRoom", "Bedroom"},
-               "pick_clean_then_place_in_recep": {"Kitchen", "Bathroom"},
-               "pick_heat_then_place_in_recep": {"Kitchen"},
-               "pick_cool_then_place_in_recep": {"Kitchen"},
-               "pick_slice_then_place_in_recep": {"Kitchen"},
-               "pick_and_place_with_movable_recep": {"Kitchen", "LivingRoom", "Bedroom"}
-               }
+GOALS_VALID_1 = {"cool_simple": {"Kitchen"},
+                 "heat_simple": {"Kitchen"},
+                 "clean_simple": {"Kitchen", "Bathroom"},
+                 "toggle_simple": {"LivingRoom", "Bedroom"},
+                 "slice_simple": {"Kitchen"},
+                 "place_simple": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"}}
 
-pddl_goal_type = "pick_and_place"  # default goal type
+GOALS_VALID_2 = {"place_2": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"},
+                 "clean_and_place": {"Kitchen", "Bathroom"},
+                 "heat_and_place": {"Kitchen"},
+                 "cool_and_place": {"Kitchen"},
+                 "slice_and_place": {"Kitchen"},
+                 "stack_and_place": {"Kitchen", "LivingRoom", "Bedroom"}}
+
+GOALS_VALID_3 = {"heat_stack_and_place": {"Kitchen"},
+                 "cool_stack_and_place": {"Kitchen"},
+                 "clean_stack_and_place": {"Kitchen"},
+                 "slice_stack_and_place": {"Kitchen"},
+                 "heat_slice_and_place": {"Kitchen"},
+                 "cool_slice_and_place": {"Kitchen"},
+                 "clean_slice_and_place": {"Kitchen"}}
+
+pddl_goal_type = "place_simple"  # default goal type
 
 ########################################################################################################################
 # Video Settings

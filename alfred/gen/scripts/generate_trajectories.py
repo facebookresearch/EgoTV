@@ -1,6 +1,6 @@
 import os
 import sys
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLanguageGrounding/alfred/'
+# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLanguageGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -36,31 +36,50 @@ goal_to_required_variables = {"cool_simple": {"pickup", "scene"},
                               "clean_simple": {"pickup", "scene"},
                               "toggle_simple": {"pickup", "scene"},
                               "slice_simple": {"pickup", "scene"},
-                              "pick_and_place": {"pickup", "receptacle", "scene"},
-                              "pick_two_obj_and_place": {"pickup", "receptacle", "scene"},
-                              "pick_clean_then_place_in_recep": {"pickup", "receptacle", "scene"},
-                              "pick_heat_then_place_in_recep": {"pickup", "receptacle", "scene"},
-                              "pick_cool_then_place_in_recep": {"pickup", "receptacle", "scene"},
-                              "pick_slice_then_place_in_recep": {"pickup", "receptacle", "scene"},
-                              "pick_and_place_with_movable_recep": {"pickup", "movable", "receptacle", "scene"},
-                              "look_at_obj_in_light": {"pickup", "receptacle", "scene"}
-                              }
+                              "place_simple": {"pickup", "receptacle", "scene"},
+                              "place_2": {"pickup", "receptacle", "scene"},
+                              "clean_and_place": {"pickup", "receptacle", "scene"},
+                              "heat_and_place": {"pickup", "receptacle", "scene"},
+                              "cool_and_place": {"pickup", "receptacle", "scene"},
+                              "slice_and_place": {"pickup", "receptacle", "scene"},
+                              "stack_and_place": {"pickup", "movable", "receptacle", "scene"},
+                              "heat_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
+                              "cool_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
+                              "clean_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
+                              "slice_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
+                              "heat_slice_and_place": {"pickup", "receptacle", "scene"},
+                              "cool_slice_and_place": {"pickup", "receptacle", "scene"},
+                              "clean_slice_and_place": {"pickup", "receptacle", "scene"}}
 
-goal_to_pickup_type = {'heat_simple': 'Heatable',
-                       'cool_simple': 'Coolable',
-                       'clean_simple': 'Cleanable',
-                       'slice_simple': 'Sliceable',
-                       'pick_heat_then_place_in_recep': 'Heatable',
-                       'pick_cool_then_place_in_recep': 'Coolable',
-                       'pick_clean_then_place_in_recep': 'Cleanable',
-                       'pick_slice_then_place_in_recep': 'Sliceable'}
+# TODO: 'heat/cool/clean_slice_and_place' has a list of pickup types
+goal_to_pickup_type = {'heat_simple': ['Heatable'],
+                       'cool_simple': ['Coolable'],
+                       'clean_simple': ['Cleanable'],
+                       'slice_simple': ['Sliceable'],
+                       'heat_and_place': ['Heatable'],
+                       'cool_and_place': ['Coolable'],
+                       'clean_and_place': ['Cleanable'],
+                       'slice_and_place': ['Sliceable'],
+                       'heat_stack_and_place': ['Heatable'],
+                       'cool_stack_and_place': ['Coolable'],
+                       'clean_stack_and_place': ['Cleanable'],
+                       'slice_stack_and_place': ['Sliceable'],
+                       'heat_slice_and_place': ['Heatable', 'Sliceable'],
+                       'cool_slice_and_place': ['Coolable', 'Sliceable'],
+                       'clean_slice_and_place': ['Cleanable', 'Sliceable']}
 
 goal_to_receptacle_type = {'look_at_obj_in_light': "Toggleable"}
 
-goal_to_invalid_receptacle = {'pick_heat_then_place_in_recep': {'Microwave'},
-                              'pick_cool_then_place_in_recep': {'Fridge'},
-                              'pick_clean_then_place_in_recep': {'SinkBasin'},
-                              'pick_two_obj_and_place': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'}}
+goal_to_invalid_receptacle = {'heat_and_place': {'Microwave'},
+                              'cool_and_place': {'Fridge'},
+                              'clean_and_place': {'SinkBasin'},
+                              'place_2': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'},
+                              'heat_stack_and_place': {'Microwave'},
+                              'cool_stack_and_place': {'Fridge'},
+                              'clean_stack_and_place': {'SinkBasin'},
+                              'heat_slice_and_place': {'Microwave'},
+                              'cool_slice_and_place': {'Fridge'},
+                              'clean_slice_and_place': {'SinkBasin'}}
 
 scene_id_to_objs = {}
 obj_to_scene_ids = {}
@@ -171,10 +190,14 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
             variable_value_by_diff[key] = []
         variable_value_by_diff[key].append((variable, value))
 
-    # TODO: automate this
-    tasks_with_recep_variables = ['pick_and_place', 'pick_two_obj_and_place', 'pick_cool_then_place_in_recep',
-                                  'pick_heat_then_place_in_recep', 'pick_clean_then_place_in_recep',
-                                  'pick_and_place_with_movable_recep', 'look_at_obj_in_light', 'pick_slice_then_place_in_recep']
+    tasks_with_recep_variables = []
+    for task, value in goal_to_required_variables.items():
+        if 'receptacle' in value:
+            tasks_with_recep_variables.append(task)
+    tasks_with_movable_variables = []
+    for task, value in goal_to_required_variables.items():
+        if 'movable' in value:
+            tasks_with_movable_variables.append(task)
 
     for key, diff in sorted(enumerate(diffs_as_keys), key=lambda x: x[1], reverse=True):
         variable_value = variable_value_by_diff[key]
@@ -210,7 +233,7 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
                 # print("sampled movable object '%s' with prob %.4f" %
                 #       (movable_obj,  movable_probs[movable_candidates.index(movable_obj)]))
                 _movable_candidates = [movable_obj]
-                _goal_candidates = [g for g in goal_candidates if g == 'pick_and_place_with_movable_recep']
+                _goal_candidates = [g for g in goal_candidates if 'stack' in g]
 
                 _pickup_candidates = pickup_candidates[:]
                 _receptacle_candidates = receptacle_candidates[:]
@@ -244,11 +267,12 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
             while not propagation_finished:
                 assignment_lens = (len(_goal_candidates), len(_pickup_candidates), len(_movable_candidates),
                                    len(_receptacle_candidates), len(_scene_candidates))
+
                 # Constraints on goal.
                 _goal_candidates = [g for g in _goal_candidates if
                                     (g not in goal_to_pickup_type or
                                      len(set(_pickup_candidates).intersection(  # Pickup constraint.
-                                        constants.VAL_ACTION_OBJECTS[goal_to_pickup_type[g]])) > 0)
+                                        *map(set, [constants.VAL_ACTION_OBJECTS[type] for type in goal_to_pickup_type[g]]))) > 0)
                                     and (g not in goal_to_receptacle_type or
                                          np.any([r in constants.VAL_ACTION_OBJECTS[goal_to_receptacle_type[g]]
                                                 for r in _receptacle_candidates]))  # Valid by goal receptacle const.
@@ -269,7 +293,7 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
                 # Constraints on pickup obj.
                 _pickup_candidates = [p for p in _pickup_candidates if
                                       np.any([g not in goal_to_pickup_type or
-                                              p in constants.VAL_ACTION_OBJECTS[goal_to_pickup_type[g]]
+                                              p in set.intersection(*map(set, [constants.VAL_ACTION_OBJECTS[type] for type in goal_to_pickup_type[g]]))
                                               for g in _goal_candidates])  # Goal constraint.
                                       and (not movable_constrained or
                                            np.any([p in constants.VAL_RECEPTACLE_OBJECTS[m]
@@ -284,7 +308,7 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
                                       ]
                 # Constraints on movable obj.
                 _movable_candidates = [m for m in _movable_candidates if
-                                       'pick_and_place_with_movable_recep' in _goal_candidates  # Goal constraint
+                                       len(set(tasks_with_movable_variables).intersection(set(_goal_candidates))) > 0  # Goal constraint
                                        and (not pickup_constrained or
                                             np.any([p in constants.VAL_RECEPTACLE_OBJECTS[m]
                                                    for p in _pickup_candidates]))  # Pickup constraint.
@@ -432,7 +456,8 @@ def main(args):
 
     # scene-goal database
     for g in constants.GOALS:
-        for st in constants.GOALS_VALID[g]:
+        # TODO: automate this (GOALS_VALID_k)
+        for st in constants.GOALS_VALID_1[g]:
             scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]])
         scenes_for_goal[g] = set(scenes_for_goal[g])
 
