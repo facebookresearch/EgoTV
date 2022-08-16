@@ -27,10 +27,13 @@ $ cd $ALFRED_ROOT/gen/ff_planner
 $ make
 ```
 
+Now, generate dataset
 ```
 $ cd $GENERATE_DATA/gen
 $ python scripts/generate_trajectories.py
 ```
+
+The data is generated in: alfred/gen/dataset/
 
 ## Generate Layouts
 If you want to generate new layouts (aside from the generated layouts in alfred/gen/layouts/),
@@ -40,7 +43,7 @@ $ cd $GENERATE_DATA/gen
 $ python layouts/precompute_layout_locations.py 
 ```
 
-## Generate data corresponding to new goals
+## Define new goals and generate data corresponding to those goals
 
 * Define the goal conditions in alfred/gen/goal_library.py
 * Add the list of goals in alfred/gen/constants.py
