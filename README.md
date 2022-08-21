@@ -1,4 +1,4 @@
-# Vision Langauge Grounding
+# Vision Language Grounding
 
 ## To set-up the AI2-THOR environment
 
@@ -23,7 +23,7 @@ $ pip install -r requirements.txt
 Get dependencies and compile the planner
 ```
 $ sudo apt-get install ffmpeg flex bison
-$ cd $ALFRED_ROOT/gen/ff_planner
+$ cd $GENERATE_DATA/gen/ff_planner
 $ make
 ```
 
@@ -52,5 +52,11 @@ $ python layouts/precompute_layout_locations.py
 ```
 $ cd $GENERATE_DATA/gen
 $ python scripts/generate_trajectories.py
+```
+
+To simply run the fastforward planner on the generated pddl problem
+```
+$ cd $GENERATE_DATA/gen
+$ ff_planner/ff -o planner/domains/PutTaskExtended_domain.pddl -s 3 -f logs_gen/planner/generated_problems/problem_<num>.pddl
 ```
 
