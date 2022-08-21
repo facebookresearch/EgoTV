@@ -308,7 +308,7 @@ class TaskGameState(PlannedGameState):
                 raise Exception("Couldn't find a valid receptacle object according to constraints specified")
 
             # choose a receptacle object
-            if "simple" in constants.pddl_goal_type:
+            if "place" not in constants.pddl_goal_type:
                 self.parent_target = None
             else:
                 if constants.FORCED_SAMPLING or objs is None:

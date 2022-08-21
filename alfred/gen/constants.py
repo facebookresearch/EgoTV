@@ -34,29 +34,44 @@ CHOOSE_RANDOM_PLAN = False       # if False, only the best plan (cheapest) is se
 ########################################################################################################################
 # Goals
 
-GOALS = ["cool_simple"]
+GOALS = ["clean_then_heat"]
 
-GOALS_VALID_1 = {"cool_simple": {"Kitchen"},
-                 "heat_simple": {"Kitchen"},
-                 "clean_simple": {"Kitchen", "Bathroom"},
-                 "toggle_simple": {"LivingRoom", "Bedroom"},
-                 "slice_simple": {"Kitchen"},
-                 "place_simple": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"}}
+ALL_GOALS = ['cool_simple', 'heat_simple', 'clean_simple', 'toggle_simple', 'slice_simple', 'place_simple', 'place_2',
+             'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',
+             'clean_and_place', 'heat_and_place', 'cool_and_place', 'slice_and_place', 'stack_and_place',
+             'cool_and_stack', 'heat_and_stack', 'clean_and_stack', 'heat_stack_and_place', 'cool_stack_and_place',
+             'clean_stack_and_place', 'slice_stack_and_place', 'heat_slice_and_place', 'cool_slice_and_place',
+             'clean_slice_and_place', 'clean_then_heat', 'clean_then_slice', 'clean_then_cool', 'heat_then_slice',
+             'heat_then_clean', 'cool_then_clean', 'cool_then_slice', 'slice_then_heat', 'slice_then_cool',
+             'slice_then_clean', 'heat_then_stack', 'cool_then_stack', 'clean_then_stack', 'slice_then_stack',
+             'clean_then_slice_then_place', 'clean_then_heat_then_place', 'clean_then_cool_then_place',
+             'clean_then_cool_then_slice', 'clean_then_slice_then_cool', 'clean_then_slice_then_heat',
+             'clean_then_heat_then_slice', 'heat_then_slice_then_place', 'heat_then_clean_then_place',
+             'heat_then_clean_then_slice', 'heat_then_slice_then_clean', 'cool_then_slice_then_place',
+             'cool_then_clean_then_place', 'cool_then_clean_then_slice', 'cool_then_slice_then_clean',
+             'slice_then_heat_then_place', 'slice_then_cool_then_place', 'slice_then_cool_then_clean',
+             'slice_then_clean_then_cool', 'slice_then_clean_then_heat', 'slice_then_heat_then_clean']
 
-GOALS_VALID_2 = {"place_2": {"Kitchen", "LivingRoom", "Bathroom", "Bedroom"},
-                 "clean_and_place": {"Kitchen", "Bathroom"},
-                 "heat_and_place": {"Kitchen"},
-                 "cool_and_place": {"Kitchen"},
-                 "slice_and_place": {"Kitchen"},
-                 "stack_and_place": {"Kitchen", "LivingRoom", "Bedroom"}}
+GOALS_VALID = {}
+for goal in ALL_GOALS:
+    kitchen_flag = False
+    if goal == 'toggle_simple':
+        GOALS_VALID[goal] = {"LivingRoom", "Bedroom"}
+        continue
+    else:
+        GOALS_VALID[goal] = {"Kitchen"}
 
-GOALS_VALID_3 = {"heat_stack_and_place": {"Kitchen"},
-                 "cool_stack_and_place": {"Kitchen"},
-                 "clean_stack_and_place": {"Kitchen"},
-                 "slice_stack_and_place": {"Kitchen"},
-                 "heat_slice_and_place": {"Kitchen"},
-                 "cool_slice_and_place": {"Kitchen"},
-                 "clean_slice_and_place": {"Kitchen"}}
+    for sub_goal in ['heat', 'cool', 'slice']:
+        if sub_goal in goal:
+            kitchen_flag = True
+            break
+
+    if not kitchen_flag:
+        if 'clean' in goal:
+            GOALS_VALID[goal].add("Bathroom")
+        else:
+            if 'place' or 'stack' in goal:
+                GOALS_VALID[goal].union(("Bathroom", "LivingRoom", "Bedroom"))
 
 pddl_goal_type = "place_simple"  # default goal type
 

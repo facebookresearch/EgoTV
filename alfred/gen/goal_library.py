@@ -233,7 +233,7 @@ gdict["clean_and_place"] = \
         )
     )
     ''',
-    'templates': ['place a clean {obj} in {recep}']
+    'templates': ['provide a clean {obj} in {recep}']
 }
 
 
@@ -262,7 +262,7 @@ gdict["heat_and_place"] = \
         )
     )
     ''',
-    'templates': ['place a hot {obj} in {recep}']
+    'templates': ['provide a hot {obj} in {recep}']
 }
 
 
@@ -291,7 +291,7 @@ gdict["cool_and_place"] = \
         )
     )
     ''',
-    'templates': ['place a cool {obj} in {recep}']
+    'templates': ['provide a cool {obj} in {recep}']
 }
 
 # slice, place object
@@ -319,7 +319,7 @@ gdict["slice_and_place"] = \
         )
     )
     ''',
-    'templates': ['place a sliced {obj} in {recep}']
+    'templates': ['provide a sliced {obj} in {recep}']
 }
 
 
@@ -354,8 +354,7 @@ gdict["place_2"] = \
                 )
             )
             ''',
-        'templates': ['put two {obj}s in {recep}',
-                      'find two {obj}s and put them in {recep}']
+        'templates': ['provide two {obj}s in {recep}']
     }
 
 
@@ -391,8 +390,8 @@ gdict["stack_and_place"] = \
                 )
             )
             ''',
-        'templates': ['put a {mrecep} of {obj} in {recep}',
-                      'put {obj} {mrecep} in {recep}']
+        'templates': ['provide a {mrecep} of {obj} in {recep}',
+                      'provide {obj} {mrecep} in {recep}']
     }
 
 
@@ -434,7 +433,7 @@ gdict["heat_stack_and_place"] = \
                 )
             )
             ''',
-        'templates': ['place a hot {obj} {mrecep} in {recep}']
+        'templates': ['provide a hot {obj} {mrecep} in {recep}']
     }
 
 # pick, cool, place with movable receptacle
@@ -471,7 +470,7 @@ gdict["cool_stack_and_place"] = \
                 )
             )
             ''',
-        'templates': ['place a cool {obj} {mrecep} in {recep}']
+        'templates': ['provide a cool {obj} {mrecep} in {recep}']
     }
 
 # pick, clean, place with movable receptacle
@@ -508,7 +507,7 @@ gdict["clean_stack_and_place"] = \
                 )
             )
             ''',
-        'templates': ['place a clean {obj} {mrecep} in {recep}']
+        'templates': ['provide a clean {obj} {mrecep} in {recep}']
     }
 
 
@@ -546,7 +545,7 @@ gdict["slice_stack_and_place"] = \
                 )
             )
             ''',
-        'templates': ['place a sliced {obj} {mrecep} in {recep}']
+        'templates': ['provide a sliced {obj} {mrecep} in {recep}']
     }
 
 
@@ -577,7 +576,7 @@ gdict["clean_slice_and_place"] = \
                 )
             )
             ''',
-        'templates': ['place a clean sliced {obj} in {recep}']
+        'templates': ['provide a clean sliced {obj} in {recep}']
 
     }
 
@@ -608,7 +607,7 @@ gdict["heat_slice_and_place"] = \
                 )
             )
             ''',
-        'templates': ['place a hot sliced {obj} in {recep}']
+        'templates': ['provide a hot sliced {obj} in {recep}']
     }
 
 # pick, cool, slice & place
@@ -638,7 +637,7 @@ gdict["cool_slice_and_place"] = \
                 )
             )
             ''',
-        'templates': ['place a cool sliced {obj} in {recep}']
+        'templates': ['provide a cool sliced {obj} in {recep}']
     }
 
 # pick two instances of a sliced object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
@@ -677,8 +676,7 @@ gdict["pick_two_obj_and_place_slice"] = \
                 )
             )
             ''',
-        'templates': ['put two sliced {obj} in {recep}',
-                      'find two sliced {obj} and put them in {recep}']
+        'templates': ['provide two sliced {obj}s in {recep}']
     }
 
 
@@ -755,7 +753,7 @@ gdict["place_all_obj_type_into_recep"] = \
 }
 
 
-# pick three instances of an object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
+# pick three instances of an object and place them in a receptacle (e.g: "pick three apples and put them in the sink")
 # NOTE: doesn't work
 gdict["pick_three_obj_and_place"] = \
     {
@@ -797,10 +795,9 @@ gdict["pick_three_obj_and_place"] = \
                 )
             )
             ''',
-        'templates': ['put three {obj} in {recep}',
-                      'find three {obj} and put them in {recep}']
+        'templates': ['put three {obj}s in {recep}',
+                      'find three {obj}s and put them in {recep}']
     }
-
 
 
 gdict["pick_heat_and_place_with_movable_recep"] = \
@@ -836,7 +833,7 @@ gdict["pick_heat_and_place_with_movable_recep"] = \
                 )
             )
             ''',
-        'templates': ['put a hot {mrecep} of {obj} in {recep}']
+        'templates': ['Provide a hot {mrecep} of {obj} in {recep}']
     }
 
 
@@ -873,7 +870,7 @@ gdict["pick_cool_and_place_with_movable_recep"] = \
                 )
             )
             ''',
-        'templates': ['put a cold {mrecep} of {obj} in {recep}']
+        'templates': ['Provide a cold {mrecep} of {obj} in {recep}']
     }
 
 
@@ -910,5 +907,332 @@ gdict["pick_clean_and_place_with_movable_recep"] = \
                 )
             )
             ''',
-        'templates': ['put a cold {mrecep} of {obj} in {recep}']
+        'templates': ['Provide a cold {mrecep} of {obj} in {recep}']
+    }
+
+###########################################################################################################
+###########################################################################################################
+# Axis 2: partial ordering
+# Level 2
+###########################################################################################################
+############################################################################################################
+
+gdict["clean_then_heat"] = \
+{
+    'pddl' :
+    '''
+        (:goal
+            (and
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+                (exists (?o # object)
+                    (and 
+                        (cleanable ?o)
+                        (heatable ?o)
+                        (objectType ?o {obj}Type) 
+                        (isClean ?o)
+                        (isHot ?o)
+                    )
+                )
+            )
+        )
+    )
+    ''',
+    'templates': ['heat a clean {obj}',
+                  'heat a {obj} after cleaning it',
+                  'clean a {obj} then heat it']
+}
+
+# pick, clean (in sink), then place object
+gdict["clean_then_place"] = \
+{
+    'pddl' :
+    '''
+        (:goal
+            (and
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+                (exists (?r # receptacle)
+                    (exists (?o # object)
+                        (and 
+                            (cleanable ?o)
+                            (objectType ?o {obj}Type) 
+                            (receptacleType ?r {recep}Type)
+                            (isClean ?o)
+                            (inReceptacle ?o ?r) 
+                        )
+                    )
+                )
+            )
+        )
+    )
+    ''',
+    'templates': ['clean a {obj} and place it in {recep}',
+                  'place a {obj} in {recep} after cleaning it',
+                  'clean a {obj} then place it in {recep}']
+}
+
+
+# pick, heat (in microwave), then place object
+gdict["heat_then_place"] = \
+{
+    'pddl':
+    '''
+        (:goal
+            (and
+                (exists (?r # receptacle)
+                    (exists (?o # object)
+                        (and 
+                            (heatable ?o)
+                            (objectType ?o {obj}Type) 
+                            (receptacleType ?r {recep}Type)
+                            (isHot ?o)
+                            (inReceptacle ?o ?r) 
+                        )
+                    )
+                )
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+            )
+        )
+    )
+    ''',
+    'templates': ['heat a {obj} and place it in {recep}',
+                  'place a {obj} in {recep} after heating it',
+                  'heat a {obj} then place it in {recep}']
+}
+
+
+# pick, cool (in refrigerator if not already cool), then place object
+gdict["cool_then_place"] = \
+{
+    'pddl':
+    '''
+        (:goal
+            (and
+                (exists (?r # receptacle)
+                    (exists (?o # object)
+                        (and 
+                            (coolable ?o)
+                            (objectType ?o {obj}Type) 
+                            (receptacleType ?r {recep}Type)
+                            (isCool ?o)
+                            (inReceptacle ?o ?r) 
+                        )
+                    )
+                )
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+            )
+        )
+    )
+    ''',
+    'templates': ['cool a {obj} and place it in {recep}',
+                  'place a {obj} in {recep} after cooling it',
+                  'cool a {obj} then place it in {recep}']
+}
+
+# slice, place object
+gdict["slice_then_place"] = \
+{
+    'pddl':
+    '''
+        (:goal
+            (and
+                (exists (?r # receptacle)
+                    (exists (?o # object)
+                        (and 
+                            (sliceable ?o)
+                            (objectType ?o {obj}Type) 
+                            (receptacleType ?r {recep}Type)
+                            (isSliced ?o)
+                            (inReceptacle ?o ?r) 
+                        )
+                    )
+                )
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+            )
+        )
+    )
+    ''',
+    'templates': ['slice a {obj} and place it in {recep}',
+                  'place a {obj} in {recep} after slicing it',
+                  'slice a {obj} then place it in {recep}']
+}
+
+###############################################
+# Axis 2: partial ordering
+# Level 3
+###############################################
+
+# pick, clean, then slice, then place object
+gdict["clean_then_slice_then_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (cleanable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isClean ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['slice a clean {obj} and place it in the {recep}',
+                      'clean a {obj}, then slice it and place it in {recep}']
+
+    }
+
+# pick, clean, then heat, then place object
+gdict["clean_then_heat_then_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (heatable ?o)
+                                    (isHot ?o)
+                                    (cleanable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isClean ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['heat a clean {obj} and place it in the {recep}',
+                      'clean a {obj}, then heat it and place it in {recep}']
+
+    }
+
+# pick, heat, slice & place
+gdict["heat_then_slice_then_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (heatable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isHot ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['slice a hot {obj} and place it in the {recep}',
+                      'heat a {obj}, then slice it and place it in {recep}']
+    }
+
+# pick, cool, slice & place
+gdict["cool_then_slice_then_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (coolable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isCool ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['slice a cold {obj} and place it in the {recep}',
+                      'cool a {obj}, then slice it and place it in {recep}']
+    }
+
+# pick two objects, slice them, then place them in a receptacle
+gdict["pick_two_obj_then_slice_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (exists (?o1 # object)
+                                (and 
+                                    (sliceable ?o1)
+                                    (isSliced ?o1)
+                                    (objectType ?o1 {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (inReceptacle ?o1 ?r)
+                                    (exists (?o2 # object)
+                                        (and
+                                            (not (= ?o1 ?o2))
+
+                                            (sliceable ?o2)
+                                            (isSliced ?o2)
+                                            (objectType ?o2 {obj}Type)
+                                            (receptacleType ?r {recep}Type)
+                                            (inReceptacle ?o2 ?r) 
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['slice two {obj}s and put them in {recep}',
+                      'put two sliced {obj}s in {recep}']
     }

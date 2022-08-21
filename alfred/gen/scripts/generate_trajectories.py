@@ -1,6 +1,8 @@
 import os
 import sys
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLanguageGrounding/alfred'
+from collections import defaultdict
+
+# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -31,42 +33,23 @@ constants.CHOOSE_RANDOM_PLAN = True
 video_saver = VideoSaver()
 
 # structures to help with constraint enforcement.
-goal_to_required_variables = {"cool_simple": {"pickup", "scene"},
-                              "heat_simple": {"pickup", "scene"},
-                              "clean_simple": {"pickup", "scene"},
-                              "toggle_simple": {"pickup", "scene"},
-                              "slice_simple": {"pickup", "scene"},
-                              "place_simple": {"pickup", "receptacle", "scene"},
-                              "place_2": {"pickup", "receptacle", "scene"},
-                              "clean_and_place": {"pickup", "receptacle", "scene"},
-                              "heat_and_place": {"pickup", "receptacle", "scene"},
-                              "cool_and_place": {"pickup", "receptacle", "scene"},
-                              "slice_and_place": {"pickup", "receptacle", "scene"},
-                              "stack_and_place": {"pickup", "movable", "receptacle", "scene"},
-                              "heat_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
-                              "cool_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
-                              "clean_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
-                              "slice_stack_and_place": {"pickup", "movable", "receptacle", "scene"},
-                              "heat_slice_and_place": {"pickup", "receptacle", "scene"},
-                              "cool_slice_and_place": {"pickup", "receptacle", "scene"},
-                              "clean_slice_and_place": {"pickup", "receptacle", "scene"}}
-
-# TODO: 'heat/cool/clean_slice_and_place' has a list of pickup types
-goal_to_pickup_type = {'heat_simple': ['Heatable'],
-                       'cool_simple': ['Coolable'],
-                       'clean_simple': ['Cleanable'],
-                       'slice_simple': ['Sliceable'],
-                       'heat_and_place': ['Heatable'],
-                       'cool_and_place': ['Coolable'],
-                       'clean_and_place': ['Cleanable'],
-                       'slice_and_place': ['Sliceable'],
-                       'heat_stack_and_place': ['Heatable'],
-                       'cool_stack_and_place': ['Coolable'],
-                       'clean_stack_and_place': ['Cleanable'],
-                       'slice_stack_and_place': ['Sliceable'],
-                       'heat_slice_and_place': ['Heatable', 'Sliceable'],
-                       'cool_slice_and_place': ['Coolable', 'Sliceable'],
-                       'clean_slice_and_place': ['Cleanable', 'Sliceable']}
+goal_to_required_variables = dict()
+goal_to_pickup_type = defaultdict(list)
+for goal in constants.ALL_GOALS:
+    if 'stack' in goal:
+        goal_to_required_variables[goal] = {"pickup", "movable", "receptacle", "scene"}
+    elif 'place' in goal:
+        goal_to_required_variables[goal] = {"pickup", "receptacle", "scene"}
+    else:
+        goal_to_required_variables[goal] = {"pickup", "scene"}
+    if 'heat' in goal:
+        goal_to_pickup_type[goal].append('Heatable')
+    if 'clean' in goal:
+        goal_to_pickup_type[goal].append('Cleanable')
+    if 'slice' in goal:
+        goal_to_pickup_type[goal].append('Sliceable')
+    if 'cool' in goal:
+        goal_to_pickup_type[goal].append('Coolable')
 
 goal_to_receptacle_type = {'look_at_obj_in_light': "Toggleable"}
 
@@ -79,12 +62,30 @@ goal_to_invalid_receptacle = {'heat_and_place': {'Microwave'},
                               'clean_stack_and_place': {'SinkBasin'},
                               'heat_slice_and_place': {'Microwave'},
                               'cool_slice_and_place': {'Fridge'},
-                              'clean_slice_and_place': {'SinkBasin'}}
+                              'clean_slice_and_place': {'SinkBasin'},
+                              'clean_then_slice_then_place': {'SinkBasin'},
+                              'clean_then_heat_then_place': {'Microwave', 'SinkBasin'}}
+
+tasks_with_recep_variables = []
+for task, value in goal_to_required_variables.items():
+    if 'receptacle' in value:
+        tasks_with_recep_variables.append(task)
+tasks_with_movable_variables = []
+for task, value in goal_to_required_variables.items():
+    if 'movable' in value:
+        tasks_with_movable_variables.append(task)
 
 scene_id_to_objs = {}
 obj_to_scene_ids = {}
 scenes_for_goal = {g: [] for g in constants.GOALS}
 scene_to_type = {}
+
+# # ================ Dataset Statistics ================= #
+# goal_counter = {k: 0 for k in constants.ALL_GOALS}
+# obj_counter = {k: 0 for k in constants.OBJECTS}
+# movable_receptacle_counter = {k: 0 for k in constants.MOVABLE_RECEPTACLES}
+# receptacle_counter = {k: 0 for k in constants.RECEPTACLES}
+# scene_counter = {k: 0 for k in constants.SCENE_TYPE}
 
 
 def sample_task_params(succ_traj, full_traj, fail_traj,
@@ -96,7 +97,8 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
         (succ_traj['pickup'].isin(pickup_candidates) if 'pickup' in goal_to_required_variables[c] else True) &
         (succ_traj['movable'].isin(movable_candidates) if 'movable' in goal_to_required_variables[c] else True) &
         (succ_traj['receptacle'].isin(receptacle_candidates) if 'receptacle' in goal_to_required_variables[c] else True)
-        & (succ_traj['scene'].isin(scene_candidates) if 'scene' in goal_to_required_variables[c] else True)]['goal'].tolist().count(c)))  # Conditional.
+        & (succ_traj['scene'].isin(scene_candidates) if 'scene' in goal_to_required_variables[c] else True)][
+        'goal'].tolist().count(c)))  # Conditional.
                    * (1 / (1 + succ_traj['goal'].tolist().count(c)))  # Prior.
                    for c in goal_candidates]
     goal_probs = [w / sum(goal_weight) for w in goal_weight]
@@ -190,15 +192,6 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
             variable_value_by_diff[key] = []
         variable_value_by_diff[key].append((variable, value))
 
-    tasks_with_recep_variables = []
-    for task, value in goal_to_required_variables.items():
-        if 'receptacle' in value:
-            tasks_with_recep_variables.append(task)
-    tasks_with_movable_variables = []
-    for task, value in goal_to_required_variables.items():
-        if 'movable' in value:
-            tasks_with_movable_variables.append(task)
-
     for key, diff in sorted(enumerate(diffs_as_keys), key=lambda x: x[1], reverse=True):
         variable_value = variable_value_by_diff[key]
         random.shuffle(variable_value)
@@ -272,13 +265,14 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
                 _goal_candidates = [g for g in _goal_candidates if
                                     (g not in goal_to_pickup_type or
                                      len(set(_pickup_candidates).intersection(  # Pickup constraint.
-                                        *map(set, [constants.VAL_ACTION_OBJECTS[type] for type in goal_to_pickup_type[g]]))) > 0)
+                                         *map(set, [constants.VAL_ACTION_OBJECTS[type] for type in
+                                                    goal_to_pickup_type[g]]))) > 0)
                                     and (g not in goal_to_receptacle_type or
                                          np.any([r in constants.VAL_ACTION_OBJECTS[goal_to_receptacle_type[g]]
-                                                for r in _receptacle_candidates]))  # Valid by goal receptacle const.
+                                                 for r in _receptacle_candidates]))  # Valid by goal receptacle const.
                                     and (g not in goal_to_invalid_receptacle or
                                          len(set(_receptacle_candidates).difference(
-                                            goal_to_invalid_receptacle[g])) > 0)  # Invalid by goal receptacle const.
+                                             goal_to_invalid_receptacle[g])) > 0)  # Invalid by goal receptacle const.
                                     and len(set(_scene_candidates).intersection(
                                         scenes_for_goal[g])) > 0  # Scene constraint
                                     ]
@@ -293,41 +287,45 @@ def sample_task_params(succ_traj, full_traj, fail_traj,
                 # Constraints on pickup obj.
                 _pickup_candidates = [p for p in _pickup_candidates if
                                       np.any([g not in goal_to_pickup_type or
-                                              p in set.intersection(*map(set, [constants.VAL_ACTION_OBJECTS[type] for type in goal_to_pickup_type[g]]))
+                                              p in set.intersection(*map(set,
+                                                                         [constants.VAL_ACTION_OBJECTS[type] for type in
+                                                                          goal_to_pickup_type[g]]))
                                               for g in _goal_candidates])  # Goal constraint.
                                       and (not movable_constrained or
                                            np.any([p in constants.VAL_RECEPTACLE_OBJECTS[m]
-                                                  for m in _movable_candidates]))  # Movable constraint.
+                                                   for m in _movable_candidates]))  # Movable constraint.
                                       and (not receptacle_constrained or
                                            np.any([r in constants.VAL_ACTION_OBJECTS["Toggleable"] or
-                                                  p in constants.VAL_RECEPTACLE_OBJECTS[r]
-                                                  for r in _receptacle_candidates]))  # Receptacle constraint.
+                                                   p in constants.VAL_RECEPTACLE_OBJECTS[r]
+                                                   for r in _receptacle_candidates]))  # Receptacle constraint.
                                       and (not scene_constrained or
                                            np.any([s in obj_to_scene_ids[constants.OBJ_PARENTS[p]]
-                                                   for s in _scene_candidates])) # Scene constraint
+                                                   for s in _scene_candidates]))  # Scene constraint
                                       ]
                 # Constraints on movable obj.
                 _movable_candidates = [m for m in _movable_candidates if
-                                       len(set(tasks_with_movable_variables).intersection(set(_goal_candidates))) > 0  # Goal constraint
+                                       len(set(tasks_with_movable_variables).intersection(
+                                           set(_goal_candidates))) > 0  # Goal constraint
                                        and (not pickup_constrained or
                                             np.any([p in constants.VAL_RECEPTACLE_OBJECTS[m]
-                                                   for p in _pickup_candidates]))  # Pickup constraint.
+                                                    for p in _pickup_candidates]))  # Pickup constraint.
                                        and (not receptacle_constrained or
                                             np.any([r in constants.VAL_RECEPTACLE_OBJECTS and
-                                                   m in constants.VAL_RECEPTACLE_OBJECTS[r]
-                                                   for r in _receptacle_candidates]))  # Receptacle constraint.
+                                                    m in constants.VAL_RECEPTACLE_OBJECTS[r]
+                                                    for r in _receptacle_candidates]))  # Receptacle constraint.
                                        and (not scene_constrained or
                                             np.any([s in obj_to_scene_ids[constants.OBJ_PARENTS[m]]
                                                     for s in _scene_candidates]))  # Scene constraint
                                        ]
                 # Constraints on receptacle obj.
                 _receptacle_candidates = [r for r in _receptacle_candidates if
-                                          len(set(tasks_with_recep_variables).intersection(set(_goal_candidates))) > 0 and
-                                          np.any([(g not in goal_to_receptacle_type or
-                                                   r in constants.VAL_ACTION_OBJECTS[goal_to_receptacle_type[g]]) and
-                                                  (g not in goal_to_invalid_receptacle or
-                                                  r not in goal_to_invalid_receptacle[g])
-                                                  for g in _goal_candidates])  # Goal constraint.
+                                          len(set(tasks_with_recep_variables).intersection(set(_goal_candidates))) > 0
+                                          and np.any([(g not in goal_to_receptacle_type or
+                                                       r in constants.VAL_ACTION_OBJECTS[
+                                                           goal_to_receptacle_type[g]]) and
+                                                      (g not in goal_to_invalid_receptacle or
+                                                       r not in goal_to_invalid_receptacle[g])
+                                                      for g in _goal_candidates])  # Goal constraint.
                                           and (not receptacle_constrained or
                                                r in constants.VAL_ACTION_OBJECTS["Toggleable"] or
                                                np.any([p in constants.VAL_RECEPTACLE_OBJECTS[r]
@@ -456,8 +454,7 @@ def main(args):
 
     # scene-goal database
     for g in constants.GOALS:
-        # TODO: automate this (GOALS_VALID_k)
-        for st in constants.GOALS_VALID_1[g]:
+        for st in constants.GOALS_VALID[g]:
             scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]])
         scenes_for_goal[g] = set(scenes_for_goal[g])
 
@@ -506,7 +503,10 @@ def main(args):
                                       receptacle_candidates, scene_candidates)
 
     # main generation loop
-    # keeps trying out new task tuples as trajectories either fail or suceed
+    # keeps trying out new task tuples as trajectories either fail or succeed
+
+    # TODO: increase dataset_size if videos are saved (fail + success)
+    dataset_size = 0
     while True:
 
         sampled_task = next(task_sampler)
@@ -520,10 +520,10 @@ def main(args):
         tries_remaining = args.trials_before_fail
         # only try to get the number of trajectories left to make this tuple full.
         target_remaining = args.repeats_per_cond - len(succ_traj.loc[(succ_traj['goal'] == gtype) &
-                                                                (succ_traj['pickup'] == pickup_obj) &
-                                                                (succ_traj['movable'] == movable_obj) &
-                                                                (succ_traj['receptacle'] == receptacle_obj) &
-                                                                (succ_traj['scene'] == str(sampled_scene))])
+                                                                     (succ_traj['pickup'] == pickup_obj) &
+                                                                     (succ_traj['movable'] == movable_obj) &
+                                                                     (succ_traj['receptacle'] == receptacle_obj) &
+                                                                     (succ_traj['scene'] == str(sampled_scene))])
         num_place_fails = 0  # count of errors related to placement failure for no valid positions.
 
         # continue until we're (out of tries + have never succeeded) or (have gathered the target number of instances)
@@ -557,8 +557,9 @@ def main(args):
                         constraint_objs['repeat'].append((obj_type,
                                                           np.random.randint(1, constants.MAX_NUM_OF_OBJ_INSTANCES + 1)))
                 if gtype in goal_to_invalid_receptacle:
-                    constraint_objs['empty'] = [(r.replace('Basin', ''), num_place_fails * constants.RECEPTACLE_EMPTY_POINTS)
-                                                for r in goal_to_invalid_receptacle[gtype]]
+                    constraint_objs['empty'] = [
+                        (r.replace('Basin', ''), num_place_fails * constants.RECEPTACLE_EMPTY_POINTS)
+                        for r in goal_to_invalid_receptacle[gtype]]
                 constraint_objs['seton'] = []
                 if gtype in ['look_at_obj_in_light', 'toggle_simple']:
                     constraint_objs['seton'].append((receptacle_obj, 0))
@@ -609,7 +610,13 @@ def main(args):
                     reward, terminal = agent.get_reward()
 
                 dump_data_dict()
+
+                # TODO: save video for incomplete tasks too (failures) ?
                 save_video()
+                dataset_size += 1
+                if dataset_size % 100 == 0:
+                    print(dataset_size)
+
 
             except Exception as e:
                 import traceback
@@ -692,13 +699,21 @@ def main(args):
 
 def create_dirs(gtype, pickup_obj, movable_obj, receptacle_obj, scene_num):
     task_id = 'trial_T' + datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    save_name = '%s-%s-%s-%s-%d' % (gtype, pickup_obj, movable_obj, receptacle_obj, scene_num) + '/' + task_id
+    save_name = gtype + '/' + '%s-%s-%s-%d' % (pickup_obj, movable_obj, receptacle_obj, scene_num) + '/' + task_id
 
     constants.save_path = os.path.join(constants.DATA_SAVE_PATH, save_name, RAW_IMAGES_FOLDER)
     if not os.path.exists(constants.save_path):
         os.makedirs(constants.save_path)
 
     print("Saving images to: " + constants.save_path)
+
+    # # TODO: increase counter only if videos are saved ? (success & failure)
+    # goal_counter[gtype] += 1
+    # obj_counter[pickup_obj] += 1
+    # movable_receptacle_counter[movable_obj] += 1
+    # receptacle_counter[receptacle_obj] += 1
+    # scene_counter[scene_num] += 1
+
     return task_id
 
 
@@ -760,10 +775,13 @@ if __name__ == "__main__":
     # settings
     parser.add_argument('--force_unsave', action='store_true', help="don't save any data (for debugging purposes)")
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--save_path', type=str, default="dataset/new_trajectories", help="where to save the generated data")
+    parser.add_argument('--save_path', type=str, default="dataset/new_trajectories",
+                        help="where to save the generated data")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
-    parser.add_argument("--just_examine", action='store_true', help="just examine what data is gathered; don't gather more")
-    parser.add_argument("--in_parallel", action='store_true', help="this collection will run in parallel with others, so load from disk on every new sample")
+    parser.add_argument("--just_examine", action='store_true',
+                        help="just examine what data is gathered; don't gather more")
+    parser.add_argument("--in_parallel", action='store_true',
+                        help="this collection will run in parallel with others, so load from disk on every new sample")
     parser.add_argument("-n", "--num_threads", type=int, default=0, help="number of processes for parallel mode")
     parser.add_argument('--json_file', type=str, default="", help="path to json file with trajectory dump")
 

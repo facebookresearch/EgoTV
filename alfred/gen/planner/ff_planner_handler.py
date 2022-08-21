@@ -142,6 +142,7 @@ def get_plan_from_file(args):
                    '-o %s '
                    '-s %d '
                    '-f %s ' % (domain, solver_type, filepath))
+        # print(command)
         if DEBUG:
             print(command)
         planner_output = subprocess.check_output(shlex.split(command), timeout=30)

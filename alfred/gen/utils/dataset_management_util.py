@@ -1,5 +1,6 @@
 import os
 import shutil
+import matplotlib.pyplot as plt
 
 
 def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
@@ -67,3 +68,8 @@ def load_fails_from_disk(succ_dir, to_write=None):
                 fail_traj.add((goal, pickup, movable, receptacle, scene_num))
         break  # only examine top level
     return fail_traj
+
+
+# def plot_dataset_stats(succ_traj):
+#     plt.bar(succ_traj['goal'], )
+#     plt.bar()
