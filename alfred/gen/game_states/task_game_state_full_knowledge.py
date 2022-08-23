@@ -385,9 +385,9 @@ class TaskGameStateFullKnowledge(TaskGameState):
 
         elif action['action'] == 'HeatObject':
             if self.env.last_event.metadata['lastActionSuccess']:
-                self.cool_object_ids.add(action['objectId'])
-                if action['objectId'] in self.cold_object_ids:
-                    self.cold_object_ids.remove(action['objectId'])
+                self.hot_object_ids.add(action['objectId'])
+                if action['objectId'] in self.cool_object_ids:
+                    self.cool_object_ids.remove(action['objectId'])
 
         elif action['action'] == "ToggleObject":
             if self.env.last_event.metadata['lastActionSuccess']:

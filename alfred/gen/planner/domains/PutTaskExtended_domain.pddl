@@ -261,7 +261,7 @@
                 (isCool ?o)
                 (when
                     (isHot ?o)
-                    (not (Hot ?o))
+                    (not (isHot ?o))
                 )
             )
  )
