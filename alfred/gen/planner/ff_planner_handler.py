@@ -96,6 +96,7 @@ def parse_line(line):
         action_dict['receptacleObjectId'] = parse_action_arg(line_args[2])
     elif action in {'HeatObject', 'CoolObject'}:
         action_dict['receptacleObjectId'] = parse_action_arg(line_args[2])
+        action_dict['objectId'] = parse_action_arg(line_args[3])
     elif action in {'PickupObjectInReceptacle', 'PickupObjectNoReceptacle'}:
         action_dict['action'] = 'PickupObject'
         action_dict['objectId'] = parse_action_arg(line_args[2])
@@ -114,7 +115,6 @@ def parse_line(line):
         action_dict['receptacleObjectId'] = parse_action_arg(line_args[4])
     elif action in {'PickupObjectInObject'}:
         action_dict['action'] = 'PickupObject'
-
 
     return action_dict
 

@@ -39,7 +39,7 @@ gdict["cool_simple"] = \
     )
     ''',
     'templates': ['cool a {obj}',
-                   'cool some {obj}']
+                   'fetch and cool a {obj}']
 }
 
 # basic pick and heat (e.g: "heat an apple")
@@ -68,7 +68,7 @@ gdict["heat_simple"] = \
     )
     ''',
     'templates': ['heat a {obj}',
-                   'heat some {obj}']
+                   'fetch and heat a {obj}']
 }
 
 # basic pick and clean (e.g: "clean an apple")
@@ -97,29 +97,30 @@ gdict["clean_simple"] = \
     )
     ''',
     'templates': ['clean a {obj}',
-                   'clean some {obj}']
+                   'fetch and clean a {obj}']
 }
 
-# basic locate (e.g: "locate an apple")
+# basic locate and pick (e.g: "locate a apple")
 gdict["locate_simple"] = \
 {
     'pddl':
     '''
         (:goal
             (and
-                (exists (?a # agent)
-                         (?lStart # location
-                         (?lEnd # location)
-                    (and
-                        (atLocation ?a ?lEnd)
-                        (not (atLocation ?a ?lStart)))
+                (exists (?o # object)
+                    (exists (?a # agent)
+                        (and
+                            (holds ?a ?o)
+                            (holdsAny ?a)
+                        )
                     )
+                )
             )
         )
     )
     ''',
     'templates': ['locate a {obj}',
-                   'locate some {obj}']
+                   'fetch a {obj}']
 }
 
 # basic slice task (e.g.: "slice an apple")
@@ -145,7 +146,7 @@ gdict["slice_simple"] = \
     )
     ''',
     'templates': ['slice a {obj}',
-                   'slice some {obj}']
+                   'fetch and slice a {obj}']
 }
 
 # toggle the state of a toggleable object (e.g: "toggle the lightswitch")
@@ -174,7 +175,7 @@ gdict["toggle_simple"] = \
     )
     ''',
     'templates': ['look at a {obj} under {toggle}',
-                  'examine some {obj} under {toggle}']
+                  'examine a {obj} under {toggle}']
 }
 
 # basic pick and place (e.g: "put the apple in the microwave")
@@ -201,7 +202,7 @@ gdict["place_simple"] = \
     )
     ''',
     'templates': ['put a {obj} in {recep}',
-                   'put some {obj} in {recep}']
+                   'fetch and place a {obj} in {recep}']
 }
 
 ####################################################################################

@@ -238,6 +238,10 @@
     :effect (and
                 (increase (totalCost) 5)
                 (isHot ?o)
+                (when
+                    (isCool ?o)
+                    (not (isCool ?o))
+                )
             )
  )
 
@@ -255,6 +259,10 @@
     :effect (and
                 (increase (totalCost) 5)
                 (isCool ?o)
+                (when
+                    (isHot ?o)
+                    (not (Hot ?o))
+                )
             )
  )
 

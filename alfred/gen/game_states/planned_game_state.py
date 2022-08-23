@@ -415,15 +415,16 @@ class PlannedGameState(GameStateBase, ABC):
         if self.need_plan_update:
             self.update_receptacle_nearest_points()
             self.plan = []
-            # When there are no receptacles, there's nothing to plan.
             # Only happens if called too early (before room exploration).
-            if 'simple' in constants.data_dict['task_type'] or len(self.receptacle_to_point) > 0:
+            # if 'simple' in constants.data_dict['task_type'] or len(self.receptacle_to_point) > 0:
+            try:
                 self.state_to_pddl()
                 self.plan = self.planner.get_plan()
-            self.need_plan_update = False
-            if len(self.plan) == 0:
-                # Problem is solved, plan is empty
-                self.plan = [{'action': 'End', 'value': 1}]
+            except:
+                self.need_plan_update = False
+                if len(self.plan) == 0:
+                    # Problem is solved, plan is empty
+                    self.plan = [{'action': 'End', 'value': 1}]
         return self.plan
 
     def get_setup_info(self, info=None):

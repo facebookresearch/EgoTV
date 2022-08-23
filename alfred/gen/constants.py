@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 
 ########################################################################################################################
@@ -34,10 +35,10 @@ CHOOSE_RANDOM_PLAN = False       # if False, only the best plan (cheapest) is se
 ########################################################################################################################
 # Goals
 
-GOALS = ["clean_then_heat"]
+GOALS = ["locate_simple", "cool_simple", "heat_simple"]
 
 ALL_GOALS = ['cool_simple', 'heat_simple', 'clean_simple', 'toggle_simple', 'slice_simple', 'place_simple', 'place_2',
-             'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',
+             'locate_simple', 'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',
              'clean_and_place', 'heat_and_place', 'cool_and_place', 'slice_and_place', 'stack_and_place',
              'cool_and_stack', 'heat_and_stack', 'clean_and_stack', 'heat_stack_and_place', 'cool_stack_and_place',
              'clean_stack_and_place', 'slice_stack_and_place', 'heat_slice_and_place', 'cool_slice_and_place',
@@ -70,10 +71,10 @@ for goal in ALL_GOALS:
         if 'clean' in goal:
             GOALS_VALID[goal].add("Bathroom")
         else:
-            if 'place' or 'stack' in goal:
-                GOALS_VALID[goal].union(("Bathroom", "LivingRoom", "Bedroom"))
+            if 'place' or 'stack' or 'locate' in goal:
+                GOALS_VALID[goal] = GOALS_VALID[goal].union(("Bathroom", "LivingRoom", "Bedroom"))
 
-pddl_goal_type = "place_simple"  # default goal type
+pddl_goal_type = "locate_simple"  # default goal type
 
 ########################################################################################################################
 # Video Settings

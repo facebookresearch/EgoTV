@@ -328,7 +328,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
             action['forceVisible'] = forceVisible
             should_fail = False
         elif action['action'] in {'HeatObject', 'CoolObject'}:
-            action['objectId'] = action['receptacleObjectId']
+            # action['objectId'] = action['receptacleObjectId']
             action['forceVisible'] = forceVisible
             should_fail = False
         return action, should_fail
@@ -381,19 +381,27 @@ class TaskGameStateFullKnowledge(TaskGameState):
 
         elif action['action'] == 'CleanObject':
             if self.env.last_event.metadata['lastActionSuccess']:
-                self.cleaned_object_ids.add(action['objectId'])
+                self.cleaned_object_ids.add(action['ObjectId'])
 
         elif action['action'] == 'HeatObject':
-            pass
+            if self.env.last_event.metadata['lastActionSuccess']:
+                self.cool_object_ids.add(action['objectId'])
+                if action['objectId'] in self.cold_object_ids:
+                    self.cold_object_ids.remove(action['objectId'])
 
         elif action['action'] == "ToggleObject":
-            pass
+            if self.env.last_event.metadata['lastActionSuccess']:
+                self.on_object_ids.add(action['objectId'])
 
         elif action['action'] == 'CoolObject':
-            pass
+            if self.env.last_event.metadata['lastActionSuccess']:
+                self.cool_object_ids.add(action['objectId'])
+                if action['objectId'] in self.hot_object_ids:
+                    self.hot_object_ids.remove(action['objectId'])
 
         elif action['action'] == 'SliceObject':
-            pass
+            if self.env.last_event.metadata['lastActionSuccess']:
+                self.sliced_object_ids.add(action['objectId'])
 
         visible_objects = self.event.instance_detections2D.keys() if self.event.instance_detections2D != None else []
         for obj in visible_objects:

@@ -6,34 +6,39 @@ import matplotlib.pyplot as plt
 def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                              cap_count=None, min_count=None):
     tuple_counts = {}
-    for root, dirs, files in os.walk(succ_dir):
-        for d in dirs:
-            if d.count('-') == 4:
-                goal, pickup, movable, receptacle, scene_num = d.split('-')
-                # Add an entry for every successful trial folder in the directory.
-                queue_for_delete = []
-                deleted_all = True
-                for _, _dirs, _ in os.walk(os.path.join(succ_dir, d)):
-                    for _d in _dirs:
-                        for _, _, _files in os.walk(os.path.join(succ_dir, d, _d)):
-                            if 'video.mp4' in _files:
-                                k = (goal, pickup, movable, receptacle, scene_num)
-                                if k not in tuple_counts:
-                                    tuple_counts[k] = 0
-                                tuple_counts[k] += 1
-                                deleted_all = False
-                            else:
-                                queue_for_delete.append(_d)
+    for root, goals, _ in os.walk(succ_dir):
+        for goal in goals:
+            if goal == 'fails':
+                continue
+            # traj_per_goal_dir = os.path.join(root, g)
+            for traj_root, trials, _ in os.walk(os.path.join(root, goal)):
+                for trial in trials:
+                    if trial.count('-') == 3:
+                        pickup, movable, receptacle, scene_num = trial.split('-')
+                        # Add an entry for every successful trial folder in the directory.
+                        queue_for_delete = []
+                        deleted_all = True
+                        for _, _dirs, _ in os.walk(os.path.join(traj_root, trial)):
+                            for _d in _dirs:
+                                for _, _, _files in os.walk(os.path.join(traj_root, trial, _d)):
+                                    if 'video.mp4' in _files:
+                                        k = (goal, pickup, movable, receptacle, scene_num)
+                                        if k not in tuple_counts:
+                                            tuple_counts[k] = 0
+                                        tuple_counts[k] += 1
+                                        deleted_all = False
+                                    else:
+                                        queue_for_delete.append(_d)
+                                    break  # only examine top level
                             break  # only examine top level
-                    break  # only examine top level
-                if prune_trials:
-                    if deleted_all:
-                        print("Removing trial-less parent dir '%s'" % os.path.join(succ_dir, d))
-                        shutil.rmtree(os.path.join(succ_dir, d))
-                    else:
-                        for _d in queue_for_delete:
-                            print("Removing unfinished trial '%s'" % os.path.join(succ_dir, d, _d))
-                            shutil.rmtree(os.path.join(succ_dir, d, _d))
+                        if prune_trials:
+                            # if deleted_all:
+                            #     print("Removing trial-less parent dir '%s'" % os.path.join(traj_root, trial))
+                            #     shutil.rmtree(os.path.join(traj_root, trial))
+                            # else:
+                            for _d in queue_for_delete:
+                                print("Removing unfinished trial '%s'" % os.path.join(traj_root, trial, _d))
+                                shutil.rmtree(os.path.join(traj_root, trial, _d))
         break  # only examine top level
 
     # Populate dataframe based on tuple constraints.
@@ -70,6 +75,21 @@ def load_fails_from_disk(succ_dir, to_write=None):
     return fail_traj
 
 
-# def plot_dataset_stats(succ_traj):
-#     plt.bar(succ_traj['goal'], )
-#     plt.bar()
+def plot_dataset_stats(succ_traj):
+    succ_traj[['goal', 'pickup']].groupby('goal').pickup.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+    plt.ylabel("goal")
+    plt.show()
+    movable_traj = succ_traj[succ_traj.movable != None]
+    movable_traj[['goal', 'movable']].groupby('goal').movable.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+    plt.ylabel("goal")
+    plt.show()
+    recep_traj = succ_traj[succ_traj.receptacle != None]
+    recep_traj[['goal', 'receptacle']].groupby('goal').receptacle.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+    plt.ylabel("goal")
+    plt.show()
+    succ_traj[['goal', 'scene']].groupby('goal').scene.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+    plt.ylabel("goal")
+    plt.show()
+    succ_traj['goal'].value_counts().plot(kind='bar', figsize=(8, 6), rot=45)
+    plt.ylabel("goal")
+    plt.show()

@@ -33,10 +33,12 @@ class PlanAgent(AgentBase):
 
                 if plan_action['action'] == 'GotoLocation':
                     plan_action = self.game_state.get_teleport_action(plan_action)
+                    # self.game_state.state_to_pddl()
                 elif plan_action['action'] == 'End':
                     break
                 self.controller_agent.step(plan_action, executing_plan=True)
                 step_count += 1
+                self.game_state.state_to_pddl()
                 if self.controller_agent.current_frame_count >= constants.MAX_EPISODE_LENGTH:
                     break
         else:
@@ -62,7 +64,7 @@ class PlanAgent(AgentBase):
 
             while not(plan_action is None or plan_action['action'] == 'End'):
                 self.controller_agent.step(self.game_state.get_plan_action(plan_action), executing_plan=True)
-
+                self.game_state.state_to_pddl()
                 # save data
                 self.save_plan(plan, 0)
 
@@ -81,6 +83,7 @@ class PlanAgent(AgentBase):
                     plan_action = plan[0]
                     self.controller_agent.step(self.game_state.get_plan_action(plan_action), executing_plan=True)
                     step_count += 1
+                    self.game_state.state_to_pddl()
                     plan = plan[1:]
                 plan_action = plan[0]
 

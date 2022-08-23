@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -22,7 +22,7 @@ from agents.deterministic_planner_agent import DeterministicPlannerAgent
 from env.thor_env import ThorEnv
 from game_states.task_game_state_full_knowledge import TaskGameStateFullKnowledge
 from utils.video_util import VideoSaver
-from utils.dataset_management_util import load_successes_from_disk, load_fails_from_disk
+from utils.dataset_management_util import load_successes_from_disk, load_fails_from_disk, plot_dataset_stats
 
 # params
 RAW_IMAGES_FOLDER = 'raw_images/'
@@ -506,7 +506,6 @@ def main(args):
     # keeps trying out new task tuples as trajectories either fail or succeed
 
     # TODO: increase dataset_size if videos are saved (fail + success)
-    dataset_size = 0
     while True:
 
         sampled_task = next(task_sampler)
@@ -613,9 +612,10 @@ def main(args):
 
                 # TODO: save video for incomplete tasks too (failures) ?
                 save_video()
-                dataset_size += 1
-                if dataset_size % 100 == 0:
-                    print(dataset_size)
+                if len(succ_traj) % 20 == 0 and len(succ_traj) != 0:
+                    print('==================== Stop ===========================')
+                    plot_dataset_stats(succ_traj)
+                    break
 
 
             except Exception as e:
@@ -778,7 +778,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_path', type=str, default="dataset/new_trajectories",
                         help="where to save the generated data")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
-    parser.add_argument("--just_examine", action='store_true',
+    parser.add_argument("--just_examine", default=False,
                         help="just examine what data is gathered; don't gather more")
     parser.add_argument("--in_parallel", action='store_true',
                         help="this collection will run in parallel with others, so load from disk on every new sample")
@@ -786,7 +786,7 @@ if __name__ == "__main__":
     parser.add_argument('--json_file', type=str, default="", help="path to json file with trajectory dump")
 
     # params
-    parser.add_argument("--repeats_per_cond", type=int, default=3)
+    parser.add_argument("--repeats_per_cond", type=int, default=2)
     parser.add_argument("--trials_before_fail", type=int, default=5)
     parser.add_argument("--async_load_every_n_samples", type=int, default=10)
 
