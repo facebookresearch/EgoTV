@@ -10,3 +10,4 @@ Pillow~=8.4.0
 tensorboardX~=2.5.1
 ai2thor~=4.2.0
 pyyaml~=6.0
+matplotlib~=3.3.4
