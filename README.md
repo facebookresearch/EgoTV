@@ -13,21 +13,25 @@ $ cd $GENERATE_DATA
 ```
 $ conda create -n <virtual_env> python
 $ source activate <virtual_env>
-$ pip install --upgrade pip
-$ pip install -r requirements.txt
+$ bash install_requirements.sh
 ```
 
 
 ## Data Generation
 
-Get dependencies and compile the planner
-```
-$ sudo apt-get install ffmpeg flex bison
-$ cd $GENERATE_DATA/gen/ff_planner
-$ make
-```
+[comment]: <> (Get dependencies and compile the planner)
 
-Now, generate dataset
+[comment]: <> (```)
+
+[comment]: <> ($ sudo apt-get install ffmpeg flex bison)
+
+[comment]: <> ($ cd $GENERATE_DATA/gen/ff_planner)
+
+[comment]: <> ($ make)
+
+[comment]: <> (```)
+
+Generate dataset
 ```
 $ cd $GENERATE_DATA/gen
 $ python scripts/generate_trajectories.py
