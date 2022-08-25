@@ -166,7 +166,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
         holds_str = ''
         if len(self.inventory_ids) > 0:
             holds_str = ('\n        (holdsAny agent1)\n        (holds agent1 %s)' %
-                         self.inventory_ids.get_any()[1])
+                         self.inventory_ids.get_any())
 
         fillable_receptacles = copy.deepcopy(constants.RECEPTACLES)
         if self.task_target[1] is not None:
@@ -381,7 +381,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
 
         elif action['action'] == 'CleanObject':
             if self.env.last_event.metadata['lastActionSuccess']:
-                self.cleaned_object_ids.add(action['ObjectId'])
+                self.cleaned_object_ids.add(action['objectId'])
 
         elif action['action'] == 'HeatObject':
             if self.env.last_event.metadata['lastActionSuccess']:

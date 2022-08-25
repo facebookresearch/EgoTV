@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import warnings
 import constants
 from game_states.game_state_base import GameStateBase
 from planner import ff_planner_handler
@@ -267,7 +268,8 @@ class PlannedGameState(GameStateBase, ABC):
         for (key, val) in self.was_in_receptacle_ids.items():
             if 'Fridge' in key:
                 for vv in val:
-                    self.cool_object_ids.add(vv)
+                    if vv not in self.hot_object_ids:
+                        self.cool_object_ids.add(vv)
 
         is_cool_str = '\n        '.join((['(isCool %s)' % obj
                                           for obj in self.cool_object_ids if object_dict[obj]['objectType'] == constants.OBJECTS[self.object_target]]))
@@ -365,12 +367,124 @@ class PlannedGameState(GameStateBase, ABC):
             fid.write(pddl_str)
             fid.flush()
         constants.data_dict['pddl_state'].append('problem_%s.pddl' % pddl_state_next_idx)
+        constants.data_dict['state_metadata'].append(self.get_complete_env_state(in_receptacle_strs))
+        constants.data_dict['objects_metadata'].append(self.env.last_event.metadata['objects'])
 
         with open('%s/planner/generated_problems/problem_%s.pddl' % (self.dname, self.problem_id), 'w') as fid:
             fid.write(pddl_str)
             fid.flush()
 
         return pddl_str
+
+    def get_complete_env_state(self, in_receptacle_strs):
+        # state_predicates = ['isSliced', 'isHot', 'isCool', 'isClean', 'isOn', 'isToggled', 'inReceptacle', 'opened',
+        #                     'atLocation', 'objectAtLocation', 'receptacleAtLocation', 'holds']
+        # attribute_predicates = ['sliceable', 'heatable', 'coolable', 'cleanable', 'toggleable', 'openable', 'moveable',
+        #                         'pickupable', 'objectType', 'receptacleType']
+
+        state_metadata = list()
+        for object in self.env.last_event.metadata['objects']:
+            object_metadata = dict()
+            object_metadata['assetId'] = object['assetId']
+            object_metadata['objectId'] = object['objectId']
+            object_metadata['name'] = object['name']
+            object_metadata['axisAlignedBoundingBox'] = object['axisAlignedBoundingBox']
+            object_metadata['objectOrientedBoundingBox'] = object['objectOrientedBoundingBox']
+
+            root_obj = object['objectId'].split('|')[0]
+
+            object_metadata['isSliced'] = False
+            for sliced_obj in self.sliced_object_ids:
+                if object['objectId'] == sliced_obj:
+                    object_metadata['isSliced'] = True
+
+            object_metadata['isCool'] = False
+            for cool_obj in self.cool_object_ids:
+                if object['objectId'] == cool_obj:
+                    object_metadata['isCool'] = True
+
+            object_metadata['isHot'] = False
+            for hot_obj in self.hot_object_ids:
+                if object['objectId'] == hot_obj:
+                    object_metadata['isHot'] = True
+
+            object_metadata['isClean'] = False
+            for clean_obj in self.cleaned_object_ids:
+                if object['objectId'] == clean_obj:
+                    object_metadata['isClean'] = True
+
+            object_metadata['isOn'] = False
+            for on_obj in self.on_object_ids:
+                if object['objectId'] == on_obj and self.toggle_target is not None:
+                    object_metadata['isOn'] = True
+
+            object_metadata['isToggled'] = False
+            # TODO: change this code
+            for toggle_obj in self.toggleable_object_ids:
+                if object['objectId'] == toggle_obj and self.toggle_target is not None:
+                    object_metadata['isToggled'] = True
+
+            object_metadata['inReceptacle'] = None
+            for in_receptacle_str in in_receptacle_strs:
+                processed_str = in_receptacle_str.replace("(", "").replace(")", "").split()
+                if processed_str[1] == object['objectId']:
+                    object_metadata['inReceptacle'] = processed_str[2]
+
+            # does agent hold this object
+            object_metadata['holds'] = False
+            if len(self.inventory_ids) > 0 and object['objectId'] in self.inventory_ids.get_any():
+                object_metadata['holds'] = True
+            if object_metadata['holds'] != object['isPickedUp']:
+                warnings.warn("holds and PickUp mismatch")
+
+            if root_obj in constants.VAL_ACTION_OBJECTS['Sliceable']:
+                object_metadata['sliceable'] = True
+            else:
+                object_metadata['sliceable'] = False
+            if object_metadata['sliceable'] != object['sliceable']:
+                warnings.warn("Property mismatch: sliceable")
+
+            if root_obj in constants.VAL_ACTION_OBJECTS['Heatable']:
+                object_metadata['heatable'] = True
+            else:
+                object_metadata['heatable'] = False
+            if object_metadata['heatable'] != object['heatable']:
+                warnings.warn("Property mismatch: heatable")
+
+            if root_obj in constants.VAL_ACTION_OBJECTS['Coolable']:
+                object_metadata['coolable'] = True
+            else:
+                object_metadata['coolable'] = False
+            if object_metadata['coolable'] != object['coolable']:
+                warnings.warn("Property mismatch: coolable")
+
+            if root_obj in constants.VAL_ACTION_OBJECTS['Cleanable']:
+                object_metadata['cleanable'] = True
+            else:
+                object_metadata['cleanable'] = False
+            if object_metadata['cleanable'] != object['cleanable']:
+                warnings.warn("Property mismatch: cleanable")
+
+            if root_obj in constants.VAL_ACTION_OBJECTS['Toggleable']:
+                object_metadata['toggleable'] = True
+            else:
+                object_metadata['toggleable'] = False
+            if object_metadata['toggleable'] != object['toggleable']:
+                warnings.warn("Property mismatch: toggleable")
+
+            object_metadata['openable'] = object['openable']
+            object_metadata['moveable'] = object['moveable']
+            object_metadata['pickupable'] = object['pickupable']
+            object_metadata['objectType'] = object['objectType']
+
+            if object['receptacle']:
+                object_metadata['receptacleType'] = object['objectType']
+            else:
+                object_metadata['receptacleType'] = None
+
+            state_metadata.append(object_metadata)
+        return state_metadata
+
 
     def get_extra_facts(self):
         raise NotImplementedError

@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -737,6 +737,8 @@ def setup_data_dict():
                                           'mrecep_target': -1}
     constants.data_dict['dataset_params'] = {'video_frame_rate': -1}
     constants.data_dict['pddl_state'] = []
+    constants.data_dict['objects_metadata'] = []
+    constants.data_dict['state_metadata'] = []
 
 
 def dump_data_dict():
