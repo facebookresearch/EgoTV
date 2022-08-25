@@ -434,8 +434,8 @@ class PlannedGameState(GameStateBase, ABC):
             object_metadata['holds'] = False
             if len(self.inventory_ids) > 0 and object['objectId'] in self.inventory_ids.get_any():
                 object_metadata['holds'] = True
-            if object_metadata['holds'] != object['isPickedUp']:
-                warnings.warn("holds and PickUp mismatch")
+            # if object_metadata['holds'] != object['isPickedUp']:
+            #     warnings.warn("holds and PickUp mismatch")
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Sliceable']:
                 object_metadata['sliceable'] = True
@@ -448,22 +448,16 @@ class PlannedGameState(GameStateBase, ABC):
                 object_metadata['heatable'] = True
             else:
                 object_metadata['heatable'] = False
-            if object_metadata['heatable'] != object['heatable']:
-                warnings.warn("Property mismatch: heatable")
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Coolable']:
                 object_metadata['coolable'] = True
             else:
                 object_metadata['coolable'] = False
-            if object_metadata['coolable'] != object['coolable']:
-                warnings.warn("Property mismatch: coolable")
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Cleanable']:
                 object_metadata['cleanable'] = True
             else:
                 object_metadata['cleanable'] = False
-            if object_metadata['cleanable'] != object['cleanable']:
-                warnings.warn("Property mismatch: cleanable")
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Toggleable']:
                 object_metadata['toggleable'] = True
