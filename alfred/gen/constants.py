@@ -35,7 +35,7 @@ CHOOSE_RANDOM_PLAN = False       # if False, only the best plan (cheapest) is se
 ########################################################################################################################
 # Goals
 
-GOALS = ["heat_and_place"]
+GOALS = ["heat_simple"]
 
 ALL_GOALS = ['cool_simple', 'heat_simple', 'clean_simple', 'toggle_simple', 'slice_simple', 'place_simple', 'place_2',
              'locate_simple', 'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',
@@ -503,11 +503,6 @@ MOVABLE_RECEPTACLES = [
     'Pan',
     'Pot'
 ]
-
-# 'Microwave',
-# 'CoffeeMachine'
-# 'GarbageCan',
-# 'Toaster'
 
 MOVABLE_RECEPTACLES_SET = set(MOVABLE_RECEPTACLES)
 OBJECTS_SET = set(OBJECTS) | MOVABLE_RECEPTACLES_SET
@@ -1214,7 +1209,8 @@ VAL_ACTION_OBJECTS = {
                   'Tomato',
                   'TomatoSliced'},
     'Toggleable': {'DeskLamp',
-                   'FloorLamp'},
+                   'FloorLamp',
+                   'StoveKnob'},
     'Sliceable': {'Apple',
                   'Bread',
                   'Lettuce',

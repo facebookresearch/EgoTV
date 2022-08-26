@@ -2,6 +2,7 @@ import copy
 import glob
 import random
 import time
+import warnings
 
 import cv2
 import numpy as np
@@ -373,11 +374,13 @@ class GameStateBase(object):
         mask = self.get_mask_of_obj(object_id)
         return bbox, point, mask
 
-    def get_some_visible_obj_of_name(self, name):
+    def get_some_visible_obj_of_name(self, name, all=False):
         objects = [obj for obj in self.env.last_event.metadata['objects'] if
                    obj['objectType'] == name and obj['visible']]
         if len(objects) == 0:
             raise Exception("No visible %s found!" % name)
+        if all:
+            return objects
         return objects[0]  # return the first visible instance
 
     def step(self, action_or_ind, process_frame=True):
@@ -651,64 +654,162 @@ class GameStateBase(object):
                         self.check_action_success(self.event)
 
                     elif 'HeatObject' in action['action']:
-                        # open the microwave
-                        microwave_obj_id = self.get_some_visible_obj_of_name('Microwave')['objectId']
-                        microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
-                        self.open_recep(microwave_obj)
+                        # select the receptacle in which the object is heated
+                        if 'Microwave' in action['receptacleObjectId']:
+                            # open the microwave
+                            microwave_obj_id = self.get_some_visible_obj_of_name('Microwave')['objectId']
+                            microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
+                            self.open_recep(microwave_obj)
 
-                        # put the object in the microwave
-                        inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
-                        put_action = dict(action='PutObject',
-                                          objectId=microwave_obj_id,
-                                          forceAction=True,
-                                          placeStationary=True)
-                        self.store_ll_action(put_action)
-                        self.save_act_image(put_action, dir=constants.BEFORE)
-                        self.event = self.env.step(put_action)
-                        self.save_act_image(put_action, dir=constants.AFTER)
-                        self.check_obj_visibility(put_action)
-                        self.check_action_success(self.event)
+                            # put the object in the microwave
+                            inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
+                            put_action = dict(action='PutObject',
+                                              objectId=microwave_obj_id,
+                                              forceAction=True,
+                                              placeStationary=True)
+                            self.store_ll_action(put_action)
+                            self.save_act_image(put_action, dir=constants.BEFORE)
+                            self.event = self.env.step(put_action)
+                            self.save_act_image(put_action, dir=constants.AFTER)
+                            self.check_obj_visibility(put_action)
+                            self.check_action_success(self.event)
 
-                        # close the microwave
-                        microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
-                        self.close_recep(microwave_obj)
+                            # close the microwave
+                            microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
+                            self.close_recep(microwave_obj)
 
-                        # turn on the microwave
-                        heat_action = copy.deepcopy(action)
-                        heat_action['action'] = 'ToggleObjectOn'
-                        heat_action['objectId'] = microwave_obj_id
-                        self.store_ll_action(heat_action)
-                        self.save_act_image(heat_action, dir=constants.BEFORE)
-                        self.event = self.env.step({k: heat_action[k]
-                                                    for k in ['action', 'objectId']})
-                        self.save_act_image(heat_action, dir=constants.AFTER)
+                            # turn on the microwave
+                            heat_action = copy.deepcopy(action)
+                            heat_action['action'] = 'ToggleObjectOn'
+                            heat_action['objectId'] = microwave_obj_id
+                            self.store_ll_action(heat_action)
+                            self.save_act_image(heat_action, dir=constants.BEFORE)
+                            self.event = self.env.step({k: heat_action[k]
+                                                        for k in ['action', 'objectId']})
+                            self.save_act_image(heat_action, dir=constants.AFTER)
 
-                        # turn off the microwave
-                        stop_action = copy.deepcopy(heat_action)
-                        stop_action['action'] = 'ToggleObjectOff'
-                        self.store_ll_action(stop_action)
-                        self.save_act_image(stop_action, dir=constants.BEFORE)
-                        self.event = self.env.step({k: stop_action[k]
-                                                    for k in ['action', 'objectId']})
-                        self.save_act_image(stop_action, dir=constants.AFTER)
+                            # turn off the microwave
+                            stop_action = copy.deepcopy(heat_action)
+                            stop_action['action'] = 'ToggleObjectOff'
+                            self.store_ll_action(stop_action)
+                            self.save_act_image(stop_action, dir=constants.BEFORE)
+                            self.event = self.env.step({k: stop_action[k]
+                                                        for k in ['action', 'objectId']})
+                            self.save_act_image(stop_action, dir=constants.AFTER)
 
-                        # open the microwave
-                        microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
-                        self.open_recep(microwave_obj)
+                            # open the microwave
+                            microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
+                            self.open_recep(microwave_obj)
 
-                        # pick up the object from the microwave
-                        pickup_action = dict(action='PickupObject',
-                                             objectId=inv_obj['objectId'])
-                        self.store_ll_action(pickup_action)
-                        self.save_act_image(pickup_action, dir=constants.BEFORE)
-                        self.event = self.env.step(pickup_action)
-                        self.save_act_image(pickup_action, dir=constants.AFTER)
-                        self.check_obj_visibility(pickup_action)
-                        self.check_action_success(self.event)
+                            # pick up the object from the microwave
+                            pickup_action = dict(action='PickupObject',
+                                                 objectId=inv_obj['objectId'])
+                            self.store_ll_action(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.BEFORE)
+                            self.event = self.env.step(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.AFTER)
+                            self.check_obj_visibility(pickup_action)
+                            self.check_action_success(self.event)
 
-                        # close the microwave again
-                        microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
-                        self.close_recep(microwave_obj)
+                            # close the microwave again
+                            microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
+                            self.close_recep(microwave_obj)
+
+                        # TODO: support kettle as receptacle for water
+                        else:  # StoveBurner (for stoveburner, the object should be placed in a pan or pot)
+                            try:
+                                heat_recep_object = self.get_some_visible_obj_of_name('Pan')
+                            except Exception:
+                                heat_recep_object = self.get_some_visible_obj_of_name('Pot')
+                            heat_recep_object_id = heat_recep_object['objectId']
+
+                            # put the object in the heat_recep_object
+                            put_action = dict(action='PutObject',
+                                              objectId=heat_recep_object_id,
+                                              forceAction=True,
+                                              placeStationary=True)
+                            inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
+                            self.store_ll_action(put_action)
+                            self.save_act_image(put_action, dir=constants.BEFORE)
+                            self.event = self.env.step(put_action)
+                            self.save_act_image(put_action, dir=constants.AFTER)
+                            self.check_obj_visibility(put_action)
+                            self.check_action_success(self.event)
+
+                            parent_obj_id = heat_recep_object['parentReceptacles'][0]
+                            # pickup & put the pan/pot on a stoveburner if not already there (but in scene)
+                            if 'StoveBurner' not in parent_obj_id:
+                                stoveburner_object = self.get_some_visible_obj_of_name('StoveBurner')
+                                stoveburner_obj_id = stoveburner_object['objectId']
+
+                                pickup_action = dict(action='PickupObject',
+                                                     objectId=heat_recep_object_id)
+                                self.store_ll_action(pickup_action)
+                                self.save_act_image(pickup_action, dir=constants.BEFORE)
+                                self.event = self.env.step(pickup_action)
+                                self.save_act_image(pickup_action, dir=constants.AFTER)
+                                self.check_obj_visibility(pickup_action)
+                                self.check_action_success(self.event)
+
+                                put_action = dict(action='PutObject',
+                                                  objectId=stoveburner_obj_id,
+                                                  forceAction=True,
+                                                  placeStationary=True)
+                                self.store_ll_action(put_action)
+                                self.save_act_image(put_action, dir=constants.BEFORE)
+                                self.event = self.env.step(put_action)
+                                self.save_act_image(put_action, dir=constants.AFTER)
+                                self.check_obj_visibility(put_action)
+                                self.check_action_success(self.event)
+                            else:  # if already on stoveburner, get the correct stoveburner object ID
+                                stoveburner_objs = self.get_some_visible_obj_of_name('StoveBurner', all=True)
+                                for stoveburner_obj in stoveburner_objs:
+                                    stoveburner_obj_id = stoveburner_obj['objectId']
+                                    if heat_recep_object_id in self.in_receptacle_ids[stoveburner_obj_id]:
+                                        break
+                                # sanity check
+                                print(heat_recep_object_id, stoveburner_obj_id)
+                                if parent_obj_id != stoveburner_obj_id:
+                                    warnings.warn("Parent Receptacle and inReceptacle mismatch")
+
+                            action['receptacleObjectId'] = stoveburner_obj_id
+                            # get the corresponding stoveknob id to toggle
+                            stoveknob_objs = self.get_some_visible_obj_of_name('StoveKnob', all=True)
+                            for stoveknob_obj in stoveknob_objs:
+                                if stoveknob_obj['controlledObjects'][0] == stoveburner_obj_id:
+                                    break
+                            stoveknob_obj_id = stoveknob_obj['objectId']
+
+                            # turn on the stoveknob
+                            # self.env.step(action="Crouch")
+                            heat_action = copy.deepcopy(action)
+                            heat_action['action'] = 'ToggleObjectOn'
+                            heat_action['objectId'] = stoveknob_obj_id
+                            self.store_ll_action(heat_action)
+                            self.save_act_image(heat_action, dir=constants.BEFORE)
+                            self.event = self.env.step({k: heat_action[k]
+                                                        for k in ['action', 'objectId']})
+                            self.save_act_image(heat_action, dir=constants.AFTER)
+
+                            # turn off the stoveknob
+                            stop_action = copy.deepcopy(heat_action)
+                            stop_action['action'] = 'ToggleObjectOff'
+                            self.store_ll_action(stop_action)
+                            self.save_act_image(stop_action, dir=constants.BEFORE)
+                            self.event = self.env.step({k: stop_action[k]
+                                                        for k in ['action', 'objectId']})
+                            self.save_act_image(stop_action, dir=constants.AFTER)
+                            # self.env.step(action="Stand")
+
+                            # pick up the object from the stoveburner
+                            pickup_action = dict(action='PickupObject',
+                                                 objectId=inv_obj['objectId'])
+                            self.store_ll_action(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.BEFORE)
+                            self.event = self.env.step(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.AFTER)
+                            self.check_obj_visibility(pickup_action)
+                            self.check_action_success(self.event)
 
                     elif 'CoolObject' in action['action']:
                         # open the fridge

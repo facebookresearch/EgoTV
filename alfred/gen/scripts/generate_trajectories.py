@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -53,7 +53,7 @@ for goal in constants.ALL_GOALS:
 
 goal_to_receptacle_type = {'look_at_obj_in_light': "Toggleable"}
 
-goal_to_invalid_receptacle = {'heat_and_place': {'Microwave'},
+goal_to_invalid_receptacle = {'heat_and_place': {'StoveBurner'},
                               'cool_and_place': {'Fridge'},
                               'clean_and_place': {'SinkBasin'},
                               'place_2': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'},
@@ -79,6 +79,7 @@ scene_id_to_objs = {}
 obj_to_scene_ids = {}
 scenes_for_goal = {g: [] for g in constants.GOALS}
 scene_to_type = {}
+
 
 # # ================ Dataset Statistics ================= #
 # goal_counter = {k: 0 for k in constants.ALL_GOALS}
@@ -504,8 +505,6 @@ def main(args):
 
     # main generation loop
     # keeps trying out new task tuples as trajectories either fail or succeed
-
-    # TODO: increase dataset_size if videos are saved (fail + success)
     while True:
 
         sampled_task = next(task_sampler)
@@ -610,13 +609,11 @@ def main(args):
 
                 dump_data_dict()
 
-                # TODO: save video for incomplete tasks too (failures) ?
                 save_video()
                 if len(succ_traj) % 20 == 0 and len(succ_traj) != 0:
                     print('==================== Stop ===========================')
                     plot_dataset_stats(succ_traj)
                     break
-
 
             except Exception as e:
                 import traceback
@@ -744,7 +741,7 @@ def setup_data_dict():
 def dump_data_dict():
     data_save_path = constants.save_path.replace(RAW_IMAGES_FOLDER, '')
     with open(os.path.join(data_save_path, DATA_JSON_FILENAME), 'w') as fp:
-        json.dump(constants.data_dict, fp, sort_keys=True, indent=4)
+        json.dump(constants.data_dict['state_metadata'], fp, sort_keys=True, indent=4)
 
 
 def delete_save(in_parallel):

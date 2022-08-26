@@ -377,8 +377,8 @@ class PlannedGameState(GameStateBase, ABC):
         return pddl_str
 
     def get_complete_env_state(self, in_receptacle_strs):
-        # state_predicates = ['isSliced', 'isHot', 'isCool', 'isClean', 'isOn', 'isToggled', 'inReceptacle', 'opened',
-        #                     'atLocation', 'objectAtLocation', 'receptacleAtLocation', 'holds']
+        # state_predicates = ['isSliced', 'isHot', 'isCool', 'isClean', 'isOn', 'isToggled', 'inReceptacle', 'isOpen',
+        #                     'atLocation', 'objectAtLocation', 'receptacleAtLocation', 'holdsAny']
         # attribute_predicates = ['sliceable', 'heatable', 'coolable', 'cleanable', 'toggleable', 'openable', 'moveable',
         #                         'pickupable', 'objectType', 'receptacleType']
 
@@ -388,6 +388,9 @@ class PlannedGameState(GameStateBase, ABC):
             object_metadata['assetId'] = object['assetId']
             object_metadata['objectId'] = object['objectId']
             object_metadata['name'] = object['name']
+            object_metadata['position'] = object['position']
+            object_metadata['rotation'] = object['rotation']
+            object_metadata['salientMaterials'] = object['salientMaterials']
             object_metadata['axisAlignedBoundingBox'] = object['axisAlignedBoundingBox']
             object_metadata['objectOrientedBoundingBox'] = object['objectOrientedBoundingBox']
 
@@ -413,13 +416,14 @@ class PlannedGameState(GameStateBase, ABC):
                 if object['objectId'] == clean_obj:
                     object_metadata['isClean'] = True
 
+            # TODO: verify
             object_metadata['isOn'] = False
             for on_obj in self.on_object_ids:
                 if object['objectId'] == on_obj and self.toggle_target is not None:
                     object_metadata['isOn'] = True
 
             object_metadata['isToggled'] = False
-            # TODO: change this code
+            # TODO: verify
             for toggle_obj in self.toggleable_object_ids:
                 if object['objectId'] == toggle_obj and self.toggle_target is not None:
                     object_metadata['isToggled'] = True
@@ -430,12 +434,17 @@ class PlannedGameState(GameStateBase, ABC):
                 if processed_str[1] == object['objectId']:
                     object_metadata['inReceptacle'] = processed_str[2]
 
+            object_metadata['isOpen'] = False
+            for open_obj in self.currently_opened_object_ids:
+                if object['objectId'] == open_obj:
+                    object_metadata['isOpen'] = True
+
             # does agent hold this object
-            object_metadata['holds'] = False
+            object_metadata['holdsAny'] = False
             if len(self.inventory_ids) > 0 and object['objectId'] in self.inventory_ids.get_any():
-                object_metadata['holds'] = True
-            # if object_metadata['holds'] != object['isPickedUp']:
-            #     warnings.warn("holds and PickUp mismatch")
+                object_metadata['holdsAny'] = True
+            if object_metadata['holdsAny'] != object['isPickedUp']:
+                warnings.warn("holdsAny and PickUp mismatch")
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Sliceable']:
                 object_metadata['sliceable'] = True
@@ -467,15 +476,32 @@ class PlannedGameState(GameStateBase, ABC):
                 warnings.warn("Property mismatch: toggleable")
 
             object_metadata['openable'] = object['openable']
+            # These are non-static objects that can be moved around the scene by using actions like Push and Pull.
+            # They can also be repositioned due to forces from other objects, such as using Throw to toss a
+            # Pickupable object at a Moveable object. The key difference between Moveable and Pickupable objects
+            # are that Moveable objects are too large to be held in the agent’s hand as Pickupable objects are,
+            # so actions like PickupObject will not work on Moveable objects.
             object_metadata['moveable'] = object['moveable']
             object_metadata['pickupable'] = object['pickupable']
             object_metadata['objectType'] = object['objectType']
+            # All Toggleable objects have a visible state change that occurs when toggled on or off (i.e., laptop screen
+            # will be on with an image or blank when off, a lamp will be lit when on and dim when off)
+            object_metadata['visible'] = object['visible']
 
             if object['receptacle']:
                 object_metadata['receptacleType'] = object['objectType']
             else:
                 object_metadata['receptacleType'] = None
 
+            try:
+                if object['receptacle']:
+                    object_metadata['receptacleAtLocation'] = self.receptacle_to_point[object['objectId']].tolist()
+                else:
+                    object_metadata['objectAtLocation'] = self.object_to_point[object['objectId']].tolist()
+            except KeyError:
+                state_metadata.append(object_metadata)
+                continue
+            # object_metadata['parentReceptacles'] = object['parentReceptacles']
             state_metadata.append(object_metadata)
         return state_metadata
 

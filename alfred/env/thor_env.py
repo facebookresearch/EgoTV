@@ -185,11 +185,27 @@ class ThorEnv(Controller):
                     self.cleaned_objects = self.cleaned_objects | set(
                         cleaned_object_ids) if cleaned_object_ids is not None else set()
                 # heat
-                if action['action'] == 'ToggleObjectOn' and "Microwave" in action['objectId']:
-                    microwave = get_objects_of_type('Microwave', event.metadata)[0]
-                    heated_object_ids = microwave['receptacleObjectIds']
-                    self.heated_objects = self.heated_objects | set(
-                        heated_object_ids) if heated_object_ids is not None else set()
+                if action['action'] == 'ToggleObjectOn':
+                    if "Microwave" in action['objectId']:
+                        microwave = get_objects_of_type('Microwave', event.metadata)[0]
+                        heated_object_ids = microwave['receptacleObjectIds']
+                        self.heated_objects = self.heated_objects | set(
+                            heated_object_ids) if heated_object_ids is not None else set()
+                    elif "StoveKnob" in action['objectId']:
+                        stoveburners = get_objects_of_type('StoveBurner', event.metadata)
+                        stoveknobs = get_objects_of_type('StoveKnob', event.metadata)
+                        # get the stoveknob object from action objectId
+                        for stoveknob_obj in stoveknobs:
+                            if stoveknob_obj['objectId'] == action['objectId']:
+                                stoveburner_id = stoveknob_obj['controlledObjects'][0]
+                                break
+                        # find the stoveburner object from the corresponding stoveknob object
+                        for stoveburner_obj in stoveburners:
+                            if stoveburner_obj['objectId'] == stoveburner_id:
+                                break
+                        heated_object_ids = stoveburner_obj['receptacleObjectIds']
+                        self.heated_objects = self.heated_objects | set(
+                            heated_object_ids) if heated_object_ids is not None else set()
                 # cool
                 if action['action'] == 'CloseObject' and "Fridge" in action['objectId']:
                     fridge = get_objects_of_type('Fridge', event.metadata)[0]

@@ -223,12 +223,12 @@
             )
  )
 
-
 ;; agent heats-up some object
  (:action HeatObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
             (or
+                (receptacleType ?r StoveBurnerType)
                 (receptacleType ?r MicrowaveType)
             )
             (atLocation ?a ?l)
