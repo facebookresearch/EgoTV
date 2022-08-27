@@ -112,6 +112,7 @@ class PlannedGameState(GameStateBase, ABC):
         movable_recep_cls_with_knife = []
         in_receptacle_strs = []
         was_in_receptacle_strs = []
+
         for key, val in self.in_receptacle_ids.items():
             if len(val) == 0:
                 continue
@@ -259,7 +260,6 @@ class PlannedGameState(GameStateBase, ABC):
                                           if (object_dict[obj]['objectType'] in constants.VAL_ACTION_OBJECTS['Sliceable'])])
 
         # sliced objects
-        # TODO cleanup: sliced_object_ids is never added to. Does that matter?
         is_sliced_str = '\n        '.join((['(isSliced %s)' % obj
                                             for obj in self.sliced_object_ids
                                             if object_dict[obj]['objectType'] == constants.OBJECTS[self.object_target]]))
@@ -367,7 +367,7 @@ class PlannedGameState(GameStateBase, ABC):
             fid.write(pddl_str)
             fid.flush()
         constants.data_dict['pddl_state'].append('problem_%s.pddl' % pddl_state_next_idx)
-        constants.data_dict['state_metadata'].append(self.get_complete_env_state(in_receptacle_strs))
+        constants.data_dict['state_metadata'].append(self.get_complete_env_state())
         constants.data_dict['objects_metadata'].append(self.env.last_event.metadata['objects'])
 
         with open('%s/planner/generated_problems/problem_%s.pddl' % (self.dname, self.problem_id), 'w') as fid:
@@ -376,7 +376,7 @@ class PlannedGameState(GameStateBase, ABC):
 
         return pddl_str
 
-    def get_complete_env_state(self, in_receptacle_strs):
+    def get_complete_env_state(self):
         # state_predicates = ['isSliced', 'isHot', 'isCool', 'isClean', 'isOn', 'isToggled', 'inReceptacle', 'isOpen',
         #                     'atLocation', 'objectAtLocation', 'receptacleAtLocation', 'holdsAny']
         # attribute_predicates = ['sliceable', 'heatable', 'coolable', 'cleanable', 'toggleable', 'openable', 'moveable',
@@ -428,11 +428,11 @@ class PlannedGameState(GameStateBase, ABC):
                 if object['objectId'] == toggle_obj and self.toggle_target is not None:
                     object_metadata['isToggled'] = True
 
-            object_metadata['inReceptacle'] = None
-            for in_receptacle_str in in_receptacle_strs:
-                processed_str = in_receptacle_str.replace("(", "").replace(")", "").split()
-                if processed_str[1] == object['objectId']:
-                    object_metadata['inReceptacle'] = processed_str[2]
+            object_metadata['inReceptacle'] = object['parentReceptacles']
+                # for in_receptacle_str in in_receptacle_strs:
+            #     processed_str = in_receptacle_str.replace("(", "").replace(")", "").split()
+            #     if processed_str[1] == object['objectId']:
+            #         object_metadata['inReceptacle'] = processed_str[2]
 
             object_metadata['isOpen'] = False
             for open_obj in self.currently_opened_object_ids:
@@ -440,11 +440,12 @@ class PlannedGameState(GameStateBase, ABC):
                     object_metadata['isOpen'] = True
 
             # does agent hold this object
-            object_metadata['holdsAny'] = False
+            object_metadata['holdsAny'] = object['isPickedUp']
+            holdsAny = False
             if len(self.inventory_ids) > 0 and object['objectId'] in self.inventory_ids.get_any():
-                object_metadata['holdsAny'] = True
-            if object_metadata['holdsAny'] != object['isPickedUp']:
-                warnings.warn("holdsAny and PickUp mismatch")
+                holdsAny = True
+            if holdsAny != object['isPickedUp']:
+                warnings.warn("holdsAny and PickUp mismatch, must be a slicing task")
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Sliceable']:
                 object_metadata['sliceable'] = True

@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -741,7 +741,7 @@ def setup_data_dict():
 def dump_data_dict():
     data_save_path = constants.save_path.replace(RAW_IMAGES_FOLDER, '')
     with open(os.path.join(data_save_path, DATA_JSON_FILENAME), 'w') as fp:
-        json.dump(constants.data_dict['state_metadata'], fp, sort_keys=True, indent=4)
+        json.dump(constants.data_dict, fp, sort_keys=True, indent=4)
 
 
 def delete_save(in_parallel):

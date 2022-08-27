@@ -30,12 +30,12 @@ MAX_EPISODE_LENGTH = 1000        # maximum number of API steps allowed per traje
 FORCED_SAMPLING = False          # set True for debugging instead of proper sampling
 PRUNE_UNREACHABLE_POINTS = True  # prune navigation points that were deemed unreachable by the proprocessing script
 
-CHOOSE_RANDOM_PLAN = False       # if False, only the best plan (cheapest) is selected
+CHOOSE_RANDOM_PLAN = True       # if False, only the best plan (cheapest) is selected
 
 ########################################################################################################################
 # Goals
 
-GOALS = ["heat_simple"]
+GOALS = ["slice_simple"]
 
 ALL_GOALS = ['cool_simple', 'heat_simple', 'clean_simple', 'toggle_simple', 'slice_simple', 'place_simple', 'place_2',
              'locate_simple', 'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',
