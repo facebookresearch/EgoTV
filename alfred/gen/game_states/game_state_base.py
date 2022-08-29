@@ -559,6 +559,26 @@ class GameStateBase(object):
                             raise RuntimeError("Taking 'PutObject' action with no held inventory object")
                         action['objectId'] = inv_obj
 
+                        if action['objectId'].split('|')[0] in ['Knife', 'ButterKnife'] and \
+                                action['receptacleObjectId'].split('|')[0] in ['Toaster', 'Fridge', 'Microwave', 'Stoveburner', 'Pan', 'Pot']:
+                            for recep_id, _ in self.receptacle_to_point.items():
+                                if recep_id.split('|')[0] not in ['Toaster', 'Microwave', 'Fridge', 'Stoveburner', 'Pan', 'Pot']:
+                                    try:
+                                        print(recep_id)
+                                        action['receptacleObjectId'] = recep_id
+                                        # put_action = dict(action='PutObject',
+                                        #                   objectId=recep_id,
+                                        #                   forceAction=True,
+                                        #                   placeStationary=True)
+                                        # self.store_ll_action(put_action)
+                                        # self.save_act_image(put_action, dir=constants.BEFORE)
+                                        # self.event = self.env.step(put_action)
+                                        # self.save_act_image(put_action, dir=constants.AFTER)
+                                        # self.check_obj_visibility(put_action)
+                                        # self.check_action_success(self.event)
+                                    except:
+                                        continue
+
                         # open the receptacle if needed
                         parent_recep = game_util.get_object(action['receptacleObjectId'], self.env.last_event.metadata)
                         if parent_recep is not None and parent_recep['objectType'] in constants.OPENABLE_CLASS_SET:
@@ -819,6 +839,7 @@ class GameStateBase(object):
 
                         # put the object in the fridge
                         inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
+                        action['objectId'] = inv_obj['objectId']
                         put_action = dict(action='PutObject',
                                           objectId=fridge_obj_id,
                                           forceAction=True,
@@ -830,7 +851,7 @@ class GameStateBase(object):
                         self.check_obj_visibility(put_action)
                         self.check_action_success(self.event)
 
-                        # close and cool the object inside the frige
+                        # close and cool the object inside the fridge
                         cool_action = dict(action='CloseObject',
                                            objectId=action['receptacleObjectId'])
                         self.store_ll_action(cool_action)
@@ -888,6 +909,27 @@ class GameStateBase(object):
                         if parent_recep is not None:
                             parent_recep = game_util.get_object(parent_recep['objectId'], self.env.last_event.metadata)
                             self.close_recep(parent_recep)  # stores LL action
+
+                        # put down the knife
+                        # knife_obj = self.env.last_event.metadata['inventoryObjects'][0]
+                        # for recep_id, _ in self.receptacle_to_point.items():
+                        #     if recep_id.split('|')[0] not in ['Microwave', 'Fridge', 'Stoveburner', 'Pan', 'Pot']:
+                        #         try:
+                        #             print(recep_id)
+                        #             put_action = dict(action='PutObject',
+                        #                               objectId=recep_id,
+                        #                               forceAction=True,
+                        #                               placeStationary=True)
+                        #             self.store_ll_action(put_action)
+                        #             self.save_act_image(put_action, dir=constants.BEFORE)
+                        #             self.event = self.env.step(put_action)
+                        #             self.save_act_image(put_action, dir=constants.AFTER)
+                        #             self.check_obj_visibility(put_action)
+                        #             self.check_action_success(self.event)
+                        #         except:
+                        #             continue
+
+                        # pickup the sliced object
 
                     else:
                         # check that the object to pick is visible in the camera frame

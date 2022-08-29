@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -610,10 +610,15 @@ def main(args):
                 dump_data_dict()
 
                 save_video()
-                if len(succ_traj) % 20 == 0 and len(succ_traj) != 0:
+                if len(succ_traj) > args.num_generate_per_goal:
                     print('==================== Stop ===========================')
-                    plot_dataset_stats(succ_traj)
-                    break
+                    if not os.path.exists(args.save_path_csv):
+                        os.mkdir(args.save_path_csv)
+                    csv_id = gtype + '|' + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
+                    csv_filepath = os.path.join(args.save_path_csv, csv_id)
+                    succ_traj.to_csv(csv_filepath)
+                    # plot_dataset_stats(succ_traj)
+                    exit()
 
             except Exception as e:
                 import traceback
@@ -776,6 +781,8 @@ if __name__ == "__main__":
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--save_path', type=str, default="dataset/new_trajectories",
                         help="where to save the generated data")
+    parser.add_argument('--save_path_csv', type=str, default="dataset/csv_files",
+                        help="where to save the csv files of all generated trajectories for dataset stats")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
     parser.add_argument("--just_examine", default=False,
                         help="just examine what data is gathered; don't gather more")
@@ -788,6 +795,7 @@ if __name__ == "__main__":
     parser.add_argument("--repeats_per_cond", type=int, default=2)
     parser.add_argument("--trials_before_fail", type=int, default=5)
     parser.add_argument("--async_load_every_n_samples", type=int, default=10)
+    parser.add_argument("--num_generate_per_goal", type=int, default=30)
 
     parse_args = parser.parse_args()
 

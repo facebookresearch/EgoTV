@@ -389,7 +389,11 @@ class TaskGameStateFullKnowledge(TaskGameState):
                     inner_recetacle_id = inner_recetacle_ids.pop()
                     if inner_recetacle_id.split('|')[0] in constants.VAL_ACTION_OBJECTS['Cleanable']:
                         self.cleaned_object_ids.add(inner_recetacle_id)
-                    inner_recetacle_ids = inner_recetacle_ids.union(self.in_receptacle_ids[inner_recetacle_id])
+                    # only add receptacles, sometimes a receptacle like fridge can have other objects
+                    # which are not receptacles
+                    for object_in_receptacle in self.in_receptacle_ids[inner_recetacle_id]:
+                        if object_in_receptacle.split('|')[0] in constants.RECEPTACLES:
+                            inner_recetacle_ids = inner_recetacle_ids.add(object_in_receptacle)
 
         elif action['action'] == 'HeatObject':
             if self.env.last_event.metadata['lastActionSuccess']:
@@ -405,7 +409,11 @@ class TaskGameStateFullKnowledge(TaskGameState):
                         self.hot_object_ids.add(inner_recetacle_id)
                         if inner_recetacle_id in self.cool_object_ids:
                             self.cool_object_ids.remove(inner_recetacle_id)
-                    inner_recetacle_ids = inner_recetacle_ids.union(self.in_receptacle_ids[inner_recetacle_id])
+                    # only add receptacles, sometimes a receptacle like fridge can have other objects
+                    # which are not receptacles
+                    for object_in_receptacle in self.in_receptacle_ids[inner_recetacle_id]:
+                        if object_in_receptacle.split('|')[0] in constants.RECEPTACLES:
+                            inner_recetacle_ids = inner_recetacle_ids.add(object_in_receptacle)
 
         elif action['action'] == "ToggleObject":
             if self.env.last_event.metadata['lastActionSuccess']:
@@ -416,7 +424,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
                 self.cool_object_ids.add(action['objectId'])
                 if action['objectId'] in self.hot_object_ids:
                     self.hot_object_ids.remove(action['objectId'])
-                # if object in receptacle in refrigerator (stack)
+                # if object in moveable receptacle in refrigerator (stack)
                 # iteratively add the receptacle to the set of cool objects
                 inner_recetacle_ids = {action['receptacleObjectId']}
                 while len(inner_recetacle_ids) != 0:
@@ -425,7 +433,11 @@ class TaskGameStateFullKnowledge(TaskGameState):
                         self.cool_object_ids.add(inner_recetacle_id)
                         if inner_recetacle_id in self.hot_object_ids:
                             self.hot_object_ids.remove(inner_recetacle_id)
-                    inner_recetacle_ids = inner_recetacle_ids.union(self.in_receptacle_ids[inner_recetacle_id])
+                    # only add receptacles, sometimes a receptacle like fridge can have other objects
+                    # which are not receptacles
+                    for object_in_receptacle in self.in_receptacle_ids[inner_recetacle_id]:
+                        if object_in_receptacle.split('|')[0] in constants.RECEPTACLES:
+                            inner_recetacle_ids = inner_recetacle_ids.add(object_in_receptacle)
 
         elif action['action'] == 'SliceObject':
             if self.env.last_event.metadata['lastActionSuccess']:

@@ -242,6 +242,7 @@
                     (isCool ?o)
                     (not (isCool ?o))
                 )
+                (holds ?a ?o)
             )
  )
 
@@ -263,6 +264,7 @@
                     (isHot ?o)
                     (not (isHot ?o))
                 )
+                (holds ?a ?o)
             )
  )
 

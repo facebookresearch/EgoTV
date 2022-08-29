@@ -445,7 +445,10 @@ class PlannedGameState(GameStateBase, ABC):
             if len(self.inventory_ids) > 0 and object['objectId'] in self.inventory_ids.get_any():
                 holdsAny = True
             if holdsAny != object['isPickedUp']:
-                warnings.warn("holdsAny and PickUp mismatch, must be a slicing task")
+                warnings.warn("holdsAny and isPickedUp mismatch, must be a slicing task")
+                print('Object: {}, holdsAny: {}, isPickedUp: {}'.format(object['objectId'],
+                                                                        object_metadata['holdsAny'],
+                                                                        object['isPickedUp']))
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Sliceable']:
                 object_metadata['sliceable'] = True
@@ -453,6 +456,9 @@ class PlannedGameState(GameStateBase, ABC):
                 object_metadata['sliceable'] = False
             if object_metadata['sliceable'] != object['sliceable']:
                 warnings.warn("Property mismatch: sliceable")
+                print('Property: {}, Object: {}, state: {}, objects: {}'.format('sliceable', object['objectId'],
+                                                                        object_metadata['sliceable'],
+                                                                        object['sliceable']))
 
             if root_obj in constants.VAL_ACTION_OBJECTS['Heatable']:
                 object_metadata['heatable'] = True
@@ -475,6 +481,9 @@ class PlannedGameState(GameStateBase, ABC):
                 object_metadata['toggleable'] = False
             if object_metadata['toggleable'] != object['toggleable']:
                 warnings.warn("Property mismatch: toggleable")
+                print('Property:{}, Object: {}, state: {}, objects: {}'.format('toggleable', object['objectId'],
+                                                                  object_metadata['toggleable'],
+                                                                  object['toggleable']))
 
             object_metadata['openable'] = object['openable']
             # These are non-static objects that can be moved around the scene by using actions like Push and Pull.

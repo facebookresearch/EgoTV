@@ -323,6 +323,36 @@ gdict["slice_and_place"] = \
     'templates': ['provide a sliced {obj} in {recep}']
 }
 
+# slice, cool object (in any order)
+gdict["slice_and_cool"] = \
+{
+    'pddl':
+    '''
+        (:goal
+            (and               
+                (exists (?o # object)
+                    (exists (?a # agent)
+                        (and 
+                            (sliceable ?o)
+                            (coolable ?o)
+                            (objectType ?o {obj}Type) 
+                            (isSliced ?o)
+                            (isCool ?o)
+                            (holds ?a ?o)
+                            (holdsAny ?a)
+                        )
+                    )
+                )                
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+            )
+        )
+    )
+    ''',
+    'templates': ['cool and slice a {obj}']
+}
+
 
 # pick two instances of an object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
 gdict["place_2"] = \
