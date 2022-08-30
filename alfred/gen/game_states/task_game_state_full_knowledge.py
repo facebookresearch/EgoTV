@@ -393,7 +393,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
                     # which are not receptacles
                     for object_in_receptacle in self.in_receptacle_ids[inner_recetacle_id]:
                         if object_in_receptacle.split('|')[0] in constants.RECEPTACLES:
-                            inner_recetacle_ids = inner_recetacle_ids.add(object_in_receptacle)
+                            inner_recetacle_ids.add(object_in_receptacle)
 
         elif action['action'] == 'HeatObject':
             if self.env.last_event.metadata['lastActionSuccess']:
@@ -413,7 +413,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
                     # which are not receptacles
                     for object_in_receptacle in self.in_receptacle_ids[inner_recetacle_id]:
                         if object_in_receptacle.split('|')[0] in constants.RECEPTACLES:
-                            inner_recetacle_ids = inner_recetacle_ids.add(object_in_receptacle)
+                            inner_recetacle_ids.add(object_in_receptacle)
 
         elif action['action'] == "ToggleObject":
             if self.env.last_event.metadata['lastActionSuccess']:
@@ -437,7 +437,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
                     # which are not receptacles
                     for object_in_receptacle in self.in_receptacle_ids[inner_recetacle_id]:
                         if object_in_receptacle.split('|')[0] in constants.RECEPTACLES:
-                            inner_recetacle_ids = inner_recetacle_ids.add(object_in_receptacle)
+                            inner_recetacle_ids.add(object_in_receptacle)
 
         elif action['action'] == 'SliceObject':
             if self.env.last_event.metadata['lastActionSuccess']:

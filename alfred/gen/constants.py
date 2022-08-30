@@ -35,7 +35,7 @@ CHOOSE_RANDOM_PLAN = True       # if False, only the best plan (cheapest) is sel
 ########################################################################################################################
 # Goals
 
-GOALS = ["place_simple"]
+GOALS = ["slice_and_heat"]
 
 ALL_GOALS = ['cool_simple', 'heat_simple', 'clean_simple', 'toggle_simple', 'slice_simple', 'place_simple', 'place_2',
              'locate_simple', 'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',

@@ -559,25 +559,25 @@ class GameStateBase(object):
                             raise RuntimeError("Taking 'PutObject' action with no held inventory object")
                         action['objectId'] = inv_obj
 
-                        if action['objectId'].split('|')[0] in ['Knife', 'ButterKnife'] and \
-                                action['receptacleObjectId'].split('|')[0] in ['Toaster', 'Fridge', 'Microwave', 'Stoveburner', 'Pan', 'Pot']:
-                            for recep_id, _ in self.receptacle_to_point.items():
-                                if recep_id.split('|')[0] not in ['Toaster', 'Microwave', 'Fridge', 'Stoveburner', 'Pan', 'Pot']:
-                                    try:
-                                        print(recep_id)
-                                        action['receptacleObjectId'] = recep_id
-                                        # put_action = dict(action='PutObject',
-                                        #                   objectId=recep_id,
-                                        #                   forceAction=True,
-                                        #                   placeStationary=True)
-                                        # self.store_ll_action(put_action)
-                                        # self.save_act_image(put_action, dir=constants.BEFORE)
-                                        # self.event = self.env.step(put_action)
-                                        # self.save_act_image(put_action, dir=constants.AFTER)
-                                        # self.check_obj_visibility(put_action)
-                                        # self.check_action_success(self.event)
-                                    except:
-                                        continue
+                        # if action['objectId'].split('|')[0] in ['Knife', 'ButterKnife'] and \
+                        #         action['receptacleObjectId'].split('|')[0] in ['Toaster', 'Fridge', 'Microwave', 'Stoveburner', 'Pan', 'Pot']:
+                        #     for recep_id, _ in self.receptacle_to_point.items():
+                        #         if recep_id.split('|')[0] not in ['Toaster', 'Microwave', 'Fridge', 'Stoveburner', 'Pan', 'Pot']:
+                        #             try:
+                        #                 print(recep_id)
+                        #                 action['receptacleObjectId'] = recep_id
+                        #                 # put_action = dict(action='PutObject',
+                        #                 #                   objectId=recep_id,
+                        #                 #                   forceAction=True,
+                        #                 #                   placeStationary=True)
+                        #                 # self.store_ll_action(put_action)
+                        #                 # self.save_act_image(put_action, dir=constants.BEFORE)
+                        #                 # self.event = self.env.step(put_action)
+                        #                 # self.save_act_image(put_action, dir=constants.AFTER)
+                        #                 # self.check_obj_visibility(put_action)
+                        #                 # self.check_action_success(self.event)
+                        #             except:
+                        #                 continue
 
                         # open the receptacle if needed
                         parent_recep = game_util.get_object(action['receptacleObjectId'], self.env.last_event.metadata)
@@ -597,7 +597,7 @@ class GameStateBase(object):
                         # put the object
                         put_action = dict(action=action['action'],
                                           objectId=action['receptacleObjectId'],
-                                          forceAction=True,
+                                          forceAction=False,
                                           placeStationary=True)
                         self.store_ll_action(put_action)
                         self.save_act_image(put_action, dir=constants.BEFORE)
@@ -619,7 +619,7 @@ class GameStateBase(object):
                         inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
                         put_action = dict(action='PutObject',
                                           objectId=sink_obj_id,
-                                          forceAction=True,
+                                          forceAction=False,
                                           placeStationary=True)
                         self.store_ll_action(put_action)
                         self.save_act_image(put_action, dir=constants.BEFORE)
@@ -685,7 +685,7 @@ class GameStateBase(object):
                             inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
                             put_action = dict(action='PutObject',
                                               objectId=microwave_obj_id,
-                                              forceAction=True,
+                                              forceAction=False,
                                               placeStationary=True)
                             self.store_ll_action(put_action)
                             self.save_act_image(put_action, dir=constants.BEFORE)
@@ -746,7 +746,7 @@ class GameStateBase(object):
                             # put the object in the heat_recep_object
                             put_action = dict(action='PutObject',
                                               objectId=heat_recep_object_id,
-                                              forceAction=True,
+                                              forceAction=False,
                                               placeStationary=True)
                             inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
                             self.store_ll_action(put_action)
@@ -773,7 +773,7 @@ class GameStateBase(object):
 
                                 put_action = dict(action='PutObject',
                                                   objectId=stoveburner_obj_id,
-                                                  forceAction=True,
+                                                  forceAction=False,
                                                   placeStationary=True)
                                 self.store_ll_action(put_action)
                                 self.save_act_image(put_action, dir=constants.BEFORE)
@@ -842,7 +842,7 @@ class GameStateBase(object):
                         action['objectId'] = inv_obj['objectId']
                         put_action = dict(action='PutObject',
                                           objectId=fridge_obj_id,
-                                          forceAction=True,
+                                          forceAction=False,
                                           placeStationary=True)
                         self.store_ll_action(put_action)
                         self.save_act_image(put_action, dir=constants.BEFORE)

@@ -3,6 +3,7 @@ import os
 import threading
 import time
 import sys
+
 # os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLanguageGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
@@ -20,13 +21,12 @@ all_scene_numbers = sorted(constants.TRAIN_SCENE_NUMBERS + constants.TEST_SCENE_
 
 
 def get_obj(env, open_test_objs, reachable_points, agent_height, scene_name, good_obj_point):
-
     # Reset the scene to put all the objects back where they started.
     env.reset(scene_name,
-                    render_image=False,
-                    render_depth_image=False,
-                    render_class_image=False,
-                    render_object_image=True)
+              render_image=False,
+              render_depth_image=False,
+              render_class_image=False,
+              render_object_image=True)
 
     if good_obj_point is not None:
         search_points = {good_obj_point[0]}
@@ -101,7 +101,7 @@ def get_obj(env, open_test_objs, reachable_points, agent_height, scene_name, goo
 def get_mask_of_obj(env, object_id):
     instance_detections2D = env.last_event.instance_detections2D
     instance_seg_frame = np.array(env.last_event.instance_segmentation_frame)
-    
+
     if object_id in instance_detections2D:
         color = env.last_event.object_id_to_color[object_id]
         seg_mask = cv2.inRange(instance_seg_frame, color, color)
@@ -115,7 +115,7 @@ def get_mask_of_obj(env, object_id):
 def run(thread_num):
     print(all_scene_numbers)
     # create env and agent
-    env = ThorEnv(build_path=constants.BUILD_PATH, x_display='0.%d' %(thread_num % 2), quality='Low')
+    env = ThorEnv(build_path=constants.BUILD_PATH, x_display='0.%d' % (thread_num % 2), quality='Low')
     while len(all_scene_numbers) > 0:
         lock.acquire()
         scene_num = all_scene_numbers.pop()
@@ -131,10 +131,10 @@ def run(thread_num):
         scene_name = ('FloorPlan%d') % scene_num
         print('Running ' + scene_name)
         event = env.reset(scene_name,
-                            render_image=False,
-                            render_depth_image=False,
-                            render_class_image=False,
-                            render_object_image=True)
+                          render_image=False,
+                          render_depth_image=False,
+                          render_class_image=False,
+                          render_object_image=True)
         agent_height = event.metadata['agent']['position']['y']
 
         scene_objs = list(set([obj['objectType'] for obj in event.metadata['objects']]))
@@ -156,7 +156,6 @@ def run(thread_num):
                               'KeyChain', 'Pen', 'Pencil', 'SoapBar', 'Spoon', 'Watch'}
             good_obj_point = None
             good_obj_point = get_obj(env, open_test_objs, reachable_points, agent_height, scene_name, good_obj_point)
-
 
             best_open_point = {}  # map from object names to the best point from which they can be successfully opened
             best_sem_coverage = {}  # number of pixels in the semantic map of the receptacle at the existing best openpt
@@ -257,10 +256,10 @@ def run(thread_num):
                                     # If we don't have an inventory object, though, we'll fall back to the heuristic
                                     # of being able to open/close as _close_ as possible.
                                     closer_than_existing_good_point = (obj_name not in best_open_point or
-                                                                        point_to_recep <
-                                                                        np.linalg.norm(
-                                                                            np.array(point) -
-                                                                            np.array(best_open_point[obj_name][:2])))
+                                                                       point_to_recep <
+                                                                       np.linalg.norm(
+                                                                           np.array(point) -
+                                                                           np.array(best_open_point[obj_name][:2])))
                                     # Semantic segmentation heuristic.
                                     if ((use_sem_heuristic and heuristic_far_enough_from_recep and better_sem_covereage)
                                             or (not use_sem_heuristic and
@@ -294,11 +293,11 @@ def run(thread_num):
                                                                   'objectId': obj['objectId']}
                                                         event = env.step(action)
                                                     if not obj['openable'] or event.metadata['lastActionSuccess']:
-
                                                         # We can put/pick our inv object into the receptacle from here.
                                                         # We have already ensured this point is farther than any
                                                         # existing best, so this is the new best.
-                                                        best_open_point[obj_name] = [point[0], point[1], rotation * 90, horizon]
+                                                        best_open_point[obj_name] = [point[0], point[1], rotation * 90,
+                                                                                     horizon]
                                                         best_sem_coverage[obj_name] = point_sem_coverage
 
                                                 # We could not retrieve our inv object, so we need to go get another one
