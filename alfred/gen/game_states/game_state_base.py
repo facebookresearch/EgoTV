@@ -682,11 +682,17 @@ class GameStateBase(object):
                             self.open_recep(microwave_obj)
 
                             # put the object in the microwave
+                            # only if the object is placed in a valid receptacle (avoid for instance: knife)
                             inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
                             action['objectId'] = inv_obj['objectId']
+                            if inv_obj['objectType'] in \
+                                    constants.VAL_RECEPTACLE_OBJECTS[microwave_obj['objectType']]:
+                                forceAction = True
+                            else:
+                                forceAction = False
                             put_action = dict(action='PutObject',
                                               objectId=microwave_obj_id,
-                                              forceAction=False,
+                                              forceAction=forceAction,
                                               placeStationary=True)
                             self.store_ll_action(put_action)
                             self.save_act_image(put_action, dir=constants.BEFORE)
@@ -743,13 +749,20 @@ class GameStateBase(object):
                             except Exception:
                                 heat_recep_object = self.get_some_visible_obj_of_name('Pot')
                             heat_recep_object_id = heat_recep_object['objectId']
+                            inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
 
                             # put the object in the heat_recep_object
+                            # only if the object is placed in a valid receptacle (avoid for instance: knife)
+                            if inv_obj['objectType'] in \
+                                    constants.VAL_RECEPTACLE_OBJECTS[heat_recep_object['objectType']]:
+                                forceAction = True
+                            else:
+                                forceAction = False
                             put_action = dict(action='PutObject',
                                               objectId=heat_recep_object_id,
-                                              forceAction=True,
+                                              forceAction=forceAction,
                                               placeStationary=True)
-                            inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
+
                             action['objectId'] = inv_obj['objectId']
                             self.store_ll_action(put_action)
                             self.save_act_image(put_action, dir=constants.BEFORE)
@@ -921,21 +934,26 @@ class GameStateBase(object):
 
                         # put down the knife
                         knife_obj = self.env.last_event.metadata['inventoryObjects'][0]
-                        for recep_id, _ in self.receptacle_to_point.items():
+                        valid_receptacles_in_scene = [obj for obj in self.env.last_event.metadata['objects'] if
+                                   obj['objectType'] in constants.RECEPTACLES and obj['visible'] and
+                                                knife_obj['objectType'] in constants.VAL_RECEPTACLE_OBJECTS[obj['objectType']]]
+
+                        for recep_id in valid_receptacles_in_scene:
                             try:
-                                if self.get_some_visible_obj_of_name(recep_id.split('|')[0]):
-                                    valid_recep_id = self.get_some_visible_obj_of_name(recep_id.split('|')[0])['objectId']
-                                    put_action = dict(action='PutObject',
-                                                      objectId=valid_recep_id,
-                                                      forceAction=True,
-                                                      placeStationary=True)
-                                    self.store_ll_action(put_action)
-                                    self.save_act_image(put_action, dir=constants.BEFORE)
-                                    self.event = self.env.step(put_action)
-                                    self.save_act_image(put_action, dir=constants.AFTER)
-                                    self.check_obj_visibility(put_action)
-                                    self.check_action_success(self.event)
-                                    break
+                                recep_id_name = recep_id['objectType']
+                                # if self.get_some_visible_obj_of_name(recep_id_name):
+                                valid_recep_id = self.get_some_visible_obj_of_name(recep_id_name)['objectId']
+                                put_action = dict(action='PutObject',
+                                                  objectId=valid_recep_id,
+                                                  forceAction=True,
+                                                  placeStationary=True)
+                                self.store_ll_action(put_action)
+                                self.save_act_image(put_action, dir=constants.BEFORE)
+                                self.event = self.env.step(put_action)
+                                self.save_act_image(put_action, dir=constants.AFTER)
+                                self.check_obj_visibility(put_action)
+                                self.check_action_success(self.event)
+                                break
                             except:
                                 continue
                         # pickup the sliced object

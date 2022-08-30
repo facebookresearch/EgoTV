@@ -35,16 +35,17 @@ CHOOSE_RANDOM_PLAN = True       # if False, only the best plan (cheapest) is sel
 ########################################################################################################################
 # Goals
 
-GOALS = ["slice_and_heat"]
+GOALS = ["heat_stack_and_place"]
 
 ALL_GOALS = ['cool_simple', 'heat_simple', 'clean_simple', 'toggle_simple', 'slice_simple', 'place_simple', 'place_2',
              'locate_simple', 'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',
              'clean_and_place', 'heat_and_place', 'cool_and_place', 'slice_and_place', 'stack_and_place',
-             'cool_and_stack', 'heat_and_stack', 'clean_and_stack', 'heat_stack_and_place', 'cool_stack_and_place',
-             'clean_stack_and_place', 'slice_stack_and_place', 'heat_slice_and_place', 'cool_slice_and_place',
-             'clean_slice_and_place', 'clean_then_heat', 'clean_then_slice', 'clean_then_cool', 'heat_then_slice',
-             'heat_then_clean', 'cool_then_clean', 'cool_then_slice', 'slice_then_heat', 'slice_then_cool',
-             'slice_then_clean', 'heat_then_stack', 'cool_then_stack', 'clean_then_stack', 'slice_then_stack',
+             'heat_stack_and_place', 'cool_stack_and_place', 'clean_stack_and_place', 'slice_stack_and_place',
+             'heat_slice_and_place', 'cool_slice_and_place', 'clean_slice_and_place',
+             'clean_then_heat', 'clean_then_slice', 'clean_then_cool', 'heat_then_slice', 'heat_then_clean',
+             'cool_then_clean', 'cool_then_slice', 'slice_then_heat', 'slice_then_cool', 'slice_then_clean',
+             'heat_then_stack_then_place', 'cool_then_stack_then_place',
+             'clean_then_stack_then_place', 'slice_then_stack_then_place',
              'clean_then_slice_then_place', 'clean_then_heat_then_place', 'clean_then_cool_then_place',
              'clean_then_cool_then_slice', 'clean_then_slice_then_cool', 'clean_then_slice_then_heat',
              'clean_then_heat_then_slice', 'heat_then_slice_then_place', 'heat_then_clean_then_place',
@@ -575,11 +576,9 @@ QUESTION_OBJECT_CLASS_LIST = [
 VAL_RECEPTACLE_OBJECTS = {
     'Pot': {'Apple',
             'AppleSliced',
-            'ButterKnife',
             'DishSponge',
             'Egg',
             'Fork',
-            'Knife',
             'Ladle',
             'Lettuce',
             'LettuceSliced',
@@ -591,11 +590,9 @@ VAL_RECEPTACLE_OBJECTS = {
             'TomatoSliced'},
     'Pan': {'Apple',
             'AppleSliced',
-            'ButterKnife',
             'DishSponge',
             'Egg',
             'Fork',
-            'Knife',
             'Ladle',
             'Lettuce',
             'LettuceSliced',
