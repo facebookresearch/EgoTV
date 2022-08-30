@@ -243,6 +243,7 @@
                     (not (isCool ?o))
                 )
                 (holds ?a ?o)
+                (holdsAny ?a)
             )
  )
 
@@ -265,6 +266,7 @@
                     (not (isHot ?o))
                 )
                 (holds ?a ?o)
+                (holdsAny ?a)
             )
  )
 
@@ -305,6 +307,9 @@
     :effect (and
                 (increase (totalCost) 5)
                 (isSliced ?co)
+                (atLocation ?a ?l)
+                (not (holds ?a ?ko))
+                (not(holdsAny ?a))
             )
  )
 

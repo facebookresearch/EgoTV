@@ -288,6 +288,10 @@ class PlannedGameState(GameStateBase, ABC):
         receptacle_at_location_str = '\n        '.join(receptacle_nearest_point_strs)
         extra_facts = self.get_extra_facts()
 
+        # sanity test to verify that hot objects and cold objects are disjoint
+        if len(self.hot_object_ids.intersection(self.cool_object_ids)) > 0:
+            warnings.warn("hot objects and cold objects are not disjoint")
+
         pddl_mid_start = '''
         %s
         %s

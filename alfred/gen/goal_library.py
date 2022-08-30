@@ -149,8 +149,7 @@ gdict["slice_simple"] = \
     )
     ''',
         'templates': ['a sliced {obj}',
-                      'a {obj} is sliced',
-                      'a {obj} is picked and sliced']
+                      'a {obj} is sliced']
     }
 
 # toggle the state of a toggleable object (e.g: "toggle the lightswitch")

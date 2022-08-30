@@ -683,6 +683,7 @@ class GameStateBase(object):
 
                             # put the object in the microwave
                             inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
+                            action['objectId'] = inv_obj['objectId']
                             put_action = dict(action='PutObject',
                                               objectId=microwave_obj_id,
                                               forceAction=False,
@@ -746,9 +747,10 @@ class GameStateBase(object):
                             # put the object in the heat_recep_object
                             put_action = dict(action='PutObject',
                                               objectId=heat_recep_object_id,
-                                              forceAction=False,
+                                              forceAction=True,
                                               placeStationary=True)
                             inv_obj = self.env.last_event.metadata['inventoryObjects'][0]
+                            action['objectId'] = inv_obj['objectId']
                             self.store_ll_action(put_action)
                             self.save_act_image(put_action, dir=constants.BEFORE)
                             self.event = self.env.step(put_action)
@@ -759,9 +761,6 @@ class GameStateBase(object):
                             parent_obj_id = heat_recep_object['parentReceptacles'][0]
                             # pickup & put the pan/pot on a stoveburner if not already there (but in scene)
                             if 'StoveBurner' not in parent_obj_id:
-                                stoveburner_object = self.get_some_visible_obj_of_name('StoveBurner')
-                                stoveburner_obj_id = stoveburner_object['objectId']
-
                                 pickup_action = dict(action='PickupObject',
                                                      objectId=heat_recep_object_id)
                                 self.store_ll_action(pickup_action)
@@ -771,16 +770,26 @@ class GameStateBase(object):
                                 self.check_obj_visibility(pickup_action)
                                 self.check_action_success(self.event)
 
-                                put_action = dict(action='PutObject',
-                                                  objectId=stoveburner_obj_id,
-                                                  forceAction=False,
-                                                  placeStationary=True)
-                                self.store_ll_action(put_action)
-                                self.save_act_image(put_action, dir=constants.BEFORE)
-                                self.event = self.env.step(put_action)
-                                self.save_act_image(put_action, dir=constants.AFTER)
-                                self.check_obj_visibility(put_action)
-                                self.check_action_success(self.event)
+                                # check which Stoveburner is empty
+                                stoveburner_objects = self.get_some_visible_obj_of_name('StoveBurner', all=True)
+                                for stoveburner_object in stoveburner_objects:
+                                    try:
+                                        if len(stoveburner_object['receptacleObjectIds']) == 0:
+                                            stoveburner_obj_id = stoveburner_object['objectId']
+
+                                            put_action = dict(action='PutObject',
+                                                              objectId=stoveburner_obj_id,
+                                                              forceAction=False,
+                                                              placeStationary=True)
+                                            self.store_ll_action(put_action)
+                                            self.save_act_image(put_action, dir=constants.BEFORE)
+                                            self.event = self.env.step(put_action)
+                                            self.save_act_image(put_action, dir=constants.AFTER)
+                                            self.check_obj_visibility(put_action)
+                                            self.check_action_success(self.event)
+                                            break
+                                    except Exception:
+                                        continue
                             else:  # if already on stoveburner, get the correct stoveburner object ID
                                 stoveburner_objs = self.get_some_visible_obj_of_name('StoveBurner', all=True)
                                 for stoveburner_obj in stoveburner_objs:
@@ -911,24 +920,24 @@ class GameStateBase(object):
                             self.close_recep(parent_recep)  # stores LL action
 
                         # put down the knife
-                        # knife_obj = self.env.last_event.metadata['inventoryObjects'][0]
-                        # for recep_id, _ in self.receptacle_to_point.items():
-                        #     if recep_id.split('|')[0] not in ['Microwave', 'Fridge', 'Stoveburner', 'Pan', 'Pot']:
-                        #         try:
-                        #             print(recep_id)
-                        #             put_action = dict(action='PutObject',
-                        #                               objectId=recep_id,
-                        #                               forceAction=True,
-                        #                               placeStationary=True)
-                        #             self.store_ll_action(put_action)
-                        #             self.save_act_image(put_action, dir=constants.BEFORE)
-                        #             self.event = self.env.step(put_action)
-                        #             self.save_act_image(put_action, dir=constants.AFTER)
-                        #             self.check_obj_visibility(put_action)
-                        #             self.check_action_success(self.event)
-                        #         except:
-                        #             continue
-
+                        knife_obj = self.env.last_event.metadata['inventoryObjects'][0]
+                        for recep_id, _ in self.receptacle_to_point.items():
+                            try:
+                                if self.get_some_visible_obj_of_name(recep_id.split('|')[0]):
+                                    valid_recep_id = self.get_some_visible_obj_of_name(recep_id.split('|')[0])['objectId']
+                                    put_action = dict(action='PutObject',
+                                                      objectId=valid_recep_id,
+                                                      forceAction=True,
+                                                      placeStationary=True)
+                                    self.store_ll_action(put_action)
+                                    self.save_act_image(put_action, dir=constants.BEFORE)
+                                    self.event = self.env.step(put_action)
+                                    self.save_act_image(put_action, dir=constants.AFTER)
+                                    self.check_obj_visibility(put_action)
+                                    self.check_action_success(self.event)
+                                    break
+                            except:
+                                continue
                         # pickup the sliced object
 
                     else:

@@ -442,22 +442,33 @@ class TaskGameStateFullKnowledge(TaskGameState):
         elif action['action'] == 'SliceObject':
             if self.env.last_event.metadata['lastActionSuccess']:
                 self.sliced_object_ids.add(action['objectId'])
-                #TODO: add new sliced objects to self.in_receptacle_ids
+                # is in recep sliced
                 recep_ids = [key for key, val in self.in_receptacle_ids.items() if action['objectId'] in val]
+                # was in recep sliced
+                sliced_from_obj_receps = [key for key, val in self.was_in_receptacle_ids.items()
+                                          if action['objectId'] in val]
                 new_sliced_objects_ids = [x['objectId'] for x in self.env.last_event.metadata["objects"]
-                                      if (action['objectId'] in x['objectId'] and action['objectId'] != x['objectId'])]
-
+                                          if
+                                          (action['objectId'] in x['objectId'] and action['objectId'] != x['objectId'])]
                 for sliced_object_id in new_sliced_objects_ids:
                     for recep_id in recep_ids:
                         self.in_receptacle_ids[recep_id].add(sliced_object_id)
 
-                # was in recep sliced
-                for sliced_object_id in new_sliced_objects_ids:
-                    # TODO: add sliced objects
-                    sliced_from_obj_receps = [key for key, val in self.was_in_receptacle_ids.items()
-                                             if action['objectId'] in val]
                     for sliced_from_obj_recep in sliced_from_obj_receps:
                         self.was_in_receptacle_ids[sliced_from_obj_recep].add(sliced_object_id)
+
+                    # adding sliced object hot_objects if parent object was hot
+                    # used when object is heated, then sliced
+                    if action['objectId'] in self.hot_object_ids:
+                        self.hot_object_ids.add(sliced_object_id)
+                    # adding sliced object cool_objects if parent object was cool
+                    # used when object is cooled, then sliced
+                    elif action['objectId'] in self.cool_object_ids:
+                        self.cool_object_ids.add(sliced_object_id)
+                    # adding sliced object clean_objects if parent object was clean
+                    # used when object is cleaned, then sliced
+                    if action['objectId'] in self.cool_object_ids:
+                        self.cleaned_object_ids.add(sliced_object_id)
 
         visible_objects = self.event.instance_detections2D.keys() if self.event.instance_detections2D != None else []
         for obj in visible_objects:
