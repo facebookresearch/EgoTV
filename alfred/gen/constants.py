@@ -18,41 +18,142 @@ FULL_OBSERVABLE_STATE = True
 ########################################################################################################################
 # Generation Ablations
 
-MAX_NUM_OF_OBJ_INSTANCES = 3     # when randomly initializing the scene, create duplicate instance up to this number
-PICKUP_REPEAT_MAX = 4            # how many of the target pickup object to generate in [1, MAX] (randomly chosen)
-RECEPTACLE_SPARSE_POINTS = 50    # increment for how many points to leave free for sparsely populated receptacles
-RECEPTACLE_EMPTY_POINTS = 200    # increment for how many points to leave free for empty receptacles
+MAX_NUM_OF_OBJ_INSTANCES = 3  # when randomly initializing the scene, create duplicate instance up to this number
+PICKUP_REPEAT_MAX = 4  # how many of the target pickup object to generate in [1, MAX] (randomly chosen)
+RECEPTACLE_SPARSE_POINTS = 50  # increment for how many points to leave free for sparsely populated receptacles
+RECEPTACLE_EMPTY_POINTS = 200  # increment for how many points to leave free for empty receptacles
 
-MIN_VISIBLE_RATIO = 0.0011       # minimum area ratio (with respect to image size) of visible object
-PLANNER_MAX_STEPS = 100          # if the generated plan is more than these steps, discard the traj
-MAX_EPISODE_LENGTH = 1000        # maximum number of API steps allowed per trajectory
+MIN_VISIBLE_RATIO = 0.0011  # minimum area ratio (with respect to image size) of visible object
+PLANNER_MAX_STEPS = 100  # if the generated plan is more than these steps, discard the traj
+MAX_EPISODE_LENGTH = 1000  # maximum number of API steps allowed per trajectory
 
-FORCED_SAMPLING = False          # set True for debugging instead of proper sampling
+FORCED_SAMPLING = False  # set True for debugging instead of proper sampling
 PRUNE_UNREACHABLE_POINTS = True  # prune navigation points that were deemed unreachable by the proprocessing script
 
-CHOOSE_RANDOM_PLAN = True       # if False, only the best plan (cheapest) is selected
+CHOOSE_RANDOM_PLAN = True  # if False, only the best plan (cheapest) is selected
 
 ########################################################################################################################
 # Goals
-
+# sub-goals = pick, place, clean, slice, heat, cool
 GOALS = ["heat_stack_and_place"]
 
-ALL_GOALS = ['cool_simple', 'heat_simple', 'clean_simple', 'toggle_simple', 'slice_simple', 'place_simple', 'place_2',
-             'locate_simple', 'clean_and_heat', 'clean_and_cool', 'clean_and_slice', 'slice_and_heat', 'slice_and_cool',
-             'clean_and_place', 'heat_and_place', 'cool_and_place', 'slice_and_place', 'stack_and_place',
-             'heat_stack_and_place', 'cool_stack_and_place', 'clean_stack_and_place', 'slice_stack_and_place',
-             'heat_slice_and_place', 'cool_slice_and_place', 'clean_slice_and_place',
-             'clean_then_heat', 'clean_then_slice', 'clean_then_cool', 'heat_then_slice', 'heat_then_clean',
-             'cool_then_clean', 'cool_then_slice', 'slice_then_heat', 'slice_then_cool', 'slice_then_clean',
-             'heat_then_stack_then_place', 'cool_then_stack_then_place',
-             'clean_then_stack_then_place', 'slice_then_stack_then_place',
-             'clean_then_slice_then_place', 'clean_then_heat_then_place', 'clean_then_cool_then_place',
-             'clean_then_cool_then_slice', 'clean_then_slice_then_cool', 'clean_then_slice_then_heat',
-             'clean_then_heat_then_slice', 'heat_then_slice_then_place', 'heat_then_clean_then_place',
-             'heat_then_clean_then_slice', 'heat_then_slice_then_clean', 'cool_then_slice_then_place',
-             'cool_then_clean_then_place', 'cool_then_clean_then_slice', 'cool_then_slice_then_clean',
-             'slice_then_heat_then_place', 'slice_then_cool_then_place', 'slice_then_cool_then_clean',
-             'slice_then_clean_then_cool', 'slice_then_clean_then_heat', 'slice_then_heat_then_clean']
+ALL_GOALS = ['clean_simple',
+             'cool_simple',
+             'heat_simple',
+             'pick_simple',
+             'place_2',
+             'place_simple',
+             'slice_simple',
+             'clean_and_cool',
+             'clean_and_heat',
+             'clean_and_place',
+             'clean_and_slice',
+             'cool_and_place',
+             'heat_and_place',
+             'slice_and_cool',
+             'slice_and_heat',
+             'slice_and_place',
+             'stack_and_place',
+             'clean_slice_and_place',
+             'clean_stack_and_place',
+             'cool_clean_and_place',
+             'cool_slice_and_place',
+             'cool_stack_and_place',
+             'heat_clean_and_place',
+             'heat_slice_and_place',
+             'heat_stack_and_place',
+             'clean_then_cool',
+             'clean_then_heat',
+             'clean_then_place',
+             'clean_then_slice',
+             'cool_then_clean',
+             'cool_then_place',
+             'cool_then_slice',
+             'heat_then_clean',
+             'heat_then_place',
+             'heat_then_slice',
+             'place_then_stack',
+             'slice_then_clean',
+             'slice_then_cool',
+             'slice_then_heat',
+             'slice_then_place',
+             'stack_then_place',
+             'clean_then_cool_then_place',
+             'clean_then_cool_then_slice',
+             'clean_then_heat_then_place',
+             'clean_then_heat_then_slice',
+             'clean_then_place_then_stack',
+             'clean_then_slice_then_cool',
+             'clean_then_slice_then_heat',
+             'clean_then_stack_then_place',
+             'cool_then_clean_then_place',
+             'cool_then_clean_then_slice',
+             'cool_then_place_then_stack',
+             'cool_then_slice_then_clean',
+             'cool_then_stack_then_place',
+             'heat_then_clean_then_place',
+             'heat_then_clean_then_slice',
+             'heat_then_place_then_stack',
+             'heat_then_slice_then_clean',
+             'heat_then_stack_then_place',
+             'place_then_slice_then_clean',
+             'place_then_slice_then_cool',
+             'place_then_slice_then_heat',
+             'slice_then_clean_then_cool',
+             'slice_then_clean_then_heat',
+             'slice_then_clean_then_place',
+             'slice_then_cool_then_clean',
+             'slice_then_cool_then_place',
+             'slice_then_heat_then_clean',
+             'slice_then_heat_then_place',
+             'slice_then_place_then_stack',
+             'slice_then_stack_then_place',
+             'clean_and_cool_then_place',
+             'clean_and_cool_then_slice',
+             'clean_and_heat_then_place',
+             'clean_and_heat_then_slice',
+             'clean_and_place_then_stack',
+             'clean_and_slice_then_cool',
+             'clean_and_slice_then_heat',
+             'clean_and_stack_then_place',
+             'clean_then_cool_and_slice',
+             'clean_then_heat_and_slice',
+             'clean_then_place_and_stack',
+             'clean_then_slice_and_cool',
+             'clean_then_slice_and_heat',
+             'clean_then_stack_and_place',
+             'cool_and_clean_then_place',
+             'cool_and_clean_then_slice',
+             'cool_and_slice_then_clean',
+             'cool_and_stack_then_place',
+             'cool_then_clean_and_slice',
+             'cool_then_place_then_stack',
+             'cool_then_slice_and_clean',
+             'cool_then_stack_and_place',
+             'heat_and_clean_then_place',
+             'heat_and_clean_then_slice',
+             'heat_and_place_then_stack',
+             'heat_and_slice_then_clean',
+             'heat_and_stack_then_place',
+             'heat_then_clean_and_slice',
+             'heat_then_place_and_stack',
+             'heat_then_slice_and_clean',
+             'heat_then_stack_and_place',
+             'slice_and_clean_then_cool',
+             'slice_and_clean_then_heat',
+             'slice_and_clean_then_place',
+             'slice_and_cool_then_clean',
+             'slice_and_cool_then_place',
+             'slice_and_heat_then_clean',
+             'slice_and_heat_then_place',
+             'slice_and_place_then_stack',
+             'slice_and_stack_then_place',
+             'slice_then_clean_and_cool',
+             'slice_then_clean_and_heat',
+             'slice_then_cool_and_clean',
+             'slice_then_heat_and_clean',
+             'slice_then_place_and_stack',
+             'slice_then_stack_and_place']
 
 GOALS_VALID = {}
 for goal in ALL_GOALS:
@@ -141,15 +242,15 @@ MIN_VISIBLE_PIXELS = 10
 ########################################################################################################################
 # Scenes and Objects
 
-TRAIN_SCENE_NUMBERS = list(range(7, 31))           # Train Kitchens (24/30)
+TRAIN_SCENE_NUMBERS = list(range(7, 31))  # Train Kitchens (24/30)
 TRAIN_SCENE_NUMBERS.extend(list(range(207, 231)))  # Train Living Rooms (24/30)
 TRAIN_SCENE_NUMBERS.extend(list(range(307, 331)))  # Train Bedrooms (24/30)
 TRAIN_SCENE_NUMBERS.extend(list(range(407, 431)))  # Train Bathrooms (24/30)
 
-TEST_SCENE_NUMBERS = list(range(1, 7))             # Test Kitchens (6/30)
-TEST_SCENE_NUMBERS.extend(list(range(201, 207)))   # Test Living Rooms (6/30)
-TEST_SCENE_NUMBERS.extend(list(range(301, 307)))   # Test Bedrooms (6/30)
-TEST_SCENE_NUMBERS.extend(list(range(401, 407)))   # Test Bathrooms (6/30)
+TEST_SCENE_NUMBERS = list(range(1, 7))  # Test Kitchens (6/30)
+TEST_SCENE_NUMBERS.extend(list(range(201, 207)))  # Test Living Rooms (6/30)
+TEST_SCENE_NUMBERS.extend(list(range(301, 307)))  # Test Bedrooms (6/30)
+TEST_SCENE_NUMBERS.extend(list(range(401, 407)))  # Test Bathrooms (6/30)
 
 SCENE_NUMBERS = TRAIN_SCENE_NUMBERS + TEST_SCENE_NUMBERS
 
@@ -511,45 +612,45 @@ OBJECTS_SET = set(OBJECTS) | MOVABLE_RECEPTACLES_SET
 OBJECT_CLASS_TO_ID = {obj: ii for (ii, obj) in enumerate(OBJECTS)}
 
 RECEPTACLES = {
-        'BathtubBasin',
-        'Bowl',
-        'Cup',
-        'Drawer',
-        'Mug',
-        'Plate',
-        'Shelf',
-        'SinkBasin',
-        'Box',
-        'Cabinet',
-        'CoffeeMachine',
-        'CounterTop',
-        'Fridge',
-        'GarbageCan',
-        'HandTowelHolder',
-        'Microwave',
-        'PaintingHanger',
-        'Pan',
-        'Pot',
-        'StoveBurner',
-        'DiningTable',
-        'CoffeeTable',
-        'SideTable',
-        'ToiletPaperHanger',
-        'TowelHolder',
-        'Safe',
-        'BathtubBasin',
-        'ArmChair',
-        'Toilet',
-        'Sofa',
-        'Ottoman',
-        'Dresser',
-        'LaundryHamper',
-        'Desk',
-        'Bed',
-        'Cart',
-        'TVStand',
-        'Toaster',
-    }
+    'BathtubBasin',
+    'Bowl',
+    'Cup',
+    'Drawer',
+    'Mug',
+    'Plate',
+    'Shelf',
+    'SinkBasin',
+    'Box',
+    'Cabinet',
+    'CoffeeMachine',
+    'CounterTop',
+    'Fridge',
+    'GarbageCan',
+    'HandTowelHolder',
+    'Microwave',
+    'PaintingHanger',
+    'Pan',
+    'Pot',
+    'StoveBurner',
+    'DiningTable',
+    'CoffeeTable',
+    'SideTable',
+    'ToiletPaperHanger',
+    'TowelHolder',
+    'Safe',
+    'BathtubBasin',
+    'ArmChair',
+    'Toilet',
+    'Sofa',
+    'Ottoman',
+    'Dresser',
+    'LaundryHamper',
+    'Desk',
+    'Bed',
+    'Cart',
+    'TVStand',
+    'Toaster',
+}
 
 NON_RECEPTACLES = OBJECTS_SET - RECEPTACLES
 
