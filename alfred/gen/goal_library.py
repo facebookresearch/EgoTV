@@ -103,8 +103,8 @@ gdict["clean_simple"] = \
                       'a {obj} is cleaned in a SinkBasin']
     }
 
-# basic locate and pick (e.g: "locate a apple")
-gdict["locate_simple"] = \
+# basic locate and pick (e.g: "pick a apple")
+gdict["pick_simple"] = \
     {
         'pddl':
             '''
@@ -407,6 +407,107 @@ gdict["slice_and_heat"] = \
 
 gdict["heat_and_slice"] = gdict["slice_and_heat"]
 
+# slice, clean object (in any order)
+gdict["slice_and_clean"] = \
+    {
+        'pddl':
+            '''
+        (:goal
+            (and               
+                (exists (?o # object)
+                    (exists (?a # agent)
+                        (and 
+                            (sliceable ?o)
+                            (cleanable ?o)
+                            (objectType ?o {obj}Type) 
+                            (isSliced ?o)
+                            (isClean ?o)
+                            (holds ?a ?o)
+                            (holdsAny ?a)
+                        )
+                    )
+                )                
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+            )
+        )
+    )
+    ''',
+        'templates': ['a clean, sliced {obj}',
+                      'a sliced, clean {obj}',
+                      'a slice of clean {obj}']
+    }
+
+gdict["clean_and_slice"] = gdict["slice_and_clean"]
+
+# slice, cool object (in any order)
+gdict["clean_and_cool"] = \
+    {
+        'pddl':
+            '''
+        (:goal
+            (and               
+                (exists (?o # object)
+                    (exists (?a # agent)
+                        (and 
+                            (cleanable ?o)
+                            (coolable ?o)
+                            (objectType ?o {obj}Type) 
+                            (isClean ?o)
+                            (isCool ?o)
+                            (holds ?a ?o)
+                            (holdsAny ?a)
+                        )
+                    )
+                )                
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+            )
+        )
+    )
+    ''',
+        'templates': ['a cool, clean {obj}',
+                      'a clean, cool {obj}',
+                      'a cool {obj} cleaned in the Sinkbasin']
+    }
+
+gdict["cool_and_clean"] = gdict["clean_and_cool"]
+
+# slice, heat object (in any order)
+gdict["clean_and_heat"] = \
+    {
+        'pddl':
+            '''
+        (:goal
+            (and               
+                (exists (?o # object)
+                    (exists (?a # agent)
+                        (and 
+                            (sliceable ?o)
+                            (heatable ?o)
+                            (objectType ?o {obj}Type) 
+                            (isSliced ?o)
+                            (isHot ?o)
+                            (holds ?a ?o)
+                            (holdsAny ?a)
+                        )
+                    )
+                )                
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+            )
+        )
+    )
+    ''',
+        'templates': ['a hot, clean {obj}',
+                      'a clean, hot {obj}']
+    }
+
+gdict["heat_and_clean"] = gdict["clean_and_heat"]
+
 # pick two instances of an object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
 gdict["place_2"] = \
     {
@@ -485,7 +586,7 @@ gdict["stack_and_place"] = \
 ##########################################################################
 
 # pick, heat, place with movable receptacle
-gdict["heat_stack_and_place"] = \
+gdict["heat_and_stack_and_place"] = \
     {
         'pddl':
             '''
@@ -525,7 +626,7 @@ gdict["heat_stack_and_place"] = \
     }
 
 # pick, cool, place with movable receptacle
-gdict["cool_stack_and_place"] = \
+gdict["cool_and_stack_and_place"] = \
     {
         'pddl':
             '''
@@ -565,7 +666,7 @@ gdict["cool_stack_and_place"] = \
     }
 
 # pick, clean, place with movable receptacle
-gdict["clean_stack_and_place"] = \
+gdict["clean_and_stack_and_place"] = \
     {
         'pddl':
             '''
@@ -605,7 +706,7 @@ gdict["clean_stack_and_place"] = \
     }
 
 # slice, place with movable receptacle
-gdict["slice_stack_and_place"] = \
+gdict["slice_and_stack_and_place"] = \
     {
         'pddl':
             '''
@@ -645,7 +746,7 @@ gdict["slice_stack_and_place"] = \
     }
 
 # pick, clean, slice, and place object
-gdict["clean_slice_and_place"] = \
+gdict["slice_and_clean_and_place"] = \
     {
         'pddl':
             '''
@@ -682,8 +783,189 @@ gdict["clean_slice_and_place"] = \
 
     }
 
+# pick, slice, clean, cool
+gdict["slice_and_heat_and_clean"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?o # object)
+                            (exists (?a # agent)
+                                (and 
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (cleanable ?o)
+                                    (coolable ?o)
+                                    (objectType ?o {obj}Type)
+                                    (isClean ?o)
+                                    (isCool ?o)
+                                    (holds ?a ?o)
+                                    (holdsAny ?a)
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['a slice of cool, clean {obj} is placed',
+                      'a cool, clean, sliced {obj} is placed',
+                      'a sliced, cool, clean {obj} is placed',
+                      'a slice of cool, clean {obj} is placed in a {recep}',
+                      'a clean, sliced, cool {obj} in a {recep}',
+                      'a sliced, clean, cool {obj} in a {recep}',
+                      'a clean, sliced, cool {obj} placed in a {recep}',
+                      'a sliced, clean, cool {obj} placed in a {recep}']
+    }
+
+# pick, slice, clean, heat
+gdict["slice_and_heat_and_clean"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?o # object)
+                            (exists (?a # agent)
+                                (and 
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (heatable ?o)
+                                    (cleanable ?o)
+                                    (objectType ?o {obj}Type)
+                                    (isHot ?o)
+                                    (isClean ?o)
+                                    (holds ?a ?o)
+                                    (holdsAny ?a)
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['a slice of hot, clean {obj} is placed',
+                      'a hot, clean, sliced {obj} is placed',
+                      'a sliced, hot, clean {obj} is placed',
+                      'a slice of hot, clean {obj} is placed in a {recep}',
+                      'a clean, sliced, hot {obj} in a {recep}',
+                      'a sliced, clean, hot {obj} in a {recep}',
+                      'a clean, sliced, hot {obj} placed in a {recep}',
+                      'a sliced, clean, hot {obj} placed in a {recep}']
+    }
+
+# pick, clean, heat & place
+gdict["heat_and_clean_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (cleanable ?o)
+                                    (isClean ?o)
+                                    (heatable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isHot ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['a clean, hot {obj} is placed',
+                      'a hot, clean {obj} is placed',
+                      'a clean, hot {obj} is placed in a {recep}',
+                      'a hot, clean {obj} in a {recep}']
+    }
+
+# pick, clean, cool & place
+gdict["cool_and_clean_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (cleanable ?o)
+                                    (isClean ?o)
+                                    (coolable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isCool ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['a clean, cool {obj} is placed',
+                      'a cool, clean {obj} is placed',
+                      'a clean, cool {obj} is placed in a {recep}',
+                      'a cool, clean {obj} in a {recep}']
+    }
+
+# pick, clean, slice & place
+gdict["slice_and_clean_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (cleanable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isClean ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates': ['a slice of clean {obj} is placed',
+                      'a clean, sliced {obj} is placed',
+                      'a sliced, clean {obj} is placed',
+                      'a slice of clean {obj} is placed in a {recep}',
+                      'a clean, sliced {obj} in a {recep}',
+                      'a clean, sliced {obj} placed in a {recep}',
+                      'a sliced, clean {obj} placed in a {recep}',
+                      'a sliced, clean {obj} in a {recep}']
+    }
+
 # pick, heat, slice & place
-gdict["heat_slice_and_place"] = \
+gdict["slice_and_heat_and_place"] = \
     {
         'pddl':
             '''
@@ -720,7 +1002,7 @@ gdict["heat_slice_and_place"] = \
     }
 
 # pick, cool, slice & place
-gdict["cool_slice_and_place"] = \
+gdict["cool_and_slice_and_place"] = \
     {
         'pddl':
             '''
@@ -1055,6 +1337,34 @@ gdict["clean_then_heat"] = \
                       'a {obj} is cleaned in a Sinkbasin before heating']
     }
 
+gdict["clean_then_cool"] = \
+    {
+        'pddl':
+            '''
+        (:goal
+            (and
+                (forall (?re # receptacle)
+                    (not (opened ?re))
+                )
+                (exists (?o # object)
+                    (and 
+                        (cleanable ?o)
+                        (coolable ?o)
+                        (objectType ?o {obj}Type) 
+                        (isClean ?o)
+                        (isCool ?o)
+                    )
+                )
+            )
+        )
+    )
+    ''',
+        'templates': ['a {obj} is cleaned and then cooled',
+                      'a {obj} is cleaned in a Sinkbasin and then cooled',
+                      'a {obj} is cleaned before cooling',
+                      'a {obj} is cleaned in a Sinkbasin before cooling']
+    }
+
 # pick, clean (in sink), then place object
 gdict["clean_then_place"] = \
     {
@@ -1235,12 +1545,12 @@ gdict["slice_then_place"] = \
         )
     )
     ''',
-        'templates': ['a slice of {obj} is placed',
-                      'a slice of {obj} is placed in a {recep}',
-                      'a {obj} is sliced and then placed',
+        'templates': ['a {obj} is sliced and then placed',
                       'a {obj} is sliced and then placed in a {recep}',
                       'a {obj} is sliced before placing',
-                      'a {obj} is sliced before placing in a {recep}']
+                      'a {obj} is sliced before placing in a {recep}',
+                      'a {obj} is placed in a {recep} after slicing',
+                      'a {obj} is placed after slicing']
     }
 
 ###############################################
@@ -1420,3 +1730,150 @@ gdict["pick_two_obj_then_slice_and_place"] = \
         'templates': ['slice two {obj}s and put them in {recep}',
                       'put two sliced {obj}s in {recep}']
     }
+
+gdict['clean_then_cool']['pddl'] = gdict['cool_and_clean']['pddl']
+gdict['clean_then_cool']['templates'] = ['a {obj} is cleaned and then cooled',
+                                         'a {obj} is cleaned in a Sinkbasin and then cooled in a Fridge',
+                                         'a {obj} is cleaned before cooling',
+                                         'a {obj} is cleaned in a Sinkbasin before cooling in a Fridge']
+gdict['cool_then_clean']['pddl'] = gdict['cool_and_clean']['pddl']
+gdict['cool_then_clean']['templates'] = ['a {obj} is cooled and then cleaned',
+                                         'a {obj} is cooled in a Fridge and then cleaned in a Sinkbasin',
+                                         'a {obj} is cooled before cleaning',
+                                         'a {obj} is cleaned in a Sinkbasin after cooling in a Fridge']
+
+gdict['clean_then_heat']['pddl'] = gdict['clean_and_heat']['pddl']
+gdict['clean_then_heat']['templates'] = ['a {obj} is cleaned and then heated',
+                                         'a {obj} is cleaned in a Sinkbasin and then heated',
+                                         'a {obj} is cleaned before heating',
+                                         'a {obj} is cleaned in a Sinkbasin before heating']
+gdict['heat_then_clean']['pddl'] = gdict['clean_and_heat']['pddl']
+gdict['heat_then_clean']['templates'] = ['a {obj} is heated and then cleaned',
+                                         'a {obj} is heated and then cleaned in a Sinkbasin',
+                                         'a {obj} is heated before cleaning',
+                                         'a {obj} is cleaned in a Sinkbasin after heating',
+                                         'a {obj} is picked and heated before cleaning']
+
+gdict['cool_then_slice']['pddl'] = gdict['cool_and_slice']['pddl']
+gdict['cool_then_slice']['templates'] = ['a {obj} is cooled and then sliced',
+                                         'a {obj} is cooled in a Fridge and then sliced',
+                                         'a {obj} is cooled before slicing',
+                                         'a {obj} is cooled in a Fridge before slicing',
+                                         'a {obj} is sliced after cooling',
+                                         'a {obj} is sliced after cooling in a Fridge']
+gdict['slice_then_cool']['pddl'] = gdict['cool_and_slice']['pddl']
+gdict['slice_then_cool']['templates'] = ['a {obj} is sliced and then cooled',
+                                         'a {obj} is sliced before cooling',
+                                         'a {obj} is cooled after slicing',
+                                         'a {obj} is sliced and then cooled in a Fridge',
+                                         'a {obj} is sliced before cooling in a Fridge',
+                                         'a {obj} is cooled in a Fridge after slicing']
+
+gdict['clean_then_slice']['pddl'] = gdict['clean_and_slice']['pddl']
+gdict['clean_then_slice']['templates'] = ['a {obj} is cleaned and then sliced',
+                                          'a {obj} is cleaned in a Sinkbasin and then sliced',
+                                          'a {obj} is cleaned before slicing',
+                                          'a {obj} is cleaned in a Sinkbasin before slicing']
+gdict['slice_then_clean']['pddl'] = gdict['clean_and_slice']['pddl']
+gdict['slice_then_clean']['templates'] = ['a {obj} is sliced and then cleaned',
+                                          'a {obj} is sliced and then cleaned in a Sinkbasin',
+                                          'a {obj} is sliced before cleaning',
+                                          'a {obj} is sliced before cleaning in a Sinkbasin',
+                                          'a {obj} is cleaned after slicing',
+                                          'a {obj} is cleaned in a Sinkbasin after slicing']
+
+gdict['heat_then_slice']['pddl'] = gdict['heat_and_slice']['pddl']
+gdict['heat_then_slice']['templates'] = ['a {obj} is heated and then sliced',
+                                         'a {obj} is heated before slicing',
+                                         'a {obj} is sliced after heating',
+                                         'a {obj} is picked and heated and then sliced',
+                                         'a {obj} is picked and heated before slicing']
+gdict['slice_then_heat']['pddl'] = gdict['heat_and_slice']['pddl']
+gdict['slice_then_heat']['templates'] = ['a {obj} is sliced and then heated',
+                                         'a {obj} is sliced before heating',
+                                         'a {obj} is heated after slicing']
+
+gdict['slice_then_place']['pddl'] = gdict['slice_and_place']['pddl']
+gdict['slice_then_place']['templates'] = ['a {obj} is sliced and then placed',
+                                          'a {obj} is sliced and then placed in a {recep}',
+                                          'a {obj} is sliced before placing',
+                                          'a {obj} is sliced before placing in a {recep}',
+                                          'a {obj} is placed in a {recep} after slicing',
+                                          'a {obj} is placed after slicing']
+gdict['clean_then_place']['pddl'] = gdict['clean_and_place']['pddl']
+gdict['clean_then_place']['templates'] = ['a {obj} is cleaned and then placed',
+                                          'a {obj} is cleaned and then placed in a {recep}',
+                                          'a {obj} is cleaned before placing',
+                                          'a {obj} is cleaned before placing in a {recep}',
+                                          'a {obj} is placed in a {recep} after cleaning',
+                                          'a {obj} is placed after cleaning']
+gdict['cool_then_place']['pddl'] = gdict['cool_and_place']['pddl']
+gdict['cool_then_place']['templates'] = ['a {obj} is cooled and then placed',
+                                         'a {obj} is cooled and then placed in a {recep}',
+                                         'a {obj} is cooled before placing',
+                                         'a {obj} is cooled before placing in a {recep}',
+                                         'a {obj} is placed in a {recep} after cooling',
+                                         'a {obj} is placed after cooling']
+gdict['heat_then_place']['pddl'] = gdict['heat_and_place']['pddl']
+gdict['heat_then_place']['templates'] = ['a {obj} is heated and then placed',
+                                         'a {obj} is heated and then placed in a {recep}',
+                                         'a {obj} is heated before placing',
+                                         'a {obj} is heated before placing in a {recep}',
+                                         'a {obj} is placed in a {recep} after heating',
+                                         'a {obj} is placed after heating',
+                                         'a {obj} is picked and heated before placing',
+                                         'a {obj} is picked and heated before placing in a {recep}']
+
+# ['cool_and_slice_and_place', 'cool_and_clean_and_place', 'cool_and_slice_and_clean', 'slice_and_heat_and_clean',
+# 'slice_and_heat_and_place', 'slice_and_clean_and_place', 'heat_and_clean_and_place']
+
+gdict['clean_then_cool_then_place']['pddl'] = gdict['cool_and_clean_and_place']['pddl']
+gdict['clean_then_cool_then_slice']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['clean_then_heat_then_place']['pddl'] = gdict['heat_and_clean_and_place']['pddl']
+gdict['clean_then_heat_then_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['clean_then_slice_then_cool']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['clean_then_slice_then_heat']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['cool_then_clean_then_place']['pddl'] = gdict['cool_and_clean_and_place']['pddl']
+gdict['cool_then_clean_then_slice']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['cool_then_slice_then_clean']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['heat_then_clean_then_place']['pddl'] = gdict['heat_and_clean_and_place']['pddl']
+gdict['heat_then_clean_then_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['heat_then_slice_then_clean']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['slice_then_clean_then_cool']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['slice_then_clean_then_heat']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['slice_then_clean_then_place']['pddl'] = gdict['slice_and_clean_and_place']['pddl']
+gdict['slice_then_cool_then_clean']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['slice_then_cool_then_place']['pddl'] = gdict['cool_and_slice_and_place']['pddl']
+gdict['slice_then_heat_then_clean']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['slice_then_heat_then_place']['pddl'] = gdict['slice_and_heat_and_place']['pddl']
+gdict['clean_and_cool_then_place']['pddl'] = gdict['cool_and_clean_and_place']['pddl']
+gdict['clean_and_cool_then_slice']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['clean_and_heat_then_place']['pddl'] = gdict['heat_and_clean_and_place']['pddl']
+gdict['clean_and_heat_then_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['clean_and_slice_then_cool']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['clean_and_slice_then_heat']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['clean_then_cool_and_slice']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['clean_then_heat_and_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['clean_then_slice_and_cool']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['clean_then_slice_and_heat']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['cool_and_clean_then_place']['pddl'] = gdict['cool_and_clean_and_place']['pddl']
+gdict['cool_and_clean_then_slice']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['cool_and_slice_then_clean']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['cool_then_clean_and_slice']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['cool_then_slice_and_clean']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['heat_and_clean_then_place']['pddl'] = gdict['heat_and_clean_and_place']['pddl']
+gdict['heat_and_clean_then_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['heat_and_slice_then_clean']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['heat_then_clean_and_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['heat_then_slice_and_clean']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['slice_and_clean_then_cool']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['slice_and_clean_then_heat']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['slice_and_clean_then_place']['pddl'] = gdict['slice_and_clean_and_place']['pddl']
+gdict['slice_and_cool_then_clean']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['slice_and_cool_then_place']['pddl'] = gdict['cool_and_slice_and_place']['pddl']
+gdict['slice_and_heat_then_clean']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['slice_and_heat_then_place']['pddl'] = gdict['slice_and_heat_and_place']['pddl']
+gdict['slice_then_clean_and_cool']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['slice_then_clean_and_heat']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
+gdict['slice_then_cool_and_clean']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
+gdict['slice_then_heat_and_clean']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']

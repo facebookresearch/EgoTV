@@ -10,8 +10,8 @@ from utils import game_util
 
 
 class TaskGameStateFullKnowledge(TaskGameState):
-    def __init__(self, env, seed=None, action_space=None):
-        super(TaskGameStateFullKnowledge, self).__init__(env, seed, action_space)
+    def __init__(self, env, domain, domain_path, seed=None, action_space=None):
+        super(TaskGameStateFullKnowledge, self).__init__(env, domain, domain_path, seed, action_space)
 
     # Updated with Physics to calculate nearest point to every object along the way.
     def update_receptacle_nearest_points(self):

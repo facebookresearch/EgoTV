@@ -212,10 +212,15 @@
  (:action CleanObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (isSliced ?o)
+            (sliceable ?o)
+            (isHot ?o)
+            (heatable ?o)
             (receptacleType ?r SinkBasinType)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
             (holds ?a ?o)
+            (cleanable ?o)
             )
     :effect (and
                 (increase (totalCost) 5)
@@ -234,6 +239,7 @@
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
             (holds ?a ?o)
+            (heatable ?o)
             )
     :effect (and
                 (increase (totalCost) 5)
@@ -257,6 +263,7 @@
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
             (holds ?a ?o)
+            (coolable ?o)
             )
     :effect (and
                 (increase (totalCost) 5)
@@ -292,21 +299,20 @@
 
 ;; agent slices some object with a knife
  (:action SliceObject
-    :parameters (?a - agent ?l - location ?co - object ?ko - object)
-    :precondition
-            (and
-                (or
-                    (objectType ?ko KnifeType)
-                    (objectType ?ko ButterKnifeType)
-                )
-                (atLocation ?a ?l)
-                (objectAtLocation ?co ?l)
-                (sliceable ?co)
-                (holds ?a ?ko)
+    :parameters (?a - agent ?l - location ?o - object ?ko - object)
+    :precondition (and
+            (or
+                (objectType ?ko KnifeType)
+                (objectType ?ko ButterKnifeType)
+            )
+            (atLocation ?a ?l)
+            (objectAtLocation ?o ?l)
+            (sliceable ?o)
+            (holds ?a ?ko)
             )
     :effect (and
                 (increase (totalCost) 5)
-                (isSliced ?co)
+                (isSliced ?o)
                 (atLocation ?a ?l)
                 (not (holds ?a ?ko))
                 (not(holdsAny ?a))

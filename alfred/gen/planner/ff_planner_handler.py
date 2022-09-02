@@ -252,7 +252,7 @@ if __name__ == '__main__':
     import sys
 
     DEBUG = constants.DEBUG
-    parser = PlanParser('planner/domains/PutTaskExtended_domain.pddl')
+    parser = PlanParser('planner/domains/all_goals.pddl')
     parser.problem_id = sys.argv[1]
     result_plan = parser.get_plan()
     print('plan\n' + '\n'.join(['%03d: %s' % (pp, game_util.get_action_str(pl)) for pp, pl in enumerate(result_plan)]))

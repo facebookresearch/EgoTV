@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -476,10 +476,6 @@ def main(args):
 
     # create env and agent
     env = ThorEnv()
-
-    game_state = TaskGameStateFullKnowledge(env)
-    agent = DeterministicPlannerAgent(thread_id=0, game_state=game_state)
-
     errors = {}  # map from error strings to counts, to be shown after every failure.
     goal_candidates = constants.GOALS[:]
     pickup_candidates = list(set().union(*[constants.VAL_RECEPTACLE_OBJECTS[obj]  # Union objects that can be placed.
@@ -514,6 +510,14 @@ def main(args):
                      args.repeats_per_cond)
         gtype, pickup_obj, movable_obj, receptacle_obj, sampled_scene = sampled_task
         print("sampled tuple: " + str((gtype, pickup_obj, movable_obj, receptacle_obj, sampled_scene)))
+
+        if 'then' not in gtype:
+            domain_path = os.path.join(args.domain_root_path, 'all_goals.pddl')
+        else:
+            domain_path = os.path.join(args.domain_root_path, 'task_' + gtype + '.pddl')
+        domain = 'put_task'
+        game_state = TaskGameStateFullKnowledge(env, domain, domain_path)
+        agent = DeterministicPlannerAgent(thread_id=0, game_state=game_state)
 
         tries_remaining = args.trials_before_fail
         # only try to get the number of trajectories left to make this tuple full.
@@ -708,14 +712,6 @@ def create_dirs(gtype, pickup_obj, movable_obj, receptacle_obj, scene_num):
         os.makedirs(constants.save_path)
 
     print("Saving images to: " + constants.save_path)
-
-    # # TODO: increase counter only if videos are saved ? (success & failure)
-    # goal_counter[gtype] += 1
-    # obj_counter[pickup_obj] += 1
-    # movable_receptacle_counter[movable_obj] += 1
-    # receptacle_counter[receptacle_obj] += 1
-    # scene_counter[scene_num] += 1
-
     return task_id
 
 
@@ -783,6 +779,7 @@ if __name__ == "__main__":
                         help="where to save the generated data")
     parser.add_argument('--save_path_csv', type=str, default="dataset/csv_files",
                         help="where to save the csv files of all generated trajectories for dataset stats")
+    parser.add_argument('--domain_root_path', type=str, default="planner/domains", help="PDDL action definitions")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
     parser.add_argument("--just_examine", default=False,
                         help="just examine what data is gathered; don't gather more")

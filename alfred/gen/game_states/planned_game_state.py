@@ -30,7 +30,7 @@ class PlannedGameState(GameStateBase, ABC):
 
     action_to_ind = {action['action']: ii for ii, action in enumerate(action_space)}
 
-    def __init__(self, env, seed=None, action_space=None, domain=None, domain_path=None):
+    def __init__(self, env, domain=None, domain_path=None, seed=None, action_space=None):
         super(PlannedGameState, self).__init__(env, seed, action_space)
         self.planner = ff_planner_handler.PlanParser(domain_path)
         self.domain = domain

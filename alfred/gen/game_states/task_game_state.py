@@ -14,11 +14,10 @@ class TaskGameState(PlannedGameState):
         {'action': 'End'},
     ]
 
-    def __init__(self, env, seed=None, action_space=None):
+    def __init__(self, env, domain, domain_path, seed=None, action_space=None):
         if action_space is None:
             action_space = TaskGameState.action_space
-        super(TaskGameState, self).__init__(env, seed, action_space,
-                                            'put_task', 'planner/domains/PutTaskExtended_domain.pddl')
+        super(TaskGameState, self).__init__(env, domain, domain_path, seed, action_space)
         self.task_target = None
         self.success = False
 
