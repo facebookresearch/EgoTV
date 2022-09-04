@@ -214,6 +214,7 @@
     :precondition (and
             (isSliced ?o)
             (sliceable ?o)
+            (not (isHot ?o))
             (receptacleType ?r SinkBasinType)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
@@ -230,6 +231,8 @@
  (:action HeatObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (isSliced ?o)
+            (sliceable ?o)
             (isClean ?o)
             (cleanable ?o)
             (or
@@ -301,6 +304,8 @@
  (:action SliceObject
     :parameters (?a - agent ?l - location ?o - object ?ko - object)
     :precondition (and
+            (not (isClean ?o))
+            (not (isHot ?o))
             (or
                 (objectType ?ko KnifeType)
                 (objectType ?ko ButterKnifeType)

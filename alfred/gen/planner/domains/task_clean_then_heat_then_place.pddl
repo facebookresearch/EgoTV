@@ -143,8 +143,6 @@
  (:action PutObjectInReceptacle1
     :parameters (?a - agent ?l - location ?ot - otype ?o - object ?r - receptacle) ;?rt - rtype)
     :precondition (and
-            (isHot ?o)
-            (heatable ?o)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
             (objectType ?o ?ot)
@@ -214,6 +212,7 @@
  (:action CleanObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (not (isHot ?o))
             (receptacleType ?r SinkBasinType)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)

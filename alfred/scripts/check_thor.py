@@ -1,5 +1,11 @@
 from ai2thor.controller import Controller
 from ai2thor_colab import show_video, plot_frames, side_by_side
+from ai2thor.video_controller import VideoController
+with VideoController() as vc:
+    vc.play(vc.MoveAhead())
+    vc.wait(5)
+    vc.play(vc.MoveAhead())
+    vc.export_video('thor.mp4')
 
 controller = Controller(fullscreen=False)
 

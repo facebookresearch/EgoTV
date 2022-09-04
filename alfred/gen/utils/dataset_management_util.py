@@ -19,6 +19,9 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                         queue_for_delete = []
                         deleted_all = True
                         for _, _dirs, _ in os.walk(os.path.join(traj_root, trial)):
+                            # if len(_dirs) == 0:
+                            #     print("Removing unfinished trial '%s'" % os.path.join(traj_root, trial, _d))
+                            #     shutil.rmtree(os.path.join(traj_root, trial, _d))
                             for _d in _dirs:
                                 for _, _, _files in os.walk(os.path.join(traj_root, trial, _d)):
                                     if 'video.mp4' in _files:
@@ -77,19 +80,28 @@ def load_fails_from_disk(succ_dir, to_write=None):
 
 def plot_dataset_stats(succ_traj):
     succ_traj[['goal', 'pickup']].groupby('goal').pickup.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
-    plt.ylabel("goal")
+    plt.title("goals vs. objects")
     plt.show()
-    movable_traj = succ_traj[succ_traj.movable != None]
-    movable_traj[['goal', 'movable']].groupby('goal').movable.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
-    plt.ylabel("goal")
-    plt.show()
-    recep_traj = succ_traj[succ_traj.receptacle != None]
+    try:
+        movable_traj = succ_traj[succ_traj.movable != 'None']
+        movable_traj[['goal', 'movable']].groupby('goal').movable.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+        plt.title("goals vs. movable receptacles")
+        plt.show()
+    except TypeError:
+        print("no movable objects used")
+    recep_traj = succ_traj[succ_traj.receptacle != 'None']
     recep_traj[['goal', 'receptacle']].groupby('goal').receptacle.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
-    plt.ylabel("goal")
+    plt.title("goals vs. all receptacles")
     plt.show()
     succ_traj[['goal', 'scene']].groupby('goal').scene.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
-    plt.ylabel("goal")
+    plt.title("goals vs. scenes")
     plt.show()
     succ_traj['goal'].value_counts().plot(kind='bar', figsize=(8, 6), rot=45)
-    plt.ylabel("goal")
+    plt.title("goal counts")
+    plt.show()
+    succ_traj['pickup'].value_counts().plot(kind='bar', figsize=(8, 6), rot=45)
+    plt.title("all object counts")
+    plt.show()
+    recep_traj['receptacle'].value_counts().plot(kind='bar', figsize=(8, 6), rot=45)
+    plt.title("all receptacle counts")
     plt.show()

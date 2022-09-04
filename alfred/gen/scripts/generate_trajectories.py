@@ -19,6 +19,7 @@ from datetime import datetime
 
 import constants
 from agents.deterministic_planner_agent import DeterministicPlannerAgent
+from ai2thor.video_controller import VideoController
 from env.thor_env import ThorEnv
 from game_states.task_game_state_full_knowledge import TaskGameStateFullKnowledge
 from utils.video_util import VideoSaver
@@ -53,18 +54,34 @@ for goal in constants.ALL_GOALS:
 
 goal_to_receptacle_type = {'look_at_obj_in_light': "Toggleable"}
 
-goal_to_invalid_receptacle = {'heat_and_place': {'StoveBurner'},
-                              'cool_and_place': {'Fridge'},
-                              'clean_and_place': {'SinkBasin'},
-                              'place_2': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'},
-                              'heat_stack_and_place': {'Microwave'},
-                              'cool_stack_and_place': {'Fridge'},
-                              'clean_stack_and_place': {'SinkBasin'},
-                              'heat_slice_and_place': {'Microwave'},
-                              'cool_slice_and_place': {'Fridge'},
-                              'clean_slice_and_place': {'SinkBasin'},
-                              'clean_then_slice_then_place': {'SinkBasin'},
-                              'clean_then_heat_then_place': {'Microwave', 'SinkBasin'}}
+# goal_to_invalid_receptacle = {'heat_and_place': {'StoveBurner'},
+#                               'cool_and_place': {'Fridge'},
+#                               'clean_and_place': {'SinkBasin'},
+#                               'place_2': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'},
+#                               'heat_and_stack_and_place': {'Microwave'},
+#                               'cool_and_stack_and_place': {'Fridge'},
+#                               'clean_and_stack_and_place': {'SinkBasin'},
+#                               'heat_and_slice_and_place': {'Microwave'},
+#                               'cool_and_slice_and_place': {'Fridge'},
+#                               'clean_and_slice_and_place': {'SinkBasin'},
+#                               'slice_and_heat_and_clean': {'SinkBasin', 'Microwave'},
+#                               'cool_and_slice_and_clean': {'SinkBasin', 'Fridge'},
+#                               'clean_then_slice_then_place': {'SinkBasin'},
+#                               'cool_then_slice_and_clean': {'SinkBasin', 'Fridge'}}
+
+goal_to_invalid_receptacle = dict()
+for goal in constants.ALL_GOALS:
+    if 'place' in goal:
+        # if goal not in goal_to_invalid_receptacle.keys():
+        goal_to_invalid_receptacle[goal] = set()
+        if 'heat' in goal:
+            goal_to_invalid_receptacle[goal].add('Microwave')
+        if 'cool' in goal:
+            goal_to_invalid_receptacle[goal].add('Fridge')
+        if 'clean' in goal:
+            goal_to_invalid_receptacle[goal].add('SinkBasin')
+        if 'goal' == 'place_2':
+            goal_to_invalid_receptacle[goal] = {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'}
 
 tasks_with_recep_variables = []
 for task, value in goal_to_required_variables.items():
@@ -79,14 +96,6 @@ scene_id_to_objs = {}
 obj_to_scene_ids = {}
 scenes_for_goal = {g: [] for g in constants.GOALS}
 scene_to_type = {}
-
-
-# # ================ Dataset Statistics ================= #
-# goal_counter = {k: 0 for k in constants.ALL_GOALS}
-# obj_counter = {k: 0 for k in constants.OBJECTS}
-# movable_receptacle_counter = {k: 0 for k in constants.MOVABLE_RECEPTACLES}
-# receptacle_counter = {k: 0 for k in constants.RECEPTACLES}
-# scene_counter = {k: 0 for k in constants.SCENE_TYPE}
 
 
 def sample_task_params(succ_traj, full_traj, fail_traj,
@@ -465,6 +474,7 @@ def main(args):
             scene_to_type[str(s)] = st
 
     # pre-populate counts in this structure using saved trajectories path.
+    #TODO: change path
     succ_traj, full_traj = load_successes_from_disk(args.save_path, succ_traj, args.just_examine, args.repeats_per_cond)
     if args.just_examine:
         print_successes(succ_traj)
@@ -477,6 +487,7 @@ def main(args):
     # create env and agent
     env = ThorEnv()
     errors = {}  # map from error strings to counts, to be shown after every failure.
+
     goal_candidates = constants.GOALS[:]
     pickup_candidates = list(set().union(*[constants.VAL_RECEPTACLE_OBJECTS[obj]  # Union objects that can be placed.
                                            for obj in constants.VAL_RECEPTACLE_OBJECTS]))
@@ -612,13 +623,15 @@ def main(args):
                     reward, terminal = agent.get_reward()
 
                 dump_data_dict()
-
+                # with VideoController() as vc:
+                #     vc.export_video("dataset/new_trajectories")
                 save_video()
-                if len(succ_traj) > args.num_generate_per_goal:
+                if len(succ_traj) > args.num_generate_traj:
                     print('==================== Stop ===========================')
                     if not os.path.exists(args.save_path_csv):
                         os.mkdir(args.save_path_csv)
-                    csv_id = gtype + '|' + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
+                    # csv_id = gtype + '|' + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
+                    csv_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_filepath = os.path.join(args.save_path_csv, csv_id)
                     succ_traj.to_csv(csv_filepath)
                     # plot_dataset_stats(succ_traj)
@@ -781,7 +794,7 @@ if __name__ == "__main__":
                         help="where to save the csv files of all generated trajectories for dataset stats")
     parser.add_argument('--domain_root_path', type=str, default="planner/domains", help="PDDL action definitions")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
-    parser.add_argument("--just_examine", default=False,
+    parser.add_argument("--just_examine", default=True,
                         help="just examine what data is gathered; don't gather more")
     parser.add_argument("--in_parallel", action='store_true',
                         help="this collection will run in parallel with others, so load from disk on every new sample")
@@ -792,7 +805,7 @@ if __name__ == "__main__":
     parser.add_argument("--repeats_per_cond", type=int, default=2)
     parser.add_argument("--trials_before_fail", type=int, default=5)
     parser.add_argument("--async_load_every_n_samples", type=int, default=10)
-    parser.add_argument("--num_generate_per_goal", type=int, default=30)
+    parser.add_argument("--num_generate_traj", type=int, default=50)
 
     parse_args = parser.parse_args()
 

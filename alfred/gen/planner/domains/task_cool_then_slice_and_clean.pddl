@@ -255,6 +255,8 @@
  (:action CoolObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (not (isSliced ?o))
+            (not (isClean ?o))
             (or
                 (receptacleType ?r FridgeType)
             )

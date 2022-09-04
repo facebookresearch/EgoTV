@@ -230,6 +230,8 @@
  (:action HeatObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (not (isClean ?o))
+            (not (isSliced ?o))
             (or
                 (receptacleType ?r StoveBurnerType)
                 (receptacleType ?r MicrowaveType)

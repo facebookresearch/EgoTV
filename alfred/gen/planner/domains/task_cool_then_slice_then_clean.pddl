@@ -212,6 +212,8 @@
  (:action CleanObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (isCool ?o)
+            (coolable ?o)
             (isSliced ?o)
             (sliceable ?o)
             (receptacleType ?r SinkBasinType)
@@ -255,6 +257,8 @@
  (:action CoolObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (not (isSliced ?o))
+            (not (isClean ?o))
             (or
                 (receptacleType ?r FridgeType)
             )
@@ -301,6 +305,7 @@
     :precondition (and
             (isCool ?o)
             (coolable ?o)
+            (not (isClean ?o))
             (or
                 (objectType ?ko KnifeType)
                 (objectType ?ko ButterKnifeType)

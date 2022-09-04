@@ -143,8 +143,6 @@
  (:action PutObjectInReceptacle1
     :parameters (?a - agent ?l - location ?ot - otype ?o - object ?r - receptacle) ;?rt - rtype)
     :precondition (and
-            (isClean ?o)
-            (cleanable ?o)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
             (objectType ?o ?ot)
@@ -257,6 +255,7 @@
  (:action CoolObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (not (isClean ?o))
             (or
                 (receptacleType ?r FridgeType)
             )

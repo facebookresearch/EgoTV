@@ -212,6 +212,8 @@
  (:action CleanObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (not (isSliced ?o))
+            (not (isCool ?o))
             (receptacleType ?r SinkBasinType)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)

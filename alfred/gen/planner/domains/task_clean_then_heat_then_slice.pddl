@@ -212,6 +212,8 @@
  (:action CleanObject
     :parameters (?a - agent ?l - location ?r - receptacle ?o - object)
     :precondition (and
+            (not (isHot ?o))
+            (not (isSliced ?o))
             (receptacleType ?r SinkBasinType)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
@@ -230,6 +232,7 @@
     :precondition (and
             (isClean ?o)
             (cleanable ?o)
+            (not (isSliced ?o))
             (or
                 (receptacleType ?r StoveBurnerType)
                 (receptacleType ?r MicrowaveType)
@@ -299,6 +302,8 @@
  (:action SliceObject
     :parameters (?a - agent ?l - location ?o - object ?ko - object)
     :precondition (and
+            (isClean ?o)
+            (cleanable ?o)
             (isHot ?o)
             (heatable ?o)
             (or

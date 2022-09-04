@@ -143,8 +143,6 @@
  (:action PutObjectInReceptacle1
     :parameters (?a - agent ?l - location ?ot - otype ?o - object ?r - receptacle) ;?rt - rtype)
     :precondition (and
-            (isHot ?o)
-            (heatable ?o)
             (atLocation ?a ?l)
             (receptacleAtLocation ?r ?l)
             (objectType ?o ?ot)
@@ -301,6 +299,7 @@
  (:action SliceObject
     :parameters (?a - agent ?l - location ?o - object ?ko - object)
     :precondition (and
+            (not (isHot ?o))
             (or
                 (objectType ?ko KnifeType)
                 (objectType ?ko ButterKnifeType)
