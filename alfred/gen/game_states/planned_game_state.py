@@ -426,11 +426,14 @@ class PlannedGameState(GameStateBase, ABC):
                 if object['objectId'] == on_obj and self.toggle_target is not None:
                     object_metadata['isOn'] = True
 
-            object_metadata['isToggled'] = False
             # TODO: verify
+            object_metadata['isToggled'] = False
             for toggle_obj in self.toggleable_object_ids:
                 if object['objectId'] == toggle_obj and self.toggle_target is not None:
                     object_metadata['isToggled'] = True
+            if object_metadata['isToggled'] != object['isToggled']:
+                warnings.warn("isToggled mismatch, microwave oven?")
+                object_metadata['isToggled'] = object['isToggled']
 
             object_metadata['inReceptacle'] = object['parentReceptacles']
                 # for in_receptacle_str in in_receptacle_strs:
@@ -442,6 +445,9 @@ class PlannedGameState(GameStateBase, ABC):
             for open_obj in self.currently_opened_object_ids:
                 if object['objectId'] == open_obj:
                     object_metadata['isOpen'] = True
+            if object_metadata['isOpen'] != object['isOpen']:
+                warnings.warn("isOpen mismatch")
+                object_metadata['isOpen'] = object['isOpen']
 
             # does agent hold this object
             object_metadata['holdsAny'] = object['isPickedUp']

@@ -216,16 +216,18 @@ class GameStateBase(object):
             action = action_or_ind
         return action, False
 
-    def store_image_name(self, name):
+    def store_image_name(self, name, bbox):
         constants.data_dict['images'].append({"high_idx": game_util.get_last_hl_action_index(),
                                               "low_idx": game_util.get_last_ll_action_index(),
-                                              "image_name": name})
+                                              "image_name": name,
+                                              "bbox": bbox})
 
     def store_ll_action(self, action):
         constants.data_dict['plan']['low_actions'].append(
             {"high_idx": len(constants.data_dict['plan']['high_pddl']) - 1,
              "api_action": action,
-             "discrete_action": self.get_ll_discrete_action(action)})
+             "discrete_action": self.get_ll_discrete_action(action),
+             "state_metadata": self.get_complete_env_state()})
 
     def get_ll_discrete_action(self, action):
         a_type = action['action']
@@ -421,7 +423,7 @@ class GameStateBase(object):
                                 depth_image = depth_image.astype(np.uint8)
                                 # cv2.imwrite(constants.save_depth_path + '/%09d.png' % im_ind, depth_image)
                                 game_util.store_image_name(
-                                    '%09d.png' % im_ind)  # eww... seriously need to clean this up
+                                    '%09d.png' % im_ind, self.env.last_event.instance_detections2D, before=False)  # eww... seriously need to clean this up
                                 im_ind += 1
                         if np.abs(action['horizon'] - self.env.last_event.metadata['agent']['cameraHorizon']) > 0.001:
                             end_horizon = action['horizon']
@@ -436,7 +438,8 @@ class GameStateBase(object):
                                 depth_image = depth_image * (255 / MAX_DEPTH)
                                 depth_image = depth_image.astype(np.uint8)
                                 # cv2.imwrite(constants.save_depth_path + '/%09d.png' % im_ind, depth_image)
-                                game_util.store_image_name('%09d.png' % im_ind)
+                                game_util.store_image_name('%09d.png' % im_ind,
+                                                           self.env.last_event.instance_detections2D, before=False)
                                 im_ind += 1
                         if np.abs(action['rotation'] - rotation['y']) > 0.001:
                             end_rotation = action['rotation']
@@ -450,15 +453,17 @@ class GameStateBase(object):
                                 depth_image = depth_image * (255 / MAX_DEPTH)
                                 depth_image = depth_image.astype(np.uint8)
                                 # cv2.imwrite(constants.save_depth_path + '/%09d.png' % im_ind, depth_image)
-                                game_util.store_image_name('%09d.png' % im_ind)
+                                game_util.store_image_name('%09d.png' % im_ind,
+                                                           self.env.last_event.instance_detections2D, before=False)
                                 im_ind += 1
 
                         self.event = self.env.step(action)
 
                     elif 'MoveAhead' in action['action']:
-                        self.store_ll_action(action)
-                        self.save_image(1)
+                        # self.store_ll_action(action)
+                        self.save_image(1, before=True)
                         events = self.env.smooth_move_ahead(action)
+                        self.store_ll_action(action)
                         for event in events:
                             im_ind = len(glob.glob(constants.save_path + '/*.png'))
                             cv2.imwrite(constants.save_path + '/%09d.png' % im_ind, event.frame[:, :, ::-1])
@@ -466,12 +471,15 @@ class GameStateBase(object):
                             depth_image = depth_image * (255 / MAX_DEPTH)
                             depth_image = depth_image.astype(np.uint8)
                             # cv2.imwrite(constants.save_depth_path + '/%09d.png' % im_ind, depth_image)
-                            game_util.store_image_name('%09d.png' % im_ind)
+                            game_util.store_image_name('%09d.png' % im_ind,
+                                                       self.env.last_event.instance_detections2D, before=False)
+                        last_action = action.copy()
 
                     elif 'Rotate' in action['action']:
-                        self.store_ll_action(action)
-                        self.save_image(1)
+                        # self.store_ll_action(action)
+                        self.save_image(1, before=True)
                         events = self.env.smooth_rotate(action)
+                        self.store_ll_action(action)
                         for event in events:
                             im_ind = len(glob.glob(constants.save_path + '/*.png'))
                             cv2.imwrite(constants.save_path + '/%09d.png' % im_ind, event.frame[:, :, ::-1])
@@ -479,12 +487,15 @@ class GameStateBase(object):
                             depth_image = depth_image * (255 / MAX_DEPTH)
                             depth_image = depth_image.astype(np.uint8)
                             # cv2.imwrite(constants.save_depth_path + '/%09d.png' % im_ind, depth_image)
-                            game_util.store_image_name('%09d.png' % im_ind)
+                            game_util.store_image_name('%09d.png' % im_ind,
+                                                       self.env.last_event.instance_detections2D, before=False)
+                        last_action = action.copy()
 
                     elif 'Look' in action['action']:
-                        self.store_ll_action(action)
-                        self.save_image(1)
+                        # self.store_ll_action(action)
+                        self.save_image(1, before=True)
                         events = self.env.smooth_look(action)
+                        self.store_ll_action(action)
                         for event in events:
                             im_ind = len(glob.glob(constants.save_path + '/*.png'))
                             cv2.imwrite(constants.save_path + '/%09d.png' % im_ind, event.frame[:, :, ::-1])
@@ -492,30 +503,32 @@ class GameStateBase(object):
                             depth_image = depth_image * (255 / MAX_DEPTH)
                             depth_image = depth_image.astype(np.uint8)
                             # cv2.imwrite(constants.save_depth_path + '/%09d.png' % im_ind, depth_image)
-                            game_util.store_image_name('%09d.png' % im_ind)
+                            game_util.store_image_name('%09d.png' % im_ind,
+                                                       self.env.last_event.instance_detections2D, before=False)
+                        last_action = action.copy()
 
                     elif 'OpenObject' in action['action']:
                         open_action = dict(action=action['action'],
                                            objectId=action['objectId'],
                                            moveMagnitude=1.0)
-                        self.store_ll_action(open_action)
-                        self.save_act_image(open_action, dir=constants.BEFORE)
-
+                        # self.store_ll_action(open_action)
+                        self.save_act_image(open_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(open_action)
-
-                        self.save_act_image(open_action, dir=constants.AFTER)
+                        self.store_ll_action(open_action)
+                        self.save_act_image(open_action, dir=constants.AFTER, before=False)
                         self.check_action_success(self.event)
+                        last_action = open_action.copy()
 
                     elif 'CloseObject' in action['action']:
                         close_action = dict(action=action['action'],
                                             objectId=action['objectId'])
-                        self.store_ll_action(close_action)
-                        self.save_act_image(close_action, dir=constants.BEFORE)
-
+                        # self.store_ll_action(close_action)
+                        self.save_act_image(close_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(close_action)
-
-                        self.save_act_image(close_action, dir=constants.AFTER)
+                        self.store_ll_action(close_action)
+                        self.save_act_image(close_action, dir=constants.AFTER, before=False)
                         self.check_action_success(self.event)
+                        last_action = close_action.copy()
 
                     elif 'PickupObject' in action['action']:
                         # [hack] correct object ids of slices
@@ -539,18 +552,18 @@ class GameStateBase(object):
                         self.check_obj_visibility(action, min_pixels=10)
                         pickup_action = dict(action=action['action'],
                                              objectId=action['objectId'])
-                        self.store_ll_action(pickup_action)
-                        self.save_act_image(pickup_action, dir=constants.BEFORE)
-
+                        # self.store_ll_action(pickup_action)
+                        self.save_act_image(pickup_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(pickup_action)
-
-                        self.save_act_image(pickup_action, dir=constants.AFTER)
+                        self.store_ll_action(pickup_action)
+                        self.save_act_image(pickup_action, dir=constants.AFTER, before=False)
                         self.check_action_success(self.event)
 
                         # close the receptacle if needed
                         if parent_recep is not None:
                             parent_recep = game_util.get_object(parent_recep['objectId'], self.env.last_event.metadata)
                             self.close_recep(parent_recep)  # stores LL action
+                        last_action = pickup_action.copy()
 
                     elif 'PutObject' in action['action']:
                         if len(self.env.last_event.metadata['inventoryObjects']) > 0:
@@ -558,26 +571,6 @@ class GameStateBase(object):
                         else:
                             raise RuntimeError("Taking 'PutObject' action with no held inventory object")
                         action['objectId'] = inv_obj
-
-                        # if action['objectId'].split('|')[0] in ['Knife', 'ButterKnife'] and \
-                        #         action['receptacleObjectId'].split('|')[0] in ['Toaster', 'Fridge', 'Microwave', 'Stoveburner', 'Pan', 'Pot']:
-                        #     for recep_id, _ in self.receptacle_to_point.items():
-                        #         if recep_id.split('|')[0] not in ['Toaster', 'Microwave', 'Fridge', 'Stoveburner', 'Pan', 'Pot']:
-                        #             try:
-                        #                 print(recep_id)
-                        #                 action['receptacleObjectId'] = recep_id
-                        #                 # put_action = dict(action='PutObject',
-                        #                 #                   objectId=recep_id,
-                        #                 #                   forceAction=True,
-                        #                 #                   placeStationary=True)
-                        #                 # self.store_ll_action(put_action)
-                        #                 # self.save_act_image(put_action, dir=constants.BEFORE)
-                        #                 # self.event = self.env.step(put_action)
-                        #                 # self.save_act_image(put_action, dir=constants.AFTER)
-                        #                 # self.check_obj_visibility(put_action)
-                        #                 # self.check_action_success(self.event)
-                        #             except:
-                        #                 continue
 
                         # open the receptacle if needed
                         parent_recep = game_util.get_object(action['receptacleObjectId'], self.env.last_event.metadata)
@@ -599,12 +592,12 @@ class GameStateBase(object):
                                           objectId=action['receptacleObjectId'],
                                           forceAction=False,
                                           placeStationary=True)
-                        self.store_ll_action(put_action)
-                        self.save_act_image(put_action, dir=constants.BEFORE)
+                        # self.store_ll_action(put_action)
+                        self.save_act_image(put_action, dir=constants.BEFORE, before=True)
 
                         self.event = self.env.step(put_action)
-
-                        self.save_act_image(put_action, dir=constants.AFTER)
+                        self.store_ll_action(put_action)
+                        self.save_act_image(put_action, dir=constants.AFTER, before=False)
                         self.check_obj_visibility(action)
                         self.check_action_success(self.event)
 
@@ -612,6 +605,7 @@ class GameStateBase(object):
                         if parent_recep is not None:
                             parent_recep = game_util.get_object(parent_recep['objectId'], self.env.last_event.metadata)
                             self.close_recep(parent_recep)  # stores LL action
+                        last_action = put_action.copy()
 
                     elif 'CleanObject' in action['action']:
                         # put the object in the sink
@@ -621,10 +615,11 @@ class GameStateBase(object):
                                           objectId=sink_obj_id,
                                           forceAction=False,
                                           placeStationary=True)
-                        self.store_ll_action(put_action)
-                        self.save_act_image(put_action, dir=constants.BEFORE)
+                        # self.store_ll_action(put_action)
+                        self.save_act_image(put_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(put_action)
-                        self.save_act_image(put_action, dir=constants.AFTER)
+                        self.store_ll_action(put_action)
+                        self.save_act_image(put_action, dir=constants.AFTER, before=False)
                         self.check_obj_visibility(put_action)
                         self.check_action_success(self.event)
 
@@ -633,11 +628,12 @@ class GameStateBase(object):
                         clean_action['action'] = 'ToggleObjectOn'
                         clean_action['objectId'] = game_util.get_obj_of_type_closest_to_obj(
                             "Faucet", inv_obj['objectId'], self.env.last_event.metadata)['objectId']
-                        self.store_ll_action(clean_action)
-                        self.save_act_image(clean_action, dir=constants.BEFORE)
+                        # self.store_ll_action(clean_action)
+                        self.save_act_image(clean_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step({k: clean_action[k]
                                                     for k in ['action', 'objectId']})
-                        self.save_act_image(clean_action, dir=constants.AFTER)
+                        self.store_ll_action(clean_action)
+                        self.save_act_image(clean_action, dir=constants.AFTER, before=False)
                         self.check_action_success(self.event)
                         # Need to delay one frame to let `isDirty` update on stream-affected.
                         self.env.noop()
@@ -656,22 +652,25 @@ class GameStateBase(object):
                         # turn off the tap
                         close_action = copy.deepcopy(clean_action)
                         close_action['action'] = 'ToggleObjectOff'
-                        self.store_ll_action(close_action)
-                        self.save_act_image(close_action, dir=constants.BEFORE)
+                        # self.store_ll_action(close_action)
+                        self.save_act_image(close_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step({k: close_action[k]
                                                     for k in ['action', 'objectId']})
-                        self.save_act_image(action, dir=constants.AFTER)
+                        self.store_ll_action(close_action)
+                        self.save_act_image(action, dir=constants.AFTER, before=False)
                         self.check_action_success(self.event)
 
                         # pick up the object from the sink
                         pickup_action = dict(action='PickupObject',
                                              objectId=inv_obj['objectId'])
-                        self.store_ll_action(pickup_action)
-                        self.save_act_image(pickup_action, dir=constants.BEFORE)
+                        # self.store_ll_action(pickup_action)
+                        self.save_act_image(pickup_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(pickup_action)
-                        self.save_act_image(pickup_action, dir=constants.AFTER)
+                        self.store_ll_action(pickup_action)
+                        self.save_act_image(pickup_action, dir=constants.AFTER, before=False)
                         self.check_obj_visibility(pickup_action)
                         self.check_action_success(self.event)
+                        last_action = pickup_action.copy()
 
                     elif 'HeatObject' in action['action']:
                         # select the receptacle in which the object is heated
@@ -694,10 +693,11 @@ class GameStateBase(object):
                                               objectId=microwave_obj_id,
                                               forceAction=forceAction,
                                               placeStationary=True)
-                            self.store_ll_action(put_action)
-                            self.save_act_image(put_action, dir=constants.BEFORE)
+                            # self.store_ll_action(put_action)
+                            self.save_act_image(put_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step(put_action)
-                            self.save_act_image(put_action, dir=constants.AFTER)
+                            self.store_ll_action(put_action)
+                            self.save_act_image(put_action, dir=constants.AFTER, before=False)
                             self.check_obj_visibility(put_action)
                             self.check_action_success(self.event)
 
@@ -709,20 +709,22 @@ class GameStateBase(object):
                             heat_action = copy.deepcopy(action)
                             heat_action['action'] = 'ToggleObjectOn'
                             heat_action['objectId'] = microwave_obj_id
-                            self.store_ll_action(heat_action)
-                            self.save_act_image(heat_action, dir=constants.BEFORE)
+                            # self.store_ll_action(heat_action)
+                            self.save_act_image(heat_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step({k: heat_action[k]
                                                         for k in ['action', 'objectId']})
-                            self.save_act_image(heat_action, dir=constants.AFTER)
+                            self.store_ll_action(heat_action)
+                            self.save_act_image(heat_action, dir=constants.AFTER, before=False)
 
                             # turn off the microwave
                             stop_action = copy.deepcopy(heat_action)
                             stop_action['action'] = 'ToggleObjectOff'
-                            self.store_ll_action(stop_action)
-                            self.save_act_image(stop_action, dir=constants.BEFORE)
+                            # self.store_ll_action(stop_action)
+                            self.save_act_image(stop_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step({k: stop_action[k]
                                                         for k in ['action', 'objectId']})
-                            self.save_act_image(stop_action, dir=constants.AFTER)
+                            self.store_ll_action(stop_action)
+                            self.save_act_image(stop_action, dir=constants.AFTER, before=False)
 
                             # open the microwave
                             microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
@@ -731,16 +733,19 @@ class GameStateBase(object):
                             # pick up the object from the microwave
                             pickup_action = dict(action='PickupObject',
                                                  objectId=inv_obj['objectId'])
-                            self.store_ll_action(pickup_action)
-                            self.save_act_image(pickup_action, dir=constants.BEFORE)
+                            # self.store_ll_action(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step(pickup_action)
-                            self.save_act_image(pickup_action, dir=constants.AFTER)
+                            self.store_ll_action(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.AFTER, before=False)
                             self.check_obj_visibility(pickup_action)
                             self.check_action_success(self.event)
+                            last_action = pickup_action.copy()
 
                             # close the microwave again
                             microwave_obj = game_util.get_object(microwave_obj_id, self.env.last_event.metadata)
                             self.close_recep(microwave_obj)
+                            # self.store_ll_action(pickup_action)
 
                         # TODO: support kettle as receptacle for water
                         else:  # StoveBurner (for stoveburner, the object should be placed in a pan or pot)
@@ -764,10 +769,11 @@ class GameStateBase(object):
                                               placeStationary=True)
 
                             action['objectId'] = inv_obj['objectId']
-                            self.store_ll_action(put_action)
-                            self.save_act_image(put_action, dir=constants.BEFORE)
+                            # self.store_ll_action(put_action)
+                            self.save_act_image(put_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step(put_action)
-                            self.save_act_image(put_action, dir=constants.AFTER)
+                            self.store_ll_action(put_action)
+                            self.save_act_image(put_action, dir=constants.AFTER, before=False)
                             self.check_obj_visibility(put_action)
                             self.check_action_success(self.event)
 
@@ -776,10 +782,11 @@ class GameStateBase(object):
                             if 'StoveBurner' not in parent_obj_id:
                                 pickup_action = dict(action='PickupObject',
                                                      objectId=heat_recep_object_id)
-                                self.store_ll_action(pickup_action)
-                                self.save_act_image(pickup_action, dir=constants.BEFORE)
+                                # self.store_ll_action(pickup_action)
+                                self.save_act_image(pickup_action, dir=constants.BEFORE, before=True)
                                 self.event = self.env.step(pickup_action)
-                                self.save_act_image(pickup_action, dir=constants.AFTER)
+                                self.store_ll_action(pickup_action)
+                                self.save_act_image(pickup_action, dir=constants.AFTER, before=False)
                                 self.check_obj_visibility(pickup_action)
                                 self.check_action_success(self.event)
 
@@ -794,10 +801,11 @@ class GameStateBase(object):
                                                               objectId=stoveburner_obj_id,
                                                               forceAction=False,
                                                               placeStationary=True)
-                                            self.store_ll_action(put_action)
-                                            self.save_act_image(put_action, dir=constants.BEFORE)
+                                            # self.store_ll_action(put_action)
+                                            self.save_act_image(put_action, dir=constants.BEFORE, before=True)
                                             self.event = self.env.step(put_action)
-                                            self.save_act_image(put_action, dir=constants.AFTER)
+                                            self.store_ll_action(put_action)
+                                            self.save_act_image(put_action, dir=constants.AFTER, before=False)
                                             self.check_obj_visibility(put_action)
                                             self.check_action_success(self.event)
                                             break
@@ -827,31 +835,35 @@ class GameStateBase(object):
                             heat_action = copy.deepcopy(action)
                             heat_action['action'] = 'ToggleObjectOn'
                             heat_action['objectId'] = stoveknob_obj_id
-                            self.store_ll_action(heat_action)
-                            self.save_act_image(heat_action, dir=constants.BEFORE)
+                            # self.store_ll_action(heat_action)
+                            self.save_act_image(heat_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step({k: heat_action[k]
                                                         for k in ['action', 'objectId']})
-                            self.save_act_image(heat_action, dir=constants.AFTER)
+                            self.store_ll_action(heat_action)
+                            self.save_act_image(heat_action, dir=constants.AFTER, before=False)
 
                             # turn off the stoveknob
                             stop_action = copy.deepcopy(heat_action)
                             stop_action['action'] = 'ToggleObjectOff'
-                            self.store_ll_action(stop_action)
-                            self.save_act_image(stop_action, dir=constants.BEFORE)
+                            # self.store_ll_action(stop_action)
+                            self.save_act_image(stop_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step({k: stop_action[k]
                                                         for k in ['action', 'objectId']})
-                            self.save_act_image(stop_action, dir=constants.AFTER)
+                            self.store_ll_action(stop_action)
+                            self.save_act_image(stop_action, dir=constants.AFTER, before=False)
                             # self.env.step(action="Stand")
 
                             # pick up the object from the stoveburner
                             pickup_action = dict(action='PickupObject',
                                                  objectId=inv_obj['objectId'])
-                            self.store_ll_action(pickup_action)
-                            self.save_act_image(pickup_action, dir=constants.BEFORE)
+                            # self.store_ll_action(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.BEFORE, before=True)
                             self.event = self.env.step(pickup_action)
-                            self.save_act_image(pickup_action, dir=constants.AFTER)
+                            self.store_ll_action(pickup_action)
+                            self.save_act_image(pickup_action, dir=constants.AFTER, before=False)
                             self.check_obj_visibility(pickup_action)
                             self.check_action_success(self.event)
+                            last_action = pickup_action.copy()
 
                     elif 'CoolObject' in action['action']:
                         # open the fridge
@@ -866,21 +878,23 @@ class GameStateBase(object):
                                           objectId=fridge_obj_id,
                                           forceAction=False,
                                           placeStationary=True)
-                        self.store_ll_action(put_action)
-                        self.save_act_image(put_action, dir=constants.BEFORE)
+                        # self.store_ll_action(put_action)
+                        self.save_act_image(put_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(put_action)
-                        self.save_act_image(put_action, dir=constants.AFTER)
+                        self.store_ll_action(put_action)
+                        self.save_act_image(put_action, dir=constants.AFTER, before=False)
                         self.check_obj_visibility(put_action)
                         self.check_action_success(self.event)
 
                         # close and cool the object inside the fridge
                         cool_action = dict(action='CloseObject',
                                            objectId=action['receptacleObjectId'])
-                        self.store_ll_action(cool_action)
-                        self.save_act_image(action, dir=constants.BEFORE)
+                        # self.store_ll_action(cool_action)
+                        self.save_act_image(action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(cool_action)
-                        self.save_act_image(action, dir=constants.MIDDLE)
-                        self.save_act_image(action, dir=constants.AFTER)
+                        self.store_ll_action(cool_action)
+                        self.save_act_image(action, dir=constants.MIDDLE, before=False)
+                        self.save_act_image(action, dir=constants.AFTER, before=False)
 
                         # open the fridge again
                         fridge_obj = game_util.get_object(fridge_obj_id, self.env.last_event.metadata)
@@ -889,13 +903,14 @@ class GameStateBase(object):
                         # pick up the object from the fridge
                         pickup_action = dict(action='PickupObject',
                                              objectId=inv_obj['objectId'])
-                        self.store_ll_action(pickup_action)
-                        self.save_act_image(pickup_action, dir=constants.BEFORE)
+                        # self.store_ll_action(pickup_action)
+                        self.save_act_image(pickup_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(pickup_action)
-                        self.save_act_image(pickup_action, dir=constants.AFTER)
+                        self.store_ll_action(pickup_action)
+                        self.save_act_image(pickup_action, dir=constants.AFTER, before=False)
                         self.check_obj_visibility(pickup_action)
                         self.check_action_success(self.event)
-
+                        last_action = pickup_action.copy()
                         # close the fridge again
                         fridge_obj = game_util.get_object(fridge_obj_id, self.env.last_event.metadata)
                         self.close_recep(fridge_obj)
@@ -906,11 +921,13 @@ class GameStateBase(object):
 
                         toggle_obj = game_util.get_object(action['objectId'], self.env.last_event.metadata)
                         on_action['action'] = 'ToggleObjectOff' if toggle_obj['isToggled'] else 'ToggleObjectOn'
-                        self.store_ll_action(on_action)
-                        self.save_act_image(on_action, dir=constants.BEFORE)
+                        # self.store_ll_action(on_action)
+                        self.save_act_image(on_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(on_action)
-                        self.save_act_image(on_action, dir=constants.AFTER)
+                        self.store_ll_action(on_action)
+                        self.save_act_image(on_action, dir=constants.AFTER, before=False)
                         self.check_action_success(self.event)
+                        last_action = on_action.copy()
 
                     elif 'SliceObject' in action['action']:
                         # open the receptacle if needed
@@ -921,11 +938,13 @@ class GameStateBase(object):
                         # slice the object
                         slice_action = dict(action=action['action'],
                                             objectId=action['objectId'])
-                        self.store_ll_action(slice_action)
-                        self.save_act_image(slice_action, dir=constants.BEFORE)
+                        # self.store_ll_action(slice_action)
+                        self.save_act_image(slice_action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(slice_action)
-                        self.save_act_image(action, dir=constants.AFTER)
+                        self.store_ll_action(slice_action)
+                        self.save_act_image(action, dir=constants.AFTER, before=False)
                         self.check_action_success(self.event)
+                        # last_action = slice_action.copy()
 
                         # close the receptacle if needed
                         if parent_recep is not None:
@@ -947,12 +966,14 @@ class GameStateBase(object):
                                                   objectId=valid_recep_id,
                                                   forceAction=True,
                                                   placeStationary=True)
-                                self.store_ll_action(put_action)
-                                self.save_act_image(put_action, dir=constants.BEFORE)
+                                # self.store_ll_action(put_action)
+                                self.save_act_image(put_action, dir=constants.BEFORE, before=True)
                                 self.event = self.env.step(put_action)
-                                self.save_act_image(put_action, dir=constants.AFTER)
+                                self.store_ll_action(put_action)
+                                self.save_act_image(put_action, dir=constants.AFTER, before=False)
                                 self.check_obj_visibility(put_action)
                                 self.check_action_success(self.event)
+                                last_action = put_action.copy()
                                 break
                             except:
                                 continue
@@ -963,17 +984,19 @@ class GameStateBase(object):
                         if action['action'] == 'PickupObject':
                             self.check_obj_visibility(action)
 
-                        self.store_ll_action(action)
-                        self.save_act_image(action, dir=constants.BEFORE)
-
+                        # self.store_ll_action(action)
+                        self.save_act_image(action, dir=constants.BEFORE, before=True)
                         self.event = self.env.step(action)
-
-                        self.save_act_image(action, dir=constants.AFTER)
+                        self.store_ll_action(action)
+                        self.save_act_image(action, dir=constants.AFTER, before=False)
+                        last_action = action.copy()
 
                         if action['action'] == 'PutObject':
                             self.check_obj_visibility(action)
                 else:
                     self.event = self.env.step(action)
+                    last_action = None
+
                 new_pose = game_util.get_pose(self.event)
                 point_dists = np.sum(np.abs(self.gt_graph.points - np.array(new_pose)[:2]), axis=1)
                 if np.min(point_dists) > 0.0001:
@@ -1006,6 +1029,8 @@ class GameStateBase(object):
         if self.env.last_event.metadata['lastActionSuccess'] and process_frame:
             self.process_frame()
 
+        return last_action
+
     def correct_slice_id(self, object_id):
         main_obj = game_util.get_object(object_id, self.env.last_event.metadata)
         if (main_obj is not None and
@@ -1033,21 +1058,24 @@ class GameStateBase(object):
             open_action = dict(action='OpenObject',
                                objectId=recep['objectId'])
 
-            self.store_ll_action(open_action)
-            self.save_act_image(open_action, dir=constants.BEFORE)
+            # self.store_ll_action(open_action)
+            self.save_act_image(open_action, dir=constants.BEFORE, before=True)
             self.event = self.env.step(open_action)
-            self.save_act_image(open_action, dir=constants.AFTER)
+            self.store_ll_action(open_action)
+            self.save_act_image(open_action, dir=constants.AFTER, before=False)
             self.check_action_success(self.event)
 
     def close_recep(self, recep):
         if recep['openable'] and recep['isOpen']:
             close_action = dict(action='CloseObject',
                                 objectId=recep['objectId'])
-            self.store_ll_action(close_action)
-            self.save_act_image(close_action, dir=constants.BEFORE)
+            # self.store_ll_action(close_action)
+            self.save_act_image(close_action, dir=constants.BEFORE, before=True)
             self.event = self.env.step(close_action)
-            self.save_act_image(close_action, dir=constants.AFTER)
+            self.store_ll_action(close_action)
+            self.save_act_image(close_action, dir=constants.AFTER, before=False)
             self.check_action_success(self.event)
+            last_action = close_action.copy()
 
     def get_parent_receps(self, object_id):
         obj = game_util.get_object(object_id, self.env.last_event.metadata)
@@ -1078,10 +1106,10 @@ class GameStateBase(object):
         if not event.metadata['lastActionSuccess']:
             raise Exception("API Action Failed: %s" % event.metadata['errorMessage'])
 
-    def save_act_image(self, action, dir=constants.BEFORE):
-        self.save_image(constants.SAVE_FRAME_BEFORE_AND_AFTER_COUNTS[action['action']][dir])
+    def save_act_image(self, action, before, dir=constants.BEFORE):
+        self.save_image(constants.SAVE_FRAME_BEFORE_AND_AFTER_COUNTS[action['action']][dir], before)
 
-    def save_image(self, count):
+    def save_image(self, count, before=True):
         if constants.RECORD_VIDEO_IMAGES:
             im_ind = -1
             for i in range(count):
@@ -1091,7 +1119,8 @@ class GameStateBase(object):
                 depth_image = depth_image * (255 / MAX_DEPTH)
                 depth_image = depth_image.astype(np.uint8)
                 # cv2.imwrite(constants.save_depth_path + '/%09d.png' % im_ind, depth_image)
-                game_util.store_image_name('%09d.png' % im_ind)
+                game_util.store_image_name('%09d.png' % im_ind,
+                                           self.env.last_event.instance_detections2D, before=before)
 
                 self.env.noop()
             return im_ind

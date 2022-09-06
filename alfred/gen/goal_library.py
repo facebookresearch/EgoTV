@@ -496,10 +496,10 @@ gdict["clean_and_heat"] = \
                 (exists (?o # object)
                     (exists (?a # agent)
                         (and 
-                            (sliceable ?o)
+                            (cleanable ?o)
                             (heatable ?o)
                             (objectType ?o {obj}Type) 
-                            (isSliced ?o)
+                            (isClean ?o)
                             (isHot ?o)
                             (holds ?a ?o)
                             (holdsAny ?a)

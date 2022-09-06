@@ -794,7 +794,7 @@ if __name__ == "__main__":
                         help="where to save the csv files of all generated trajectories for dataset stats")
     parser.add_argument('--domain_root_path', type=str, default="planner/domains", help="PDDL action definitions")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
-    parser.add_argument("--just_examine", default=True,
+    parser.add_argument("--just_examine", default=False,
                         help="just examine what data is gathered; don't gather more")
     parser.add_argument("--in_parallel", action='store_true',
                         help="this collection will run in parallel with others, so load from disk on every new sample")
@@ -805,7 +805,7 @@ if __name__ == "__main__":
     parser.add_argument("--repeats_per_cond", type=int, default=2)
     parser.add_argument("--trials_before_fail", type=int, default=5)
     parser.add_argument("--async_load_every_n_samples", type=int, default=10)
-    parser.add_argument("--num_generate_traj", type=int, default=50)
+    parser.add_argument("--num_generate_traj", type=int, default=1000)
 
     parse_args = parser.parse_args()
 

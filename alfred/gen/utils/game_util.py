@@ -347,16 +347,23 @@ def get_task_str(object_ind, receptacle_ind=None, toggle_ind=None, mrecep_ind=No
     return filled_in_str
 
 
-def get_last_hl_action_index():
-    return len(constants.data_dict['plan']['high_pddl']) - 1
+def get_last_hl_action_index(before):
+    if before:
+        return len(constants.data_dict['plan']['high_pddl']) - 1
+    else:
+        return len(constants.data_dict['plan']['high_pddl']) - 1
 
 
-def get_last_ll_action_index():
-    return len(constants.data_dict['plan']['low_actions']) - 1
+def get_last_ll_action_index(before):
+    if before:
+        return len(constants.data_dict['plan']['low_actions'])
+    else:
+        return len(constants.data_dict['plan']['low_actions']) - 1
 
 
-def store_image_name(name):
-    constants.data_dict['images'].append({"high_idx": get_last_hl_action_index(),
-                                          "low_idx": get_last_ll_action_index(),
-                                          "image_name": name})
+def store_image_name(name, bbox, before):
+    constants.data_dict['images'].append({"high_idx": get_last_hl_action_index(before),
+                                          "low_idx": get_last_ll_action_index(before),
+                                          "image_name": name,
+                                          "bbox": bbox})
 

@@ -364,7 +364,7 @@ class TaskGameStateFullKnowledge(TaskGameState):
         if constants.DEBUG:
             print('step action', game_util.get_action_str(action))
 
-        GameStateBase.step(self, action_or_ind)
+        last_action = GameStateBase.step(self, action_or_ind)
 
         if action['action'] == 'PickupObject':
             if 'receptacleObjectId' in action:
@@ -469,6 +469,12 @@ class TaskGameStateFullKnowledge(TaskGameState):
                     # used when object is cleaned, then sliced
                     if action['objectId'] in self.cool_object_ids:
                         self.cleaned_object_ids.add(sliced_object_id)
+
+        constants.data_dict['plan']['low_actions'][-1] = \
+            {"high_idx": len(constants.data_dict['plan']['high_pddl']) - 1,
+             "api_action": last_action,
+             "discrete_action": self.get_ll_discrete_action(last_action),
+             "state_metadata": self.get_complete_env_state()}
 
         visible_objects = self.event.instance_detections2D.keys() if self.event.instance_detections2D != None else []
         for obj in visible_objects:
