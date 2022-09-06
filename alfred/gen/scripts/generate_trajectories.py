@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -788,9 +788,9 @@ if __name__ == "__main__":
     # settings
     parser.add_argument('--force_unsave', action='store_true', help="don't save any data (for debugging purposes)")
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--save_path', type=str, default="dataset/new_trajectories",
+    parser.add_argument('--save_path', type=str, default="/fb-agios-acai-efs/dataset/new_trajectories",
                         help="where to save the generated data")
-    parser.add_argument('--save_path_csv', type=str, default="dataset/csv_files",
+    parser.add_argument('--save_path_csv', type=str, default="/fb-agios-acai-efs/dataset/csv_files",
                         help="where to save the csv files of all generated trajectories for dataset stats")
     parser.add_argument('--domain_root_path', type=str, default="planner/domains", help="PDDL action definitions")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
