@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -53,21 +53,6 @@ for goal in constants.ALL_GOALS:
         goal_to_pickup_type[goal].append('Coolable')
 
 goal_to_receptacle_type = {'look_at_obj_in_light': "Toggleable"}
-
-# goal_to_invalid_receptacle = {'heat_and_place': {'StoveBurner'},
-#                               'cool_and_place': {'Fridge'},
-#                               'clean_and_place': {'SinkBasin'},
-#                               'place_2': {'CoffeeMachine', 'ToiletPaperHanger', 'HandTowelHolder'},
-#                               'heat_and_stack_and_place': {'Microwave'},
-#                               'cool_and_stack_and_place': {'Fridge'},
-#                               'clean_and_stack_and_place': {'SinkBasin'},
-#                               'heat_and_slice_and_place': {'Microwave'},
-#                               'cool_and_slice_and_place': {'Fridge'},
-#                               'clean_and_slice_and_place': {'SinkBasin'},
-#                               'slice_and_heat_and_clean': {'SinkBasin', 'Microwave'},
-#                               'cool_and_slice_and_clean': {'SinkBasin', 'Fridge'},
-#                               'clean_then_slice_then_place': {'SinkBasin'},
-#                               'cool_then_slice_and_clean': {'SinkBasin', 'Fridge'}}
 
 goal_to_invalid_receptacle = dict()
 for goal in constants.ALL_GOALS:
@@ -463,10 +448,45 @@ def main(args):
                 obj_to_scene_ids[obj].add(id_str)
 
     # scene-goal database
-    for g in constants.GOALS:
-        for st in constants.GOALS_VALID[g]:
-            scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]])
-        scenes_for_goal[g] = set(scenes_for_goal[g])
+    if args.split_type in ['train', 'abstraction']:
+        for g in constants.train_split:
+            for st in constants.GOALS_VALID[g]:
+                scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
+                                           if s in constants.TRAIN_SCENE_NUMBERS])
+            scenes_for_goal[g] = set(scenes_for_goal[g])
+    elif args.split_type == 'sub_goal_composition':
+        for g in constants.sub_goal_composition_split:
+            for st in constants.GOALS_VALID[g]:
+                scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
+                                           if s in constants.TRAIN_SCENE_NUMBERS])
+            scenes_for_goal[g] = set(scenes_for_goal[g])
+    elif args.split_type == 'ordering_composition':
+        for g in constants.ordering_composition_split:
+            for st in constants.GOALS_VALID[g]:
+                scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
+                                           if s in constants.TRAIN_SCENE_NUMBERS])
+            scenes_for_goal[g] = set(scenes_for_goal[g])
+    elif args.split_type == 'verb_noun_composition':
+        for g in constants.verb_noun_composition_split:
+            for st in constants.GOALS_VALID[g]:
+                scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
+                                           if s in constants.TRAIN_SCENE_NUMBERS])
+            scenes_for_goal[g] = set(scenes_for_goal[g])
+    elif args.split_type == 'context_verb_noun_composition':
+        for g in constants.context_verb_noun_composition_split:
+            for st in constants.GOALS_VALID[g]:
+                scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
+                                           if s in constants.TRAIN_SCENE_NUMBERS and s not in range(16, 26)])
+            scenes_for_goal[g] = set(scenes_for_goal[g])
+    elif args.split_type == 'context_goal_composition':
+        for g in constants.train_split:
+            for st in constants.GOALS_VALID[g]:
+                scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
+                                           if s in constants.TEST_SCENE_NUMBERS])
+            scenes_for_goal[g] = set(scenes_for_goal[g])
+    else:
+        raise Exception("Not a valid split type")
+
 
     # scene-type database
     for st in constants.SCENE_TYPE:
@@ -488,7 +508,6 @@ def main(args):
     env = ThorEnv()
     errors = {}  # map from error strings to counts, to be shown after every failure.
 
-    goal_candidates = constants.GOALS[:]
     pickup_candidates = list(set().union(*[constants.VAL_RECEPTACLE_OBJECTS[obj]  # Union objects that can be placed.
                                            for obj in constants.VAL_RECEPTACLE_OBJECTS]))
     pickup_candidates = [p for p in pickup_candidates if constants.OBJ_PARENTS[p] in obj_to_scene_ids]
@@ -496,7 +515,29 @@ def main(args):
     receptacle_candidates = [obj for obj in constants.VAL_RECEPTACLE_OBJECTS
                              if obj not in constants.MOVABLE_RECEPTACLES and obj in obj_to_scene_ids] + \
                             [obj for obj in constants.VAL_ACTION_OBJECTS["Toggleable"]
-                             if obj in obj_to_scene_ids]
+                             if obj in obj_to_scene_ids and obj != 'StoveKnob']
+
+    if args.split_type in ['train', 'abstraction', 'context_goal_composition']:
+        # TODO: yet to implement
+        goal_candidates = constants.train_split[:]
+        pickup_candidates =
+        receptacle_candidates = [obj for obj in receptacle_candidates if obj not in ['Plate', 'Bowl']]
+    elif args.split_type == 'sub_goal_composition':
+        goal_candidates = constants.sub_goal_composition_split[:]
+        receptacle_candidates = [obj for obj in receptacle_candidates if obj not in ['Plate', 'Bowl']]
+    elif args.split_type == 'ordering_composition':
+        goal_candidates = constants.ordering_composition_split[:]
+        receptacle_candidates = [obj for obj in receptacle_candidates if obj not in ['Plate', 'Bowl']]
+    elif args.split_type == 'verb_noun_composition':
+        goal_candidates = constants.verb_noun_composition_split[:]
+        pickup_candidates = ['Mug', 'Knife', 'Lettuce']
+        receptacle_candidates = ['Plate', 'Bowl']
+    elif args.split_type == 'context_verb_noun_composition':
+        goal_candidates = constants.context_verb_noun_composition_split[:]
+        pickup_candidates =
+        receptacle_candidates =
+    else:
+        raise Exception("Not a valid split type")
 
     # toaster isn't interesting in terms of producing linguistic diversity
     receptacle_candidates.remove('Toaster')
@@ -520,7 +561,50 @@ def main(args):
             sys.exit("No valid tuples left to sample (all are known to fail or already have %d trajectories" %
                      args.repeats_per_cond)
         gtype, pickup_obj, movable_obj, receptacle_obj, sampled_scene = sampled_task
+        subgoals = gtype.split('_')
+        if args.split_type == 'sub_goal_composition':
+            if ('cool' in subgoals and pickup_obj == 'Mug') or \
+                ('clean' in subgoals and pickup_obj == 'Knife') or \
+                ('slice' in subgoals and pickup_obj == 'Lettuce') or \
+                ('heat' in subgoals and pickup_obj == 'Tomato' and sampled_scene in range(1, 6)) or \
+                ('cool' in subgoals and pickup_obj == 'Potato' and sampled_scene in range(6, 11)) or \
+                ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)):
+                print("............. Sample does not belong to split {}: Skipping ..............".format(
+                    args.split_type))
+                continue
+        elif args.split_type == 'ordering_composition':
+            if ('cool' in subgoals and pickup_obj == 'Mug') or \
+                ('clean' in subgoals and pickup_obj == 'Knife') or \
+                ('slice' in subgoals and pickup_obj == 'Lettuce') or \
+                ('heat' in subgoals and pickup_obj == 'Tomato' and sampled_scene in range(1, 6)) or \
+                ('cool' in subgoals and pickup_obj == 'Potato' and sampled_scene in range(6, 11)) or \
+                ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)):
+                print("............. Sample does not belong to split {}: Skipping ..............".format(
+                    args.split_type))
+                continue
+        elif args.split_type == 'verb_noun_composition':
+            if  ('cool' not in subgoals and pickup_obj == 'Mug') or \
+                ('clean' not in subgoals and pickup_obj == 'Knife') or \
+                ('slice' not in subgoals and pickup_obj == 'Lettuce') or \
+                ('heat' in subgoals and pickup_obj == 'Tomato' and sampled_scene in range(1, 6)) or \
+                ('cool' in subgoals and pickup_obj == 'Potato' and sampled_scene in range(6, 11)) or \
+                ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)):
+                print("............. Sample does not belong to split {}: Skipping ..............".format(
+                    args.split_type))
+                continue
+        elif args.split_type == 'context_verb_noun_composition':
+            # TODO: yet to implement
+            if (sampled_scene in range(1, 6) and ) or \
+                ('cool' in subgoals and pickup_obj == 'Mug') or \
+                ('clean' in subgoals and pickup_obj == 'Knife') or \
+                ('slice' in subgoals and pickup_obj == 'Lettuce'):
+                print("............. Sample does not belong to split {}: Skipping ..............".format(
+                    args.split_type))
+                continue
+
+
         print("sampled tuple: " + str((gtype, pickup_obj, movable_obj, receptacle_obj, sampled_scene)))
+
 
         if 'then' not in gtype:
             domain_path = os.path.join(args.domain_root_path, 'all_goals.pddl')
@@ -632,6 +716,7 @@ def main(args):
                         os.mkdir(args.save_path_csv)
                     # csv_id = gtype + '|' + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
+                    csv_id = args.split_type + '_' + csv_id
                     csv_filepath = os.path.join(args.save_path_csv, csv_id)
                     succ_traj.to_csv(csv_filepath)
                     # plot_dataset_stats(succ_traj)
@@ -788,9 +873,9 @@ if __name__ == "__main__":
     # settings
     parser.add_argument('--force_unsave', action='store_true', help="don't save any data (for debugging purposes)")
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--save_path', type=str, default="/fb-agios-acai-efs/dataset/new_trajectories",
+    parser.add_argument('--save_path', type=str, default="dataset/test_splits/sub_goal_composition_split",
                         help="where to save the generated data")
-    parser.add_argument('--save_path_csv', type=str, default="/fb-agios-acai-efs/dataset/csv_files",
+    parser.add_argument('--save_path_csv', type=str, default="dataset/test_splits/csv_files",
                         help="where to save the csv files of all generated trajectories for dataset stats")
     parser.add_argument('--domain_root_path', type=str, default="planner/domains", help="PDDL action definitions")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
@@ -800,12 +885,15 @@ if __name__ == "__main__":
                         help="this collection will run in parallel with others, so load from disk on every new sample")
     parser.add_argument("-n", "--num_threads", type=int, default=0, help="number of processes for parallel mode")
     parser.add_argument('--json_file', type=str, default="", help="path to json file with trajectory dump")
+    parser.add_argument('--split_type', type=str, default="sub_goal_composition", help="train-test split type",
+                        choices=["train", "sub_goal_composition", "ordering_composition", "verb_noun_composition",
+                                 "context_goal_composition", "context_verb_noun_composition", "abstraction"])
 
     # params
     parser.add_argument("--repeats_per_cond", type=int, default=2)
     parser.add_argument("--trials_before_fail", type=int, default=5)
     parser.add_argument("--async_load_every_n_samples", type=int, default=10)
-    parser.add_argument("--num_generate_traj", type=int, default=1000)
+    parser.add_argument("--num_generate_traj", type=int, default=500)
 
     parse_args = parser.parse_args()
 

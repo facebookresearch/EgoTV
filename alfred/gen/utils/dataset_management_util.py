@@ -1,5 +1,6 @@
 import os
 import shutil
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -79,29 +80,50 @@ def load_fails_from_disk(succ_dir, to_write=None):
 
 
 def plot_dataset_stats(succ_traj):
-    succ_traj[['goal', 'pickup']].groupby('goal').pickup.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+    # TODO: measure diversity of (["goal", "pickup", "movable", "receptacle", "scene"]) tuples
+    plt.figure(figsize=(30, 30))
+    succ_traj[['goal', 'pickup']].groupby('goal').pickup.value_counts().unstack().plot.barh(stacked=True,
+                                                                                            figsize=(8, 6),
+                                                                                            rot=45)
     plt.title("goals vs. objects")
+    plt.tight_layout()
     plt.show()
     try:
         movable_traj = succ_traj[succ_traj.movable != 'None']
-        movable_traj[['goal', 'movable']].groupby('goal').movable.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+        movable_traj[['goal', 'movable']].groupby('goal').movable.value_counts().unstack().plot.barh(stacked=True,
+                                                                                                     figsize=(8, 6),
+                                                                                                     rot=45)
         plt.title("goals vs. movable receptacles")
+        plt.tight_layout()
         plt.show()
     except TypeError:
         print("no movable objects used")
     recep_traj = succ_traj[succ_traj.receptacle != 'None']
-    recep_traj[['goal', 'receptacle']].groupby('goal').receptacle.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+    recep_traj[['goal', 'receptacle']].groupby('goal').receptacle.value_counts().unstack().plot.barh(stacked=True,
+                                                                                                     figsize=(8, 6),
+                                                                                                     rot=45)
     plt.title("goals vs. all receptacles")
+    plt.tight_layout()
     plt.show()
-    succ_traj[['goal', 'scene']].groupby('goal').scene.value_counts().unstack().plot.barh(stacked=True, figsize=(8, 6), rot=45)
+    succ_traj[['goal', 'scene']].groupby('goal').scene.value_counts().unstack().plot.barh(stacked=True,
+                                                                                          figsize=(8, 6),
+                                                                                          rot=45)
     plt.title("goals vs. scenes")
+    plt.tight_layout()
     plt.show()
     succ_traj['goal'].value_counts().plot(kind='bar', figsize=(8, 6), rot=45)
     plt.title("goal counts")
+    plt.tight_layout()
     plt.show()
     succ_traj['pickup'].value_counts().plot(kind='bar', figsize=(8, 6), rot=45)
+    max_val = succ_traj['pickup'].value_counts().max()
+    plt.yticks(np.arange(0, max_val + 1, int(max_val / 10)))
     plt.title("all object counts")
+    plt.tight_layout()
     plt.show()
     recep_traj['receptacle'].value_counts().plot(kind='bar', figsize=(8, 6), rot=45)
+    max_val = recep_traj['receptacle'].value_counts().max()
+    plt.yticks(np.arange(0, max_val + 1, int(max_val / 10)))
     plt.title("all receptacle counts")
+    plt.tight_layout()
     plt.show()

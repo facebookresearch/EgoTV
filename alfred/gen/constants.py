@@ -32,7 +32,7 @@ PRUNE_UNREACHABLE_POINTS = True  # prune navigation points that were deemed unre
 
 CHOOSE_RANDOM_PLAN = True  # if False, only the best plan (cheapest) is selected
 
-#######################################################################################################################
+######################################################################################################################
 # Goals
 # sub-goals = pick, place, clean, slice, heat, cool
 # GOALS = ['clean_and_heat']
@@ -232,26 +232,179 @@ ALL_GOALS = ['clean_simple',
              'cool_then_clean_and_place',
              'cool_then_slice_and_place']
 
-GOALS_VALID = {}
-for goal in ALL_GOALS:
-    kitchen_flag = False
-    if goal == 'toggle_simple':
-        GOALS_VALID[goal] = {"LivingRoom", "Bedroom"}
-        continue
-    else:
-        GOALS_VALID[goal] = {"Kitchen"}
+######################## Train Split ############################
+train_split = ['clean_and_cool',
+               'clean_and_cool_then_slice',
+               'clean_and_place',
+               'clean_and_slice',
+               'clean_simple',
+               'clean_then_place',
+               'clean_then_slice',
+               'clean_then_slice_and_place',
+               'cool_and_slice_and_clean',
+               'cool_and_slice_then_clean',
+               'cool_simple',
+               'cool_then_clean',
+               'cool_then_clean_and_slice',
+               'cool_then_clean_then_slice',
+               'cool_then_slice',
+               'cool_then_slice_then_clean',
+               'heat_and_place',
+               'heat_simple',
+               'heat_then_place',
+               'pick_simple',
+               'place_simple',
+               'slice_and_clean_and_place',
+               'slice_and_clean_then_place',
+               'slice_and_cool',
+               'slice_and_heat',
+               'slice_and_heat_and_place',
+               'slice_and_heat_then_place',
+               'slice_and_place',
+               'slice_simple',
+               'slice_then_clean',
+               'slice_then_clean_and_cool',
+               'slice_then_clean_and_place',
+               'slice_then_clean_then_place',
+               'slice_then_cool',
+               'slice_then_cool_then_clean',
+               'slice_then_heat',
+               'slice_then_heat_and_place',
+               'slice_then_heat_then_place',
+               'slice_then_place']
 
-    for sub_goal in ['heat', 'cool', 'slice']:
-        if sub_goal in goal:
-            kitchen_flag = True
-            break
+######################### Test Splits #############################
+# clean_then_cool, heat_then_slice
+# removed {'clean_and_heat_then_slice', 'clean_then_cool_and_place', 'heat_then_clean_and_slice',
+# 'clean_then_heat_then_slice', 'heat_then_clean_and_slice', 'heat_then_clean_then_slice', 'heat_then_slice_then_clean'}
+# since they lie in both ordering_composition_split and sub_goal_composition_split
+ordering_composition_split = ['clean_and_slice_then_cool',
+                              'clean_then_cool',
+                              'clean_then_cool_and_slice',
+                              'clean_then_cool_then_slice',
+                              'clean_then_slice_then_cool',
+                              'heat_then_slice',
+                              'heat_then_slice_and_place',
+                              'slice_then_clean_then_cool']
+# heat with clean, cool with place
+# removed {'clean_and_heat_then_slice', 'clean_then_cool_and_place', 'heat_then_clean_and_slice',
+# 'clean_then_heat_then_slice', 'heat_then_clean_and_slice', 'heat_then_clean_then_slice', 'heat_then_slice_then_clean'}
+# since they lie in both ordering_composition_split and sub_goal_composition_split
+sub_goal_composition_split = ['clean_and_cool_then_place',
+                              'clean_and_heat',
+                              'clean_and_heat_then_place',
+                              'clean_and_slice_then_heat',
+                              'clean_then_heat',
+                              'clean_then_heat_and_place',
+                              'clean_then_heat_and_slice',
+                              'clean_then_heat_then_place',
+                              'clean_then_slice_then_heat',
+                              'cool_and_clean_and_place',
+                              'cool_and_place',
+                              'cool_and_slice_and_place',
+                              'cool_then_clean_and_place',
+                              'cool_then_clean_then_place',
+                              'cool_then_place',
+                              'cool_then_slice_and_place',
+                              'heat_and_clean_and_place',
+                              'heat_and_slice_then_clean',
+                              'heat_then_clean',
+                              'heat_then_clean_and_place',
+                              'heat_then_clean_then_place',
+                              'slice_and_cool_then_place',
+                              'slice_and_heat_and_clean',
+                              'slice_then_clean_and_heat',
+                              'slice_then_clean_then_heat',
+                              'slice_then_cool_and_place',
+                              'slice_then_cool_then_place',
+                              'slice_then_heat_then_clean']
 
-    if not kitchen_flag:
-        if 'clean' in goal:
-            GOALS_VALID[goal].add("Bathroom")
-        else:
-            if 'place' or 'stack' or 'locate' in goal:
-                GOALS_VALID[goal] = GOALS_VALID[goal].union(("Bathroom", "LivingRoom", "Bedroom"))
+verb_noun_composition_split = ['clean_and_cool',
+                               'clean_and_cool_then_slice',
+                               'clean_and_place',
+                               'clean_and_slice',
+                               'clean_then_place',
+                               'clean_then_slice',
+                               'clean_then_slice_and_place',
+                               'cool_and_slice_and_clean',
+                               'cool_and_slice_then_clean',
+                               'cool_then_clean',
+                               'cool_then_clean_and_slice',
+                               'cool_then_clean_then_slice',
+                               'cool_then_slice',
+                               'cool_then_slice_then_clean',
+                               'heat_and_place',
+                               'heat_then_place',
+                               'slice_and_clean_and_place',
+                               'slice_and_clean_then_place',
+                               'slice_and_cool',
+                               'slice_and_heat',
+                               'slice_and_heat_and_place',
+                               'slice_and_heat_then_place',
+                               'slice_and_place',
+                               'slice_then_clean',
+                               'slice_then_clean_and_cool',
+                               'slice_then_clean_and_place',
+                               'slice_then_clean_then_place',
+                               'slice_then_cool',
+                               'slice_then_cool_then_clean',
+                               'slice_then_heat',
+                               'slice_then_heat_and_place',
+                               'slice_then_heat_then_place',
+                               'slice_then_place']
+
+context_verb_noun_composition_split = ['clean_and_cool',
+                                       'clean_and_cool_then_slice',
+                                       'clean_and_place',
+                                       'clean_then_place',
+                                       'clean_then_slice_and_place',
+                                       'cool_and_slice_and_clean',
+                                       'cool_and_slice_then_clean',
+                                       'cool_then_clean',
+                                       'cool_then_clean_and_slice',
+                                       'cool_then_clean_then_slice',
+                                       'cool_then_slice',
+                                       'cool_then_slice_then_clean',
+                                       'heat_and_place',
+                                       'heat_then_place',
+                                       'slice_and_clean_and_place',
+                                       'slice_and_clean_then_place',
+                                       'slice_and_cool',
+                                       'slice_and_heat',
+                                       'slice_and_heat_and_place',
+                                       'slice_and_heat_then_place',
+                                       'slice_and_place',
+                                       'slice_then_clean_and_cool',
+                                       'slice_then_clean_and_place',
+                                       'slice_then_clean_then_place',
+                                       'slice_then_cool',
+                                       'slice_then_cool_then_clean',
+                                       'slice_then_heat',
+                                       'slice_then_heat_and_place',
+                                       'slice_then_heat_then_place',
+                                       'slice_then_place']
+###########################################################
+
+GOALS_VALID = {goal: {"Kitchen"} for goal in ALL_GOALS}
+# for goal in ALL_GOALS:
+# kitchen_flag = False
+# if goal == 'toggle_simple':
+#     GOALS_VALID[goal] = {"LivingRoom", "Bedroom"}
+#     continue
+# else:
+#     GOALS_VALID[goal] = {"Kitchen"}
+#
+# for sub_goal in ['heat', 'cool', 'slice']:
+#     if sub_goal in goal:
+#         kitchen_flag = True
+#         break
+#
+# if not kitchen_flag:
+#     if 'clean' in goal:
+#         GOALS_VALID[goal].add("Bathroom")
+#     else:
+#         if 'place' or 'stack' or 'locate' in goal:
+#             GOALS_VALID[goal] = GOALS_VALID[goal].union(("Bathroom", "LivingRoom", "Bedroom"))
 
 pddl_goal_type = "locate_simple"  # default goal type
 
@@ -319,23 +472,25 @@ MIN_VISIBLE_PIXELS = 10
 ########################################################################################################################
 # Scenes and Objects
 
-TRAIN_SCENE_NUMBERS = list(range(7, 31))  # Train Kitchens (24/30)
-TRAIN_SCENE_NUMBERS.extend(list(range(207, 231)))  # Train Living Rooms (24/30)
-TRAIN_SCENE_NUMBERS.extend(list(range(307, 331)))  # Train Bedrooms (24/30)
-TRAIN_SCENE_NUMBERS.extend(list(range(407, 431)))  # Train Bathrooms (24/30)
-
-TEST_SCENE_NUMBERS = list(range(1, 7))  # Test Kitchens (6/30)
-TEST_SCENE_NUMBERS.extend(list(range(201, 207)))  # Test Living Rooms (6/30)
-TEST_SCENE_NUMBERS.extend(list(range(301, 307)))  # Test Bedrooms (6/30)
-TEST_SCENE_NUMBERS.extend(list(range(401, 407)))  # Test Bathrooms (6/30)
+TRAIN_SCENE_NUMBERS = list(range(1, 26))
+# TRAIN_SCENE_NUMBERS = list(range(7, 31))  # Train Kitchens (24/30)
+# TRAIN_SCENE_NUMBERS.extend(list(range(207, 231)))  # Train Living Rooms (24/30)
+# TRAIN_SCENE_NUMBERS.extend(list(range(307, 331)))  # Train Bedrooms (24/30)
+# TRAIN_SCENE_NUMBERS.extend(list(range(407, 431)))  # Train Bathrooms (24/30)
+TEST_SCENE_NUMBERS = list(range(26, 31))
+# TEST_SCENE_NUMBERS = list(range(1, 7))  # Test Kitchens (6/30)
+# TEST_SCENE_NUMBERS.extend(list(range(201, 207)))  # Test Living Rooms (6/30)
+# TEST_SCENE_NUMBERS.extend(list(range(301, 307)))  # Test Bedrooms (6/30)
+# TEST_SCENE_NUMBERS.extend(list(range(401, 407)))  # Test Bathrooms (6/30)
 
 SCENE_NUMBERS = TRAIN_SCENE_NUMBERS + TEST_SCENE_NUMBERS
 
 # Scene types.
-SCENE_TYPE = {"Kitchen": range(1, 31),
-              "LivingRoom": range(201, 231),
-              "Bedroom": range(301, 331),
-              "Bathroom": range(401, 431)}
+# SCENE_TYPE = {"Kitchen": range(1, 31),
+#               "LivingRoom": range(201, 231),
+#               "Bedroom": range(301, 331),
+#               "Bathroom": range(401, 431)}
+SCENE_TYPE = {"Kitchen": range(1, 31)}
 
 OBJECTS = [
     'AlarmClock',

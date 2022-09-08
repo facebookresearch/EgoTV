@@ -365,5 +365,6 @@ def store_image_name(name, bbox, before):
     constants.data_dict['images'].append({"high_idx": get_last_hl_action_index(before),
                                           "low_idx": get_last_ll_action_index(before),
                                           "image_name": name,
-                                          "bbox": bbox})
+                                          "bbox": {k:list(map(float,v)) for k,v in bbox.items()},
+                                          "before": str(before)})
 
