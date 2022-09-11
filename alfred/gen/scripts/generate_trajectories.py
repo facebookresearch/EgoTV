@@ -427,6 +427,7 @@ def main(args, goal_candidates):
     # In actively gathering data, we will try to maximize entropy for each (e.g., uniform spread of goals,
     # uniform spread over patient objects, uniform recipient objects, and uniform scenes).
     succ_traj = pd.DataFrame(columns=["goal", "pickup", "movable", "receptacle", "scene"])
+    full_traj = pd.DataFrame(columns=["goal", "pickup", "movable", "receptacle", "scene"])
 
     # objects-to-scene and scene-to-objects database
     for scene_type, ids in constants.SCENE_TYPE.items():
@@ -512,7 +513,7 @@ def main(args, goal_candidates):
     #                         [obj for obj in constants.VAL_ACTION_OBJECTS["Toggleable"]
     #                          if obj in obj_to_scene_ids and obj != 'StoveKnob']
     receptacle_candidates = [obj for obj in constants.VAL_RECEPTACLE_OBJECTS
-                             if obj in obj_to_scene_ids] + \
+                             if obj in obj_to_scene_ids and obj not in constants.MOVABLE_RECEPTACLES] + \
                             [obj for obj in constants.VAL_ACTION_OBJECTS["Toggleable"]
                              if obj in obj_to_scene_ids and obj != 'StoveKnob']
 
@@ -549,12 +550,12 @@ def main(args, goal_candidates):
         # TODO: Verify verb_noun and context_verb_noun compositions for simple subgoals (place_simple)
         subgoals = gtype.replace('then', 'and').replace('simple', 'and_').split('_and_')
 
-        if args.split_type in ['train', 'sub_goal_composition']:
-            if ('heat' in subgoals and pickup_obj in ['Egg', 'Mug']) or \
-                ('clean' in subgoals and pickup_obj in ['Plate', 'Bowl']) or \
+        if args.split_type in ['train', 'sub_goal_composition', 'context_goal_composition']:
+            if ('heat' in subgoals and pickup_obj in ['Egg']) or \
+                ('clean' in subgoals and pickup_obj in ['Plate']) or \
                 ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']) or \
                 ('heat' in subgoals and pickup_obj in ['Tomato', 'TomatoSliced'] and sampled_scene in range(1, 6)) or \
-                ('cool' in subgoals and pickup_obj in ['Cup', 'Bread', 'BreadSliced'] and sampled_scene in range(6, 11)) or \
+                ('cool' in subgoals and pickup_obj in ['Cup'] and sampled_scene in range(6, 11)) or \
                 ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
                 ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16, 21)) or \
                 ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21, 26)):
@@ -564,15 +565,15 @@ def main(args, goal_candidates):
         elif args.split_type == 'verb_noun_composition':
             # TODO: verify the conditions
             if ('heat' in subgoals and pickup_obj in ['Tomato', 'TomatoSliced'] and sampled_scene in range(1, 6)) or \
-                ('cool' in subgoals and pickup_obj == ['Cup', 'Bread', 'BreadSliced'] and sampled_scene in range(6, 11)) or \
+                ('cool' in subgoals and pickup_obj == ['Cup'] and sampled_scene in range(6, 11)) or \
                 ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
                 ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16, 21)) or \
                 ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21, 26)):
                 print("............. Sample does not belong to split {}: Skipping ..............".format(
                     args.split_type))
                 continue
-            if  ('heat' in subgoals and pickup_obj in ['Egg', 'Mug']) or \
-                ('clean' in subgoals and pickup_obj in ['Plate', 'Bowl']) or \
+            if  ('heat' in subgoals and pickup_obj in ['Egg']) or \
+                ('clean' in subgoals and pickup_obj in ['Plate']) or \
                 ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']) or \
                 ('place' in subgoals and receptacle_obj == 'Shelf'):
                 print('Proceed')
@@ -581,14 +582,14 @@ def main(args, goal_candidates):
                     args.split_type))
                 continue
         elif args.split_type == 'context_verb_noun_composition':
-            if ('heat' in subgoals and pickup_obj in ['Egg', 'Mug']) or \
-                ('clean' in subgoals and pickup_obj in ['Plate', 'Bowl']) or \
+            if ('heat' in subgoals and pickup_obj in ['Egg']) or \
+                ('clean' in subgoals and pickup_obj in ['Plate']) or \
                 ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']):
                 print("............. Sample does not belong to split {}: Skipping ..............".format(
                     args.split_type))
                 continue
             if ('heat' in subgoals and pickup_obj in ['Tomato', 'TomatoSliced'] and sampled_scene in range(1, 6)) or \
-                ('cool' in subgoals and pickup_obj == ['Cup', 'Bread', 'BreadSliced'] and sampled_scene in range(6, 11)) or \
+                ('cool' in subgoals and pickup_obj in ['Cup'] and sampled_scene in range(6, 11)) or \
                 ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
                 ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16, 21)) or \
                 ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21, 26)):
@@ -716,8 +717,8 @@ def main(args, goal_candidates):
                     # csv_id = gtype + '|' + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_id = args.split_type + '_' + csv_id
-                    csv_filepath = os.path.join(args.save_path_csv, csv_id)
-                    succ_traj.to_csv(csv_filepath)
+                    #csv_filepath = os.path.join(args.save_path_csv, csv_id)
+                    #succ_traj.to_csv(csv_filepath)
                     # plot_dataset_stats(succ_traj)
                     return
 
@@ -872,9 +873,9 @@ if __name__ == "__main__":
     # settings
     parser.add_argument('--force_unsave', action='store_true', help="don't save any data (for debugging purposes)")
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--save_path', type=str, default="/fb-agios-ecai-efs/dataset/test_splits/",
+    parser.add_argument('--save_path', type=str, default="/fb-agios-acai-efs/dataset/test_splits/",
                         help="where to save the generated data")
-    parser.add_argument('--save_path_csv', type=str, default="/fb-agios-ecai-efs/dataset/test_splits/csv_files",
+    parser.add_argument('--save_path_csv', type=str, default="/fb-agios-acai-efs/dataset/test_splits/csv_files",
                         help="where to save the csv files of all generated trajectories for dataset stats")
     parser.add_argument('--domain_root_path', type=str, default="planner/domains", help="PDDL action definitions")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
@@ -882,7 +883,7 @@ if __name__ == "__main__":
                         help="just examine what data is gathered; don't gather more")
     parser.add_argument("--in_parallel", action='store_true',
                         help="this collection will run in parallel with others, so load from disk on every new sample")
-    parser.add_argument("-n", "--num_threads", type=int, default=0, help="number of processes for parallel mode")
+    parser.add_argument("-n", "--num_threads", type=int, default=1, help="number of processes for parallel mode")
     parser.add_argument('--json_file', type=str, default="", help="path to json file with trajectory dump")
     parser.add_argument('--split_type', type=str, default="sub_goal_composition", help="train-test split type",
                         choices=["train", "sub_goal_composition", "verb_noun_composition",
