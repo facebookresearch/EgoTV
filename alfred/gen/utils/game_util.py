@@ -3,7 +3,8 @@ import random
 import cv2
 import numpy as np
 import constants
-import goal_library as glib
+import goal_library as glib1
+import goal_library_abstraction as glib_abstraction
 
 
 def get_pose(event):
@@ -334,17 +335,24 @@ def get_object_bounds_batch(boxes, scene_bounds):
     return obj_bounds
 
 
-def get_task_str(object_ind, receptacle_ind=None, toggle_ind=None, mrecep_ind=None):
+def get_task_str(object_ind, receptacle_ind=None, toggle_ind=None,
+                 mrecep_ind=None, abstraction=None):
     goal_str = constants.pddl_goal_type
     # if constants.data_dict['pddl_params']['object_sliced']:
     #     goal_str += "_slice"
-    template = random.choice(glib.gdict[goal_str]['templates'])
+    if abstraction:
+        template_pos = random.choice(glib_abstraction.gdict[goal_str]['templates_pos'])
+        template_neg = random.choice(glib_abstraction.gdict[goal_str]['templates_neg'])
+    else:
+        template_pos = random.choice(glib1.gdict[goal_str]['templates_pos'])
+        template_neg = random.choice(glib1.gdict[goal_str]['templates_neg'])
     obj = constants.OBJECTS[object_ind].lower() if object_ind is not None else ""
     recep = constants.OBJECTS[receptacle_ind].lower() if receptacle_ind is not None else ""
     tog = constants.OBJECTS[toggle_ind].lower() if toggle_ind is not None else ""
     mrecep = constants.OBJECTS[mrecep_ind].lower() if mrecep_ind is not None else ""
-    filled_in_str = template.format(obj=obj, recep=recep, toggle=tog, mrecep=mrecep)
-    return filled_in_str
+    filled_in_str_pos = template_pos.format(obj=obj, recep=recep, toggle=tog, mrecep=mrecep)
+    filled_in_str_pos_neg = template_neg.format(obj=obj, recep=recep, toggle=tog, mrecep=mrecep)
+    return filled_in_str_pos, filled_in_str_pos_neg
 
 
 def get_last_hl_action_index(before):

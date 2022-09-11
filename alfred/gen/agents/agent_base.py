@@ -18,8 +18,9 @@ class AgentBase(object):
         self.num_invalid_actions = 0
         self.total_num_invalid_actions = 0
 
-    def setup_problem(self, game_state_problem_args, scene=None, objs=None):
-        self.game_state.setup_problem(**game_state_problem_args, scene=scene, objs=objs)
+    def setup_problem(self, game_state_problem_args, abstraction, scene=None, objs=None):
+        self.game_state.setup_problem(**game_state_problem_args, abstraction=abstraction,
+                                      scene=scene, objs=objs)
 
     def reset(self, game_state_reset_args, scene=None, objs=None):
         self.game_state.reset(**game_state_reset_args, scene=scene, objs=objs)

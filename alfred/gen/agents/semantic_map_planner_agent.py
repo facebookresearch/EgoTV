@@ -22,8 +22,9 @@ class SemanticMapPlannerAgent(AgentBase):
             self.plan_agent.reset()
         return info
 
-    def setup_problem(self, game_state_problem_args, scene=None, objs=None):
-        super(SemanticMapPlannerAgent, self).setup_problem(game_state_problem_args, scene=scene, objs=objs)
+    def setup_problem(self, game_state_problem_args, abstraction=False, scene=None, objs=None):
+        super(SemanticMapPlannerAgent, self).setup_problem(game_state_problem_args, scene=scene, objs=objs,
+                                                           abstraction=abstraction)
         self.pose = self.game_state.pose
 
     def get_reward(self):

@@ -21,8 +21,9 @@ class TaskGameState(PlannedGameState):
         self.task_target = None
         self.success = False
 
-    def get_task_str(self):
-        return game_util.get_task_str(self.object_target, self.parent_target, self.toggle_target, self.mrecep_target)
+    def get_task_str(self, abstraction):
+        return game_util.get_task_str(self.object_target, self.parent_target, self.toggle_target, self.mrecep_target,
+                                      abstraction=abstraction)
 
     def get_goal_pddl(self):
         goal_type = constants.pddl_goal_type
@@ -193,7 +194,7 @@ class TaskGameState(PlannedGameState):
             return lambda o: is_obj_pickupable(o), \
                    lambda r: is_receptacle(r)
 
-    def setup_problem(self, seed=None, info=None, scene=None, objs=None):
+    def setup_problem(self, abstraction=None, seed=None, info=None, scene=None, objs=None):
         '''
         setup goal with sampled objects or with the objects specified
         note: must be used with `initialize_random_scene`
@@ -350,10 +351,11 @@ class TaskGameState(PlannedGameState):
                 raise Exception(str(('Row: ', task_row, 'Scene', self.scene_name,
                                      'seed', self.scene_seed)))
 
-        templated_task_desc = self.get_task_str()
+        templated_task_desc_pos, templated_task_desc_neg = self.get_task_str(abstraction=abstraction)
         print('problem id', self.problem_id)
-        print('Task:', templated_task_desc)
-        constants.data_dict['template']['task_desc'] = templated_task_desc
+        print('Task:', templated_task_desc_pos)
+        constants.data_dict['template']['pos'] = templated_task_desc_pos
+        constants.data_dict['template']['neg'] = templated_task_desc_neg
 
     def get_setup_info(self, info=None, scene=None):
         return self.get_random_task_vals(scene=scene)
