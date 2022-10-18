@@ -42,9 +42,9 @@ gdict["cool_simple"] = \
         )
     )
     ''',
-        'templates_pos': ['a cold {obj}',
+        'templates_pos': ['cold {obj}',
                           '{obj} is cooled in a Fridge'],
-        'templates_neg': ['a sliced {obj}',
+        'templates_neg': ['sliced {obj}',
                           '{obj} is heated',
                           '{obj} is cleaned in a SinkBasin']
     }
@@ -74,12 +74,12 @@ gdict["heat_simple"] = \
         )
     )
     ''',
-        'templates_pos': ['a hot {obj}',
+        'templates_pos': ['hot {obj}',
                           '{obj} is heated',
                           '{obj} is picked and heated'],
-        'templates_neg': ['a clean {obj} in a SinkBasin',
+        'templates_neg': ['clean {obj} in a SinkBasin',
                           '{obj} is cooled in a Fridge',
-                          'a sliced {obj}']
+                          'sliced {obj}']
     }
 
 # basic pick and clean (e.g: "clean an apple")
@@ -107,10 +107,10 @@ gdict["clean_simple"] = \
         )
     )
     ''',
-        'templates_pos': ['a clean {obj}',
+        'templates_pos': ['clean {obj}',
                           '{obj} is cleaned',
                           '{obj} is cleaned in a SinkBasin'],
-        'templates_neg': ['a hot {obj}',
+        'templates_neg': ['hot {obj}',
                           '{obj} is cooled in a Fridge',
                           '{obj} is sliced']
     }
@@ -163,10 +163,10 @@ gdict["slice_simple"] = \
         )
     )
     ''',
-        'templates_pos': ['a sliced {obj}',
+        'templates_pos': ['sliced {obj}',
                           '{obj} is sliced',
                           'a slice of {obj}'],
-        'templates_neg': ['a cold {obj}',
+        'templates_neg': ['cold {obj}',
                           '{obj} is heated',
                           '{obj} is cleaned']
     }
@@ -259,11 +259,11 @@ gdict["clean_and_place"] = \
     )
     ''',
         'templates_pos': ['{obj} is cleaned in a SinkBasin and placed in a {recep}',
-                          'a clean {obj} in a {recep}',
-                          'a clean {obj} placed in a {recep}'],
+                          'clean {obj} in a {recep}',
+                          'clean {obj} placed in a {recep}'],
         'templates_neg': ['{obj} is cooled in a Fridge and placed in a {recep}',
                           '{obj} is picked, heated and placed',
-                          'a hot {obj} in a SinkBasin',
+                          'hot {obj} in a SinkBasin',
                           '{obj} is sliced in a {recep}']
     }
 
@@ -294,12 +294,12 @@ gdict["heat_and_place"] = \
         )
     )
     ''',
-        'templates_pos': ['a hot {obj} in a {recep}',
-                          'a hot {obj} placed in a {recep}',
+        'templates_pos': ['hot {obj} in a {recep}',
+                          'hot {obj} placed in a {recep}',
                           '{obj} is picked, heated and placed in a {recep}'],
         'templates_neg': ['{obj} is cleaned in a SinkBasin and placed in a {recep}',
                           '{obj} is picked, heated and cleaned',
-                          'a cold {obj} in a {recep}']
+                          'cold {obj} in a {recep}']
     }
 
 gdict["place_and_heat"] = gdict["heat_and_place"]
@@ -329,10 +329,10 @@ gdict["cool_and_place"] = \
         )
     )
     ''',
-        'templates_pos': ['a cold {obj} in a {recep}',
-                          'a cold {obj} placed in a {recep}',
+        'templates_pos': ['cold {obj} in a {recep}',
+                          'cold {obj} placed in a {recep}',
                           '{obj} cooled in a Fridge and placed in a {recep}'],
-        'templates_neg': ['a hot {obj} in a {recep}',
+        'templates_neg': ['hot {obj} in a {recep}',
                           '{obj} is cleaned and placed in a SinkBasin',
                           '{obj} is cooled in a Fridge and sliced']
     }
@@ -364,11 +364,11 @@ gdict["slice_and_place"] = \
         )
     )
     ''',
-        'templates_pos': ['a sliced {obj} in a {recep}',
-                          'a sliced {obj} placed in a {recep}',
+        'templates_pos': ['sliced {obj} in a {recep}',
+                          'sliced {obj} placed in a {recep}',
                           '{obj} is sliced and placed in a {recep}'],
-        'templates_neg': ['a cold {obj} in a {recep}',
-                          'a clean {obj} placed in a {recep}',
+        'templates_neg': ['cold {obj} in a {recep}',
+                          'clean {obj} placed in a {recep}',
                           '{obj} is heated and placed in a {recep}']
     }
 
@@ -403,7 +403,7 @@ gdict["slice_and_cool"] = \
     ''',
         'templates_pos': ['{obj} is sliced and cooled in a Fridge',
                           '{obj} is cooled in a Fridge and sliced'],
-        'templates_neg': ['a hot {obj} placed in a Fridge',
+        'templates_neg': ['hot {obj} placed in a Fridge',
                           '{obj} is sliced and heated',
                           '{obj} is sliced and cleaned']
     }
@@ -441,7 +441,7 @@ gdict["slice_and_heat"] = \
                           '{obj} is sliced and heated'],
         'templates_neg': ['{obj} is cooled and sliced',
                           '{obj} is sliced and placed',
-                          'a hot {obj} is cleaned']
+                          'hot {obj} is cleaned']
     }
 
 gdict["heat_and_slice"] = gdict["slice_and_heat"]
@@ -476,7 +476,7 @@ gdict["slice_and_clean"] = \
         'templates_pos': ['{obj} is sliced and cleaned in a SinkBasin',
                           '{obj} is cleaned in a SinkBasin and sliced'],
         'templates_neg': ['{obj} is cooled and placed in a SinkBasin',
-                          'a hot {obj} is sliced in a SinkBasin',
+                          'hot {obj} is sliced in a SinkBasin',
                           '{obj} is picked, heated and cleaned']
     }
 
@@ -551,40 +551,6 @@ gdict["clean_and_heat"] = \
     }
 
 gdict["heat_and_clean"] = gdict["clean_and_heat"]
-
-# pick two instances of an object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
-gdict["place_2"] = \
-    {
-        'pddl':
-            '''
-                (:goal
-                    (and
-                        (exists (?r # receptacle)
-                            (exists (?o1 # object)
-                                (and 
-                                    (objectType ?o1 {obj}Type) 
-                                    (receptacleType ?r {recep}Type)
-                                    (inReceptacle ?o1 ?r)
-                                    (exists (?o2 # object)
-                                        (and
-                                            (not (= ?o1 ?o2))
-                                            (objectType ?o2 {obj}Type)
-                                            (receptacleType ?r {recep}Type)
-                                            (inReceptacle ?o2 ?r) 
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                        (forall (?re # receptacle)
-                            (not (opened ?re))
-                        )
-                    )
-                )
-            )
-            ''',
-        'templates_pos': ['two {obj}s placed in a {recep}']
-    }
 
 # pick and place with a movable receptacle (e.g: "put a apple in a bowl inside the microwave")
 gdict["stack_and_place"] = \
@@ -662,10 +628,10 @@ gdict["heat_and_stack_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a hot {obj} in a {mrecep} in a {recep}',
-                          'a hot {obj} in a {mrecep} placed in a {recep}',
-                          'a {mrecep} containing a hot {obj} in a {recep}',
-                          'a {mrecep} containing a hot {obj} placed in a {recep}']
+        'templates_pos': ['hot {obj} in a {mrecep} in a {recep}',
+                          'hot {obj} in a {mrecep} placed in a {recep}',
+                          'a {mrecep} containing hot {obj} in a {recep}',
+                          'a {mrecep} containing hot {obj} placed in a {recep}']
     }
 
 # pick, cool, place with movable receptacle
@@ -702,10 +668,10 @@ gdict["cool_and_stack_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a cold {obj} in a {mrecep} in a {recep}',
-                          'a cold {obj} in a {mrecep} placed in a {recep}',
-                          'a {mrecep} containing a cold {obj} in a {recep}',
-                          'a {mrecep} containing a cold {obj} placed in a {recep}']
+        'templates_pos': ['cold {obj} in a {mrecep} in a {recep}',
+                          'cold {obj} in a {mrecep} placed in a {recep}',
+                          'a {mrecep} containing cold {obj} in a {recep}',
+                          'a {mrecep} containing cold {obj} placed in a {recep}']
     }
 
 # pick, clean, place with movable receptacle
@@ -742,10 +708,10 @@ gdict["clean_and_stack_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a clean {obj} in a {mrecep} in a {recep}',
-                          'a clean {obj} in a {mrecep} placed in a {recep}',
-                          'a {mrecep} containing a clean {obj} in a {recep}',
-                          'a {mrecep} containing a clean {obj} placed in a {recep}']
+        'templates_pos': ['clean {obj} in a {mrecep} in a {recep}',
+                          'clean {obj} in a {mrecep} placed in a {recep}',
+                          'a {mrecep} containing clean {obj} in a {recep}',
+                          'a {mrecep} containing clean {obj} placed in a {recep}']
     }
 
 # slice, place with movable receptacle
@@ -782,10 +748,10 @@ gdict["slice_and_stack_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a sliced {obj} in a {mrecep} in a {recep}',
-                          'a sliced {obj} in a {mrecep} placed in a {recep}',
-                          'a {mrecep} containing a sliced {obj} placed in a {recep}',
-                          'a {mrecep} containing a sliced {obj} in a {recep}']
+        'templates_pos': ['sliced {obj} in a {mrecep} in a {recep}',
+                          'sliced {obj} in a {mrecep} placed in a {recep}',
+                          'a {mrecep} containing sliced {obj} placed in a {recep}',
+                          'a {mrecep} containing sliced {obj} in a {recep}']
     }
 
 # pick, clean, slice, and place object
@@ -815,14 +781,14 @@ gdict["slice_and_clean_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a clean, sliced {obj} placed in a {recep}',
-                          'a sliced, clean {obj} placed in a {recep}',
+        'templates_pos': ['clean, sliced {obj} placed in a {recep}',
+                          'sliced, clean {obj} placed in a {recep}',
                           '{obj} is sliced, cleaned in a SinkBasin and placed in a {recep}',
                           '{obj} is cleaned in a SinkBasin, sliced and placed in a {recep}'],
-        'templates_neg': ['a sliced, cold {obj} placed in a {recep}',
-                          'a sliced {obj} placed in a SinkBasin',
+        'templates_neg': ['sliced, cold {obj} placed in a {recep}',
+                          'sliced {obj} placed in a SinkBasin',
                           '{obj} is cleaned and placed in a SinkBasin',
-                          'a clean {obj} is heated and placed in a {recep}',
+                          'clean {obj} is heated and placed in a {recep}',
                           '{obj} is picked, heated, sliced and placed in a {recep}']
 
     }
@@ -860,7 +826,7 @@ gdict["slice_and_heat_and_clean"] = \
                           '{obj} is heated, sliced and cleaned in a SinkBasin',
                           '{obj} is cleaned in a SinkBasin, sliced and heated'],
         'templates_neg': ['{obj} is cooled in a Fridge, sliced and cleaned in a SinkBasin',
-                          'a cold, clean, sliced {obj}',
+                          'cold, clean, sliced {obj}',
                           '{obj} is sliced, heated and placed in a SinkBasin']
     }
 
@@ -891,12 +857,12 @@ gdict["heat_and_clean_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a clean, hot {obj} placed in a {recep}',
-                          'a hot, clean {obj} placed in a {recep}',
+        'templates_pos': ['clean, hot {obj} placed in a {recep}',
+                          'hot, clean {obj} placed in a {recep}',
                           '{obj} is cleaned in a SinkBasin, heated and placed in a {recep}',
                           '{obj} is heated, cleaned in a SinkBasin and placed in a {recep}'],
-        'templates_neg': ['a cool, clean {obj} is sliced',
-                          'a hot, clean, sliced {obj}',
+        'templates_neg': ['a cold, clean {obj} is sliced',
+                          'hot, clean, sliced {obj}',
                           '{obj} is cleaned in a SinkBasin, cooled and placed in a {recep}',
                           '{obj} is picked, cooled and placed in a SinkBasin']
     }
@@ -935,9 +901,9 @@ gdict["cool_and_slice_and_clean"] = \
                           '{obj} is cleaned in a SinkBasin, sliced and cooled in a Fridge',
                           '{obj} is sliced, cooled in a Fridge, and cleaned in a SinkBasin',
                           '{obj} is sliced, cleaned in a SinkBasin, and cooled in a Fridge'],
-        'templates_neg': ['a hot, sliced {obj} placed in a Fridge',
+        'templates_neg': ['hot, sliced {obj} placed in a Fridge',
                           '{obj} is picked, heated and placed in a SinkBasin',
-                          'a hot, clean, sliced {obj}']
+                          'hot, clean, sliced {obj}']
     }
 
 # pick, clean, cool & place
@@ -967,15 +933,15 @@ gdict["cool_and_clean_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a clean, cold {obj} placed in a {recep}',
-                          'a clean, cold {obj} placed in a {recep}',
+        'templates_pos': ['clean, cold {obj} placed in a {recep}',
+                          'clean, cold {obj} placed in a {recep}',
                           '{obj} is cooled, cleaned, and placed in a {recep}',
                           '{obj} is cleaned in a SinkBasin, cooled in a Fridge, and placed in a {recep}',
                           '{obj} is cleaned, cooled and placed in a {recep}',
                           '{obj} is cooled in a Fridge, cleaned in a SinkBasin, and placed in a {recep}'],
-        'templates_neg': ['a hot, clean {obj} placed in a {recep}',
-                          'a cold, sliced {obj} in a {recep}',
-                          'a clean, cold {obj} sliced in a {recep}',
+        'templates_neg': ['hot, clean {obj} placed in a {recep}',
+                          'cold, sliced {obj} in a {recep}',
+                          'clean, cold {obj} sliced in a {recep}',
                           '{obj} is cooled in a Fridge, cleaned in a SinkBasin, and sliced in a {recep}']
     }
 
@@ -1006,12 +972,12 @@ gdict["slice_and_heat_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a hot, sliced {obj} placed in a {recep}',
-                          'a sliced, hot {obj} placed in a {recep}',
+        'templates_pos': ['hot, sliced {obj} placed in a {recep}',
+                          'sliced, hot {obj} placed in a {recep}',
                           '{obj} is sliced, heated and placed in a {recep}',
                           '{obj} is heated, sliced and placed in a {recep}',
                           '{obj} is heated, placed in a {recep} and sliced'],
-        'templates_neg': ['a cold, sliced {obj} placed in a {recep}',
+        'templates_neg': ['cold, sliced {obj} placed in a {recep}',
                           '{obj} is picked, heated, sliced and cleaned in a {recep}',
                           '{obj} is sliced, cleaned and cooled in a Fridge']
     }
@@ -1043,16 +1009,16 @@ gdict["cool_and_slice_and_place"] = \
                 )
             )
             ''',
-        'templates_pos': ['a cold, sliced {obj} placed in a {recep}',
-                          'a sliced, cold {obj} placed in a {recep}',
+        'templates_pos': ['cold, sliced {obj} placed in a {recep}',
+                          'sliced, cold {obj} placed in a {recep}',
                           '{obj} is cooled in a Fridge, sliced, and placed in a {recep}',
                           '{obj} is sliced, cooled in a Fridge, and placed in a {recep}'],
-        'templates_neg': ['a hot, sliced {obj} placed in a {recep}',
-                          'a cold, sliced {obj} cleaned in a {recep}',
+        'templates_neg': ['hot, sliced {obj} placed in a {recep}',
+                          'cold, sliced {obj} cleaned in a {recep}',
                           '{obj} is picked, cooled in a Fridge, sliced and heated']
     }
 
-# pick two instances of a sliced object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
+# pick two instances of sliced object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
 gdict["pick_two_obj_and_place_slice"] = \
     {
         'pddl':
@@ -1241,7 +1207,7 @@ gdict["pick_heat_and_place_with_movable_recep"] = \
                 )
             )
             ''',
-        'templates_pos': ['Provide a hot {mrecep} of {obj} in {recep}']
+        'templates_pos': ['Provide hot {mrecep} of {obj} in {recep}']
     }
 
 gdict["pick_cool_and_place_with_movable_recep"] = \
@@ -1277,7 +1243,7 @@ gdict["pick_cool_and_place_with_movable_recep"] = \
                 )
             )
             ''',
-        'templates_pos': ['Provide a cold {mrecep} of {obj} in {recep}']
+        'templates_pos': ['Provide cold {mrecep} of {obj} in {recep}']
     }
 
 gdict["pick_clean_and_place_with_movable_recep"] = \
@@ -1313,7 +1279,7 @@ gdict["pick_clean_and_place_with_movable_recep"] = \
                 )
             )
             ''',
-        'templates_pos': ['Provide a cold {mrecep} of {obj} in {recep}']
+        'templates_pos': ['Provide cold {mrecep} of {obj} in {recep}']
     }
 
 ###########################################################################################################
@@ -1469,26 +1435,149 @@ gdict["pick_two_obj_then_slice_and_place"] = \
                           'put two sliced {obj}s in {recep}']
     }
 
+# pick, cool, clean, slice, and place object
+gdict["cool_and_slice_and_clean_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                             vvjvtfgeecdtrdbhicfrkgrckggnfuct       (coolable ?o)
+                                    (isCool ?o)
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (cleanable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isClean ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates_pos': ['cold, clean, sliced {obj} placed in a {recep}',
+                          'sliced, clean, cold {obj} placed in a {recep}',
+                          'clean, cold, sliced {obj} placed in a {recep}',
+                          '{obj} is cooled in a Fridge, sliced, cleaned in a SinkBasin and placed in a {recep}',
+                          '{obj} is cleaned in a SinkBasin, cooled in a Fridge, sliced and placed in a {recep}',
+                          'a {obj} is sliced, cooled in a Fridge, cleaned in a SinkBasin and placed in a {recep}'],
+        'templates_neg': ['clean, sliced, hot {obj} placed in a {recep}',
+                          'sliced {obj} placed in a SinkBasin',
+                          '{obj} is cleaned and placed in a SinkBasin',
+                          'clean {obj} is heated and placed in a {recep}',
+                          '{obj} is picked, heated, cleaned and placed in a {recep}',
+                          'clean, hot {obj} is placed in a {recep}',
+                          'a {onj} is heated, sliced, and cleaned']
+
+    }
+
+# pick, heat, clean, slice, and place object
+gdict["heat_and_slice_and_clean_and_place"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                        (exists (?r # receptacle)
+                            (exists (?o # object)
+                                (and 
+                                    (heatable ?o)
+                                    (isHot ?o)
+                                    (sliceable ?o)
+                                    (isSliced ?o)
+                                    (cleanable ?o)
+                                    (objectType ?o {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (isClean ?o)
+                                    (inReceptacle ?o ?r) 
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates_pos': ['hot, clean, sliced {obj} placed in a {recep}',
+                          'sliced, clean, hot {obj} placed in a {recep}',
+                          'clean, hot, sliced {obj} placed in a {recep}',
+                          '{obj} is heated sliced, cleaned in a SinkBasin and placed in a {recep}',
+                          '{obj} is cleaned in a SinkBasin, heated, sliced and placed in a {recep}',
+                          'a {obj} is sliced, heated, cleaned in a SinkBasin and placed in a {recep}'],
+        'templates_neg': ['clean, sliced, cold {obj} placed in a {recep}',
+                          'sliced {obj} placed in a SinkBasin',
+                          '{obj} is cleaned and placed in a SinkBasin',
+                          'clean {obj} is cooled and placed in a {recep}',
+                          '{obj} is picked, cooled, cleaned and placed in a {recep}',
+                          'clean, cold {obj} is placed in a {recep}',
+                          'a {onj} is cooled, sliced, and cleaned']
+
+    }
+
+# pick two instances of an object and place them in a receptacle (e.g: "pick two apples and put them in the sink")
+gdict["place_2"] = \
+    {
+        'pddl':
+            '''
+                (:goal
+                    (and
+                        (exists (?r # receptacle)
+                            (exists (?o1 # object)
+                                (and 
+                                    (objectType ?o1 {obj}Type) 
+                                    (receptacleType ?r {recep}Type)
+                                    (inReceptacle ?o1 ?r)
+                                    (exists (?o2 # object)
+                                        (and
+                                            (not (= ?o1 ?o2))
+                                            (objectType ?o2 {obj}Type)
+                                            (receptacleType ?r {recep}Type)
+                                            (inReceptacle ?o2 ?r) 
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        (forall (?re # receptacle)
+                            (not (opened ?re))
+                        )
+                    )
+                )
+            )
+            ''',
+        'templates_pos': ['two {obj}s placed in a {recep}']
+    }
 #####################################################################
 
 gdict['clean_then_cool']['pddl'] = gdict['cool_and_clean']['pddl']
 gdict['clean_then_cool']['templates_pos'] = ['{obj} is cleaned in a SinkBasin, then cooled in a Fridge',
                                              '{obj} is cleaned in a SinkBasin before cooling in a Fridge',
                                              '{obj} is cooled in a Fridge after cleaning in a SinkBasin']
-gdict['clean_then_cool']['templates_neg'] = ['a clean {obj} is heated',
-                                             'a hot {obj} is cooled in a Fridge',
-                                             'a cold {obj} is cleaned in a SinkBasin',
-                                             'a clean, cold {obj} is sliced',
+gdict['clean_then_cool']['templates_neg'] = ['clean {obj} is heated',
+                                             'hot {obj} is cooled in a Fridge',
+                                             'cold {obj} is cleaned in a SinkBasin',
+                                             'clean, cold {obj} is sliced',
                                              '{obj} is cooled in a Fridge, then cleaned in a SinkBasin',
                                              '{obj} is cleaned in a SinkBasin after cooling in a Fridge',
                                              '{obj} is cooled in a Fridge after cleaning in a SinkBasin']
 gdict['cool_then_clean']['pddl'] = gdict['cool_and_clean']['pddl']
 gdict['cool_then_clean']['templates_pos'] = ['{obj} is cooled in a Fridge, then cleaned in a SinkBasin',
                                              '{obj} is cleaned in a SinkBasin after cooling in a Fridge',
-                                             '{obj} is cooled in a Fridge after cleaning in a SinkBasin']
-gdict['cool_then_clean']['templates_neg'] = ['a hot {obj} is cleaned in a SinkBasin',
-                                             'a clean {obj} is cooled in a Fridge',
-                                             'a cold, clean {obj} is sliced',
+                                             '{obj} is cooled in a Fridge before cleaning in a SinkBasin']
+gdict['cool_then_clean']['templates_neg'] = ['hot {obj} is cleaned in a SinkBasin',
+                                             'clean {obj} is cooled in a Fridge',
+                                             'cold, clean {obj} is sliced',
                                              '{obj} is cooled in a Fridge, then sliced in a SinkBasin',
                                              '{obj} is cleaned in a SinkBasin, then cooled in a Fridge',
                                              '{obj} is cleaned in a SinkBasin before cooling in a Fridge',
@@ -1498,10 +1587,10 @@ gdict['clean_then_heat']['pddl'] = gdict['clean_and_heat']['pddl']
 gdict['clean_then_heat']['templates_pos'] = ['{obj} is cleaned in a SinkBasin, then heated',
                                              '{obj} is cleaned in a SinkBasin before heating',
                                              '{obj} is heated after cleaning in a SinkBasin']
-gdict['clean_then_heat']['templates_neg'] = ['a clean {obj} is cooled in a Fridge',
-                                             'a hot {obj} is cleaned in a SinkBasin',
-                                             'a sliced {obj} is heated',
-                                             'a clean, hot {obj} is sliced',
+gdict['clean_then_heat']['templates_neg'] = ['clean {obj} is cooled in a Fridge',
+                                             'hot {obj} is cleaned in a SinkBasin',
+                                             'sliced {obj} is heated',
+                                             'clean, hot {obj} is sliced',
                                              '{obj} is heated, then cleaned in a SinkBasin',
                                              '{obj} is cleaned in a SinkBasin after heating',
                                              '{obj} is picked and heated before cleaning in a SinkBasin']
@@ -1509,10 +1598,10 @@ gdict['heat_then_clean']['pddl'] = gdict['clean_and_heat']['pddl']
 gdict['heat_then_clean']['templates_pos'] = ['{obj} is heated, then cleaned in a SinkBasin',
                                              '{obj} is cleaned in a SinkBasin after heating',
                                              '{obj} is picked and heated before cleaning in a SinkBasin']
-gdict['heat_then_clean']['templates_neg'] = ['a clean {obj} is heated',
-                                             'a hot {obj} is placed and sliced in a SinkBasin',
-                                             'a cold {obj} is cleaned in a SinkBasin',
-                                             'a hot, clean {obj} is sliced',
+gdict['heat_then_clean']['templates_neg'] = ['clean {obj} is heated',
+                                             'hot {obj} is placed and sliced in a SinkBasin',
+                                             'cold {obj} is cleaned in a SinkBasin',
+                                             'hot, clean {obj} is sliced',
                                              '{obj} is cleaned in a SinkBasin, then heated',
                                              '{obj} is cleaned in a SinkBasin before heating',
                                              '{obj} is heated after cleaning in a SinkBasin']
@@ -1521,10 +1610,10 @@ gdict['cool_then_slice']['pddl'] = gdict['cool_and_slice']['pddl']
 gdict['cool_then_slice']['templates_pos'] = ['{obj} is cooled in a Fridge, then sliced',
                                              '{obj} is cooled in a Fridge before slicing',
                                              '{obj} is sliced after cooling in a Fridge']
-gdict['cool_then_slice']['templates_neg'] = ['a cold {obj} is cleaned in a SinkBasin',
-                                             'a hot {obj} is sliced',
-                                             'a cold, sliced {obj} is cleaned in a SinkBasin',
-                                             'a sliced {obj} is cooled in a Fridge',
+gdict['cool_then_slice']['templates_neg'] = ['cold {obj} is cleaned in a SinkBasin',
+                                             'hot {obj} is sliced',
+                                             'cold, sliced {obj} is cleaned in a SinkBasin',
+                                             'sliced {obj} is cooled in a Fridge',
                                              '{obj} is sliced, then cooled in a Fridge',
                                              '{obj} is sliced before cooling in a Fridge',
                                              '{obj} is cooled in a Fridge after slicing']
@@ -1532,9 +1621,9 @@ gdict['slice_then_cool']['pddl'] = gdict['cool_and_slice']['pddl']
 gdict['slice_then_cool']['templates_pos'] = ['{obj} is sliced, then cooled in a Fridge',
                                              '{obj} is sliced before cooling in a Fridge',
                                              '{obj} is cooled in a Fridge after slicing']
-gdict['slice_then_cool']['templates_neg'] = ['a cold {obj} is sliced',
-                                             'a sliced {obj} is heated',
-                                             'a cold, sliced {obj} is cleaned in a SinkBasin',
+gdict['slice_then_cool']['templates_neg'] = ['cold {obj} is sliced',
+                                             'sliced {obj} is heated',
+                                             'cold, sliced {obj} is cleaned in a SinkBasin',
                                              '{obj} is cooled in a Fridge, then sliced',
                                              '{obj} is cooled in a Fridge before slicing',
                                              '{obj} is sliced after cooling in a Fridge']
@@ -1543,9 +1632,9 @@ gdict['clean_then_slice']['pddl'] = gdict['clean_and_slice']['pddl']
 gdict['clean_then_slice']['templates_pos'] = ['{obj} is cleaned in a SinkBasin, then sliced',
                                               '{obj} is cleaned in a SinkBasin before slicing',
                                               '{obj} is sliced after cleaning in a SinkBasin']
-gdict['clean_then_slice']['templates_neg'] = ['a cold {obj} is sliced',
-                                              'a sliced {obj} is cleaned in a SinkBasin',
-                                              'a clean, sliced {obj} is cooled in a SinkBasin',
+gdict['clean_then_slice']['templates_neg'] = ['cold {obj} is sliced',
+                                              'sliced {obj} is cleaned in a SinkBasin',
+                                              'clean, sliced {obj} is cooled in a SinkBasin',
                                               '{obj} is sliced, then cleaned in a SinkBasin',
                                               '{obj} is sliced before cleaning in a SinkBasin',
                                               '{obj} is cleaned in a SinkBasin after slicing']
@@ -1553,9 +1642,9 @@ gdict['slice_then_clean']['pddl'] = gdict['clean_and_slice']['pddl']
 gdict['slice_then_clean']['templates_pos'] = ['{obj} is sliced, then cleaned in a SinkBasin',
                                               '{obj} is sliced before cleaning in a SinkBasin',
                                               '{obj} is cleaned in a SinkBasin after slicing']
-gdict['slice_then_clean']['templates_neg'] = ['a clean {obj} is sliced',
-                                              'a sliced {obj} is cooled in a Fridge',
-                                              'a clean, sliced {obj} is cooled in a SinkBasin',
+gdict['slice_then_clean']['templates_neg'] = ['clean {obj} is sliced',
+                                              'sliced {obj} is cooled in a Fridge',
+                                              'clean, sliced {obj} is cooled in a SinkBasin',
                                               '{obj} is cleaned in a SinkBasin, then sliced',
                                               '{obj} is cleaned in a SinkBasin before slicing',
                                               '{obj} is sliced after cleaning in a SinkBasin']
@@ -1564,9 +1653,9 @@ gdict['heat_then_slice']['pddl'] = gdict['heat_and_slice']['pddl']
 gdict['heat_then_slice']['templates_pos'] = ['{obj} is picked, heated, then sliced',
                                              '{obj} is picked and heated before slicing',
                                              '{obj} is sliced after heating']
-gdict['heat_then_slice']['templates_neg'] = ['a sliced {obj} is heated',
-                                             'a cold {obj} is sliced',
-                                             'a hot {obj} is cleaned in a SinkBasin',
+gdict['heat_then_slice']['templates_neg'] = ['sliced {obj} is heated',
+                                             'cold {obj} is sliced',
+                                             'hot {obj} is cleaned in a SinkBasin',
                                              '{obj} is sliced, then heated',
                                              '{obj} is sliced before heating',
                                              '{obj} is heated after slicing']
@@ -1574,9 +1663,9 @@ gdict['slice_then_heat']['pddl'] = gdict['heat_and_slice']['pddl']
 gdict['slice_then_heat']['templates_pos'] = ['{obj} is sliced, then heated',
                                              '{obj} is sliced before heating',
                                              '{obj} is heated after slicing']
-gdict['slice_then_heat']['templates_neg'] = ['a sliced {obj} cooled in a Fridge',
-                                             'a hot {obj} is sliced',
-                                             'a hot, sliced {obj} is cleaned in a SinkBasin',
+gdict['slice_then_heat']['templates_neg'] = ['sliced {obj} is cooled in a Fridge',
+                                             'hot {obj} is sliced',
+                                             'hot, sliced {obj} is cleaned in a SinkBasin',
                                              '{obj} is picked, heated, then sliced',
                                              '{obj} is picked and heated before slicing',
                                              '{obj} is sliced after heating']
@@ -1585,8 +1674,8 @@ gdict['slice_then_place']['pddl'] = gdict['slice_and_place']['pddl']
 gdict['slice_then_place']['templates_pos'] = ['{obj} is sliced, then placed in a {recep}',
                                               '{obj} is sliced before placing in a {recep}',
                                               '{obj} is placed in a {recep} after slicing']
-gdict['slice_then_place']['templates_neg'] = ['a clean {obj} is placed in a {recep}',
-                                              'a sliced {obj} is cooled and placed in a {recep}',
+gdict['slice_then_place']['templates_neg'] = ['clean {obj} is placed in a {recep}',
+                                              'sliced {obj} is cooled and placed in a {recep}',
                                               '{obj} is heated, then placed in a {recep}',
                                               '{obj} is cooled in a Fridge before placing in a {recep}',
                                               '{obj} is placed in a {recep} after cleaning in a SinkBasin']
@@ -1595,8 +1684,8 @@ gdict['clean_then_place']['pddl'] = gdict['clean_and_place']['pddl']
 gdict['clean_then_place']['templates_pos'] = ['{obj} is cleaned in a SinkBasin, then placed in a {recep}',
                                               '{obj} is cleaned in a SinkBasin before placing in a {recep}',
                                               '{obj} is placed in a {recep} after cleaning in a SinkBasin']
-gdict['clean_then_place']['templates_neg'] = ['a cold {obj} is placed in a {recep}',
-                                              'a clean {obj} is sliced and placed in a {recep}',
+gdict['clean_then_place']['templates_neg'] = ['cold {obj} is placed in a {recep}',
+                                              'clean {obj} is sliced and placed in a {recep}',
                                               '{obj} is heated, then placed in a {recep}',
                                               '{obj} is cooled in a Fridge before placing in a {recep}',
                                               '{obj} is placed in a {recep} after slicing']
@@ -1605,8 +1694,8 @@ gdict['cool_then_place']['pddl'] = gdict['cool_and_place']['pddl']
 gdict['cool_then_place']['templates_pos'] = ['{obj} is cooled in a Fridge, then placed in a {recep}',
                                              '{obj} is cooled in a Fridge before placing in a {recep}',
                                              '{obj} is placed in a {recep} after cooling in a Fridge']
-gdict['cool_then_place']['templates_neg'] = ['a hot {obj} is placed in a {recep}',
-                                             'a cold {obj} is sliced and placed in a {recep}',
+gdict['cool_then_place']['templates_neg'] = ['hot {obj} is placed in a {recep}',
+                                             'cold {obj} is sliced and placed in a {recep}',
                                              '{obj} is heated, then placed in a {recep}',
                                              '{obj} is cleaned in a SinkBasin before placing in a {recep}',
                                              '{obj} is placed in a {recep} after slicing']
@@ -1617,8 +1706,8 @@ gdict['heat_then_place']['templates_pos'] = ['{obj} is heated, then placed in a 
                                              '{obj} is placed in a {recep} after heating',
                                              '{obj} is picked and heated before placing in a {recep}',
                                              '{obj} is picked, heated, then placed in a {recep}']
-gdict['heat_then_place']['templates_neg'] = ['a cold {obj} is placed in a {recep}',
-                                             'a hot {obj} is cleaned and placed in a {recep}',
+gdict['heat_then_place']['templates_neg'] = ['cold {obj} is placed in a {recep}',
+                                             'hot {obj} is cleaned and placed in a {recep}',
                                              '{obj} is cooled, then placed in a {recep}',
                                              '{obj} is cleaned in a SinkBasin before placing in a {recep}',
                                              '{obj} is placed in a {recep} after slicing']
@@ -1957,9 +2046,9 @@ gdict['clean_and_cool_then_place']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'placing in a {recep}',
                                                        '{obj} is cleaned in a SinkBasin and cooled in a Fridge '
                                                        'before slicing',
-                                                       'a clean, sliced {obj} is placed in a {recep}',
-                                                       'a hot, clean {obj} is placed in a {recep}',
-                                                       'a cold, clean {obj} is sliced in a {recep}',
+                                                       'clean, sliced {obj} is placed in a {recep}',
+                                                       'hot, clean {obj} is placed in a {recep}',
+                                                       'cold, clean {obj} is sliced in a {recep}',
                                                        '{obj} is placed in a {recep} after cleaning in a SinkBasin '
                                                        'and heating',
                                                        '{obj} is placed in a {recep} after slicing '
@@ -2008,9 +2097,9 @@ gdict['clean_and_heat_then_place']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'placing in a {recep}',
                                                        '{obj} is cleaned in a SinkBasin and heated '
                                                        'before slicing',
-                                                       'a clean, sliced {obj} is placed in a {recep}',
-                                                       'a cold, clean {obj} is placed in a {recep}',
-                                                       'a hot, clean {obj} is sliced in a {recep}',
+                                                       'clean, sliced {obj} is placed in a {recep}',
+                                                       'cold, clean {obj} is placed in a {recep}',
+                                                       'hot, clean {obj} is sliced in a {recep}',
                                                        '{obj} is placed in a {recep} after cleaning in a SinkBasin '
                                                        'and cooling in a Fridge',
                                                        '{obj} is placed in a {recep} after slicing '
@@ -2150,9 +2239,9 @@ gdict['slice_and_clean_then_place']['templates_neg'] = ['{obj} is cleaned in a S
                                                         'placing in a {recep}',
                                                         '{obj} is cleaned in a SinkBasin and heated '
                                                         'before slicing',
-                                                        'a hot, sliced {obj} is placed in a {recep}',
-                                                        'a cold, clean {obj} is placed in a {recep}',
-                                                        'a hot, clean {obj} is sliced in a {recep}',
+                                                        'hot, sliced {obj} is placed in a {recep}',
+                                                        'cold, clean {obj} is placed in a {recep}',
+                                                        'hot, clean {obj} is sliced in a {recep}',
                                                         '{obj} is placed in a {recep} after cleaning in a SinkBasin '
                                                         'and cooling in a Fridge',
                                                         '{obj} is placed in a {recep} after slicing '
@@ -2177,9 +2266,9 @@ gdict['slice_and_cool_then_place']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'placing in a {recep}',
                                                        '{obj} is cleaned in a SinkBasin and cooled in a Fridge '
                                                        'before slicing',
-                                                       'a hot, sliced {obj} is placed in a {recep}',
-                                                       'a cold, clean {obj} is placed in a {recep}',
-                                                       'a cold, clean {obj} is sliced in a {recep}',
+                                                       'hot, sliced {obj} is placed in a {recep}',
+                                                       'cold, clean {obj} is placed in a {recep}',
+                                                       'cold, clean {obj} is sliced in a {recep}',
                                                        '{obj} is placed in a {recep} after cleaning in a SinkBasin '
                                                        'and cooling in a Fridge',
                                                        '{obj} is placed in a {recep} after slicing '
@@ -2198,9 +2287,9 @@ gdict['slice_and_heat_then_place']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'placing in a {recep}',
                                                        '{obj} is cleaned in a SinkBasin and heated '
                                                        'before slicing',
-                                                       'a hot, clean {obj} is placed in a {recep}',
-                                                       'a cold, sliced {obj} is placed in a {recep}',
-                                                       'a hot, sliced {obj} is cleaned in a {recep}',
+                                                       'hot, clean {obj} is placed in a {recep}',
+                                                       'cold, sliced {obj} is placed in a {recep}',
+                                                       'hot, sliced {obj} is cleaned in a {recep}',
                                                        '{obj} is placed in a {recep} after cleaning in a SinkBasin '
                                                        'and heating',
                                                        '{obj} is placed in a {recep} after slicing '
@@ -2228,10 +2317,10 @@ gdict['clean_then_cool_and_slice']['templates_neg'] = ['{obj} is cooled in a Fri
                                                        'in a SinkBasin',
                                                        '{obj} is cleaned in a SinkBasin after slicing '
                                                        'and cooling in a Fridge',
-                                                       'a hot {obj} is cooled in a Fridge and sliced',
-                                                       'a clean {obj} is sliced and heated',
-                                                       'a cool, sliced {obj} is cleaned in a SinkBasin',
-                                                       'a sliced, cool {obj} is cleaned in a SinkBasin']
+                                                       'hot {obj} is cooled in a Fridge and sliced',
+                                                       'clean {obj} is sliced and heated',
+                                                       'a cold, sliced {obj} is cleaned in a SinkBasin',
+                                                       'sliced, cold {obj} is cleaned in a SinkBasin']
 
 gdict['clean_then_heat_and_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
 gdict['clean_then_heat_and_slice']['templates_pos'] = ['{obj} is cleaned in a SinkBasin, then heated and sliced',
@@ -2245,11 +2334,11 @@ gdict['clean_then_heat_and_slice']['templates_neg'] = ['{obj} is heated and slic
                                                        '{obj} is sliced and heated before cleaning in a SinkBasin',
                                                        '{obj} is cleaned in a SinkBasin after slicing '
                                                        'and heating',
-                                                       'a cold {obj} is heated and sliced',
-                                                       'a clean {obj} is cooled in a Fridge and sliced',
-                                                       'a clean {obj} is sliced and cooled in a Fridge',
-                                                       'a hot, sliced {obj} is cleaned in a SinkBasin',
-                                                       'a sliced, hot {obj} is cleaned in a SinkBasin']
+                                                       'cold {obj} is heated and sliced',
+                                                       'clean {obj} is cooled in a Fridge and sliced',
+                                                       'clean {obj} is sliced and cooled in a Fridge',
+                                                       'hot, sliced {obj} is cleaned in a SinkBasin',
+                                                       'sliced, hot {obj} is cleaned in a SinkBasin']
 
 gdict['cool_then_clean_and_slice']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
 gdict['cool_then_clean_and_slice']['templates_pos'] = ['{obj} is cooled in a Fridge, then cleaned in a SinkBasin '
@@ -2270,12 +2359,12 @@ gdict['cool_then_clean_and_slice']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'cooling in a Fridge',
                                                        '{obj} is cooled in a Fridge after cleaning in a SinkBasin '
                                                        'and slicing',
-                                                       'a hot {obj} is cleaned in a SinkBasin and sliced',
-                                                       'a sliced {obj} is cooled in a Fridge and cleaned '
+                                                       'hot {obj} is cleaned in a SinkBasin and sliced',
+                                                       'sliced {obj} is cooled in a Fridge and cleaned '
                                                        'in a SinkBasin',
-                                                       'a cold {obj} is cleaned in a SinkBasin and heated',
-                                                       'a sliced, clean {obj} is cooled in a Fridge',
-                                                       'a clean, sliced {obj} is cooled in a Fridge']
+                                                       'cold {obj} is cleaned in a SinkBasin and heated',
+                                                       'sliced, clean {obj} is cooled in a Fridge',
+                                                       'clean, sliced {obj} is cooled in a Fridge']
 
 gdict['heat_then_clean_and_slice']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
 gdict['heat_then_clean_and_slice']['templates_pos'] = ['{obj} is heated, then cleaned in a SinkBasin and sliced',
@@ -2290,11 +2379,11 @@ gdict['heat_then_clean_and_slice']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'heating',
                                                        '{obj} is heated after cleaning in a SinkBasin '
                                                        'and slicing',
-                                                       'a cold {obj} is cleaned in a SinkBasin and sliced',
-                                                       'a sliced {obj} is heated and cleaned in a SinkBasin',
-                                                       'a cold {obj} is cleaned in a SinkBasin and sliced',
-                                                       'a clean, sliced {obj} is heated',
-                                                       'a sliced, clean {obj} is heated']
+                                                       'cold {obj} is cleaned in a SinkBasin and sliced',
+                                                       'sliced {obj} is heated and cleaned in a SinkBasin',
+                                                       'cold {obj} is cleaned in a SinkBasin and sliced',
+                                                       'clean, sliced {obj} is heated',
+                                                       'sliced, clean {obj} is heated']
 
 gdict['slice_then_clean_and_cool']['pddl'] = gdict['cool_and_slice_and_clean']['pddl']
 gdict['slice_then_clean_and_cool']['templates_pos'] = ['{obj} is sliced, then cleaned in a SinkBasin '
@@ -2313,10 +2402,10 @@ gdict['slice_then_clean_and_cool']['templates_neg'] = ['{obj} is cooled in a Fri
                                                        'before slicing',
                                                        '{obj} is sliced after cleaning in a SinkBasin and cooling '
                                                        'in a Fridge',
-                                                       'a sliced {obj} is cleaned in a SinkBasin and heated',
-                                                       'a cold, clean {obj} is sliced',
-                                                       'a clean, cold {obj} is sliced',
-                                                       'a clean {obj} is sliced and cooled in a Fridge']
+                                                       'sliced {obj} is cleaned in a SinkBasin and heated',
+                                                       'cold, clean {obj} is sliced',
+                                                       'clean, cold {obj} is sliced',
+                                                       'clean {obj} is sliced and cooled in a Fridge']
 
 gdict['slice_then_clean_and_heat']['pddl'] = gdict['slice_and_heat_and_clean']['pddl']
 gdict['slice_then_clean_and_heat']['templates_pos'] = ['{obj} is sliced, then cleaned in a SinkBasin and heated',
@@ -2331,13 +2420,13 @@ gdict['slice_then_clean_and_heat']['templates_neg'] = ['{obj} is heated and clea
                                                        '{obj} is cleaned in a SinkBasin and heated before slicing',
                                                        '{obj} is sliced after cleaning in a SinkBasin and heating',
                                                        '{obj} is sliced after heating and cleaning in a SinkBasin',
-                                                       'a sliced {obj} is cleaned in a SinkBasin and cooled in a '
+                                                       'sliced {obj} is cleaned in a SinkBasin and cooled in a '
                                                        'Fridge',
-                                                       'a sliced {obj} is cooled in a Fridge and cleaned in a '
+                                                       'sliced {obj} is cooled in a Fridge and cleaned in a '
                                                        'SinkBasin',
-                                                       'a hot, clean {obj} is sliced',
-                                                       'a clean, hot {obj} is sliced',
-                                                       'a clean {obj} is sliced and heated']
+                                                       'hot, clean {obj} is sliced',
+                                                       'clean, hot {obj} is sliced',
+                                                       'clean {obj} is sliced and heated']
 
 # clean_then_cool_and_place, clean_then_heat_and_place, clean_then_slice_and_place, slice_then_cool_and_place
 # slice_then_heat_and_place, slice_then_clean_and_place, heat_then_clean_and_place, heat_then_slice_and_place
@@ -2353,9 +2442,9 @@ gdict['clean_then_cool_and_place']['templates_neg'] = ['{obj} is cooled in a Fri
                                                        'before cleaning in a SinkBasin',
                                                        '{obj} is cleaned in a SinkBasin after cooling in a Fridge '
                                                        'and placing in a {recep}',
-                                                       'a clean {obj} is heated and placed in a {recep}',
-                                                       'a clean, hot {obj} is placed in a {recep}',
-                                                       'a clean, cold {obj} is sliced']
+                                                       'clean {obj} is heated and placed in a {recep}',
+                                                       'clean, hot {obj} is placed in a {recep}',
+                                                       'clean, cold {obj} is sliced']
 
 gdict['clean_then_heat_and_place']['pddl'] = gdict['heat_and_clean_and_place']['pddl']
 gdict['clean_then_heat_and_place']['templates_pos'] = ['{obj} is cleaned in a SinkBasin, then heated '
@@ -2368,9 +2457,9 @@ gdict['clean_then_heat_and_place']['templates_neg'] = ['{obj} is heated and plac
                                                        'before cleaning in a SinkBasin',
                                                        '{obj} is cleaned in a SinkBasin after heating '
                                                        'and placing in a {recep}',
-                                                       'a clean {obj} is cooled and placed in a {recep}',
-                                                       'a clean, cold {obj} is placed in a {recep}',
-                                                       'a clean, hot {obj} is sliced']
+                                                       'clean {obj} is cooled and placed in a {recep}',
+                                                       'clean, cold {obj} is placed in a {recep}',
+                                                       'clean, hot {obj} is sliced']
 
 gdict['clean_then_slice_and_place']['pddl'] = gdict['slice_and_clean_and_place']['pddl']
 gdict['clean_then_slice_and_place']['templates_pos'] = ['{obj} is cleaned in a SinkBasin, then sliced '
@@ -2383,9 +2472,9 @@ gdict['clean_then_slice_and_place']['templates_neg'] = ['{obj} is sliced and pla
                                                         'before cleaning in a SinkBasin',
                                                         '{obj} is cleaned in a SinkBasin after slicing '
                                                         'and placing in a {recep}',
-                                                        'a clean {obj} is cooled and placed in a {recep}',
-                                                        'a cold, sliced {obj} is placed in a {recep}',
-                                                        'a clean, sliced {obj} is heated']
+                                                        'clean {obj} is cooled and placed in a {recep}',
+                                                        'cold, sliced {obj} is placed in a {recep}',
+                                                        'clean, sliced {obj} is heated']
 
 gdict['slice_then_cool_and_place']['pddl'] = gdict['cool_and_slice_and_place']['pddl']
 gdict['slice_then_cool_and_place']['templates_pos'] = ['{obj} is sliced, then cooled in a Fridge '
@@ -2398,9 +2487,9 @@ gdict['slice_then_cool_and_place']['templates_neg'] = ['{obj} is cooled in a Fri
                                                        'before slicing',
                                                        '{obj} is sliced after cooling in a Fridge and '
                                                        'placing in a {recep}',
-                                                       'a sliced {obj} is heated and placed in a {recep}',
-                                                       'a clean, sliced {obj} is placed in a {recep}',
-                                                       'a sliced, cold {obj} is cleaned']
+                                                       'sliced {obj} is heated and placed in a {recep}',
+                                                       'clean, sliced {obj} is placed in a {recep}',
+                                                       'sliced, cold {obj} is cleaned']
 
 gdict['slice_then_heat_and_place']['pddl'] = gdict['slice_and_heat_and_place']['pddl']
 gdict['slice_then_heat_and_place']['templates_pos'] = ['{obj} is sliced, then heated and placed in a {recep}',
@@ -2411,9 +2500,9 @@ gdict['slice_then_heat_and_place']['templates_neg'] = ['{obj} is heated and plac
                                                        'before slicing',
                                                        '{obj} is sliced after heating and '
                                                        'placing in a {recep}',
-                                                       'a sliced {obj} is cooled and placed in a {recep}',
-                                                       'a clean, hot {obj} is placed in a {recep}',
-                                                       'a sliced, hot {obj} is cleaned']
+                                                       'sliced {obj} is cooled and placed in a {recep}',
+                                                       'clean, hot {obj} is placed in a {recep}',
+                                                       'sliced, hot {obj} is cleaned']
 
 gdict['slice_then_clean_and_place']['pddl'] = gdict['slice_and_clean_and_place']['pddl']
 gdict['slice_then_clean_and_place']['templates_pos'] = ['{obj} is sliced, then cleaned in a SinkBasin '
@@ -2426,9 +2515,9 @@ gdict['slice_then_clean_and_place']['templates_neg'] = ['{obj} is cleaned in a S
                                                         'before slicing',
                                                         '{obj} is sliced after cleaning in a SinkBasin and '
                                                         'placing in a {recep}',
-                                                        'a sliced {obj} is cooled and placed in a {recep}',
-                                                        'a hot, clean {obj} is placed in a {recep}',
-                                                        'a sliced, clean {obj} is heated']
+                                                        'sliced {obj} is cooled and placed in a {recep}',
+                                                        'hot, clean {obj} is placed in a {recep}',
+                                                        'sliced, clean {obj} is heated']
 
 gdict['heat_then_clean_and_place']['pddl'] = gdict['heat_and_clean_and_place']['pddl']
 gdict['heat_then_clean_and_place']['templates_pos'] = ['{obj} is heated, then cleaned in a SinkBasin and '
@@ -2441,10 +2530,10 @@ gdict['heat_then_clean_and_place']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'before heating',
                                                        '{obj} is heated after cleaning in a SinkBasin and '
                                                        'placing in a {recep}',
-                                                       'a cold {obj} is cleaned in a SinkBasin and placed in a {recep}',
-                                                       'a hot {obj} is sliced and placed in a {recep}',
-                                                       'a cold, clean {obj} is placed in a {recep}',
-                                                       'a hot, clean {obj} is sliced']
+                                                       'cold {obj} is cleaned in a SinkBasin and placed in a {recep}',
+                                                       'hot {obj} is sliced and placed in a {recep}',
+                                                       'cold, clean {obj} is placed in a {recep}',
+                                                       'hot, clean {obj} is sliced']
 
 gdict['heat_then_slice_and_place']['pddl'] = gdict['slice_and_heat_and_place']['pddl']
 gdict['heat_then_slice_and_place']['templates_pos'] = ['{obj} is heated, then sliced and placed in a {recep}',
@@ -2452,13 +2541,13 @@ gdict['heat_then_slice_and_place']['templates_pos'] = ['{obj} is heated, then sl
                                                        '{obj} is heated before slicing and placing in a {recep}']
 gdict['heat_then_slice_and_place']['templates_neg'] = ['{obj} is sliced and placed in a {recep} before heating',
                                                        '{obj} is heated after slicing and placing in a {recep}',
-                                                       'a cold {obj} is sliced and placed in a {recep}',
-                                                       'a hot {obj} is cleaned and placed in a {recep}',
-                                                       'a cold, sliced {obj} is placed in a {recep}',
+                                                       'cold {obj} is sliced and placed in a {recep}',
+                                                       'hot {obj} is cleaned and placed in a {recep}',
+                                                       'cold, sliced {obj} is placed in a {recep}',
                                                        'a heat, sliced {obj} is cleaned']
 
 gdict['cool_then_clean_and_place']['pddl'] = gdict['cool_and_clean_and_place']['pddl']
-gdict['cool_then_clean_and_place']['templates_pos'] = ['a cold {obj} is cleaned in a SinkBasin and placed in a {recep}',
+gdict['cool_then_clean_and_place']['templates_pos'] = ['cold {obj} is cleaned in a SinkBasin and placed in a {recep}',
                                                        '{obj} is cooled in Fridge, then cleaned in a SinkBasin and '
                                                        'placed in a {recep}',
                                                        '{obj} is cleaned in a SinkBasin and placed in a {recep} '
@@ -2469,10 +2558,10 @@ gdict['cool_then_clean_and_place']['templates_neg'] = ['{obj} is cleaned in a Si
                                                        'before cooling in a Fridge',
                                                        '{obj} is cooled in a Fridge after cleaning in a SinkBasin '
                                                        'and placing in a {recep}',
-                                                       'a hot {obj} is cleaned in a SinkBasin and placed in a {recep}',
-                                                       'a clean {obj} is cooled in a Fridge and placed in a {recep}',
-                                                       'a cold {obj} is cleaned in a SinkBasin and sliced in a {recep}',
-                                                       'a cold, clean {obj} is sliced']
+                                                       'hot {obj} is cleaned in a SinkBasin and placed in a {recep}',
+                                                       'clean {obj} is cooled in a Fridge and placed in a {recep}',
+                                                       'cold {obj} is cleaned in a SinkBasin and sliced in a {recep}',
+                                                       'cold, clean {obj} is sliced']
 
 gdict['cool_then_slice_and_place']['pddl'] = gdict['cool_and_slice_and_place']['pddl']
 gdict['cool_then_slice_and_place']['templates_pos'] = ['{obj} is cooled in a Fridge, then sliced and '
@@ -2485,6 +2574,11 @@ gdict['cool_then_slice_and_place']['templates_neg'] = ['{obj} is sliced and plac
                                                        'before cooling in a Fridge',
                                                        '{obj} is cooled in a Fridge after slicing '
                                                        'and placing in a {recep}',
-                                                       'a hot {obj} is sliced and placed in a {recep}',
-                                                       'a sliced {obj} is cooled in a Fridge and placed in a {recep}',
-                                                       'a cold, sliced {obj} is cleaned']
+                                                       'hot {obj} is sliced and placed in a {recep}',
+                                                       'sliced {obj} is cooled in a Fridge and placed in a {recep}',
+                                                       'cold, sliced {obj} is cleaned']
+
+# gdict['heat_then_slice_then_clean_then_place']['pddl'] = gdict['heat_and_slice_and_clean_and_place']['pddl']
+# gdict['heat_then_slice_and_clean_then_place']['pddl'] = gdict['heat_and_slice_and_clean_and_place']['pddl']
+# gdict['heat_and_slice_then_clean_then_place']['pddl'] = gdict['heat_and_slice_and_clean_and_place']['pddl']
+# gdict['heat_then_slice_then_clean_and_place']['pddl'] = gdict['heat_and_slice_and_clean_and_place']['pddl']

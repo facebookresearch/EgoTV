@@ -2,7 +2,7 @@ import os
 import sys
 from collections import defaultdict
 
-# os.environ['GENERATE_DATA'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
+# os.environ['GENERATE_DATA'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -427,7 +427,7 @@ def main(args, goal_candidates):
     # In actively gathering data, we will try to maximize entropy for each (e.g., uniform spread of goals,
     # uniform spread over patient objects, uniform recipient objects, and uniform scenes).
     succ_traj = pd.DataFrame(columns=["goal", "pickup", "movable", "receptacle", "scene"])
-    full_traj = pd.DataFrame(columns=["goal", "pickup", "movable", "receptacle", "scene"])
+    # full_traj = pd.DataFrame(columns=["goal", "pickup", "movable", "receptacle", "scene"])
 
     # objects-to-scene and scene-to-objects database
     for scene_type, ids in constants.SCENE_TYPE.items():
@@ -466,7 +466,7 @@ def main(args, goal_candidates):
         for g in constants.context_verb_noun_composition_split:
             for st in constants.GOALS_VALID[g]:
                 scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
-                                           if s in constants.TRAIN_SCENE_NUMBERS and s not in range(16, 26)])
+                                           if s in constants.TRAIN_SCENE_NUMBERS])
             scenes_for_goal[g] = set(scenes_for_goal[g])
     elif args.split_type == 'context_goal_composition':
         for g in constants.train_split:
@@ -478,7 +478,7 @@ def main(args, goal_candidates):
         for g in constants.abstraction_split:
             for st in constants.GOALS_VALID[g]:
                 scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
-                                           if s in constants.TEST_SCENE_NUMBERS])
+                                           if s in constants.TRAIN_SCENE_NUMBERS])
             scenes_for_goal[g] = set(scenes_for_goal[g])
     else:
         raise Exception("Not a valid split type")
@@ -490,8 +490,7 @@ def main(args, goal_candidates):
             scene_to_type[str(s)] = st
 
     # pre-populate counts in this structure using saved trajectories path.
-    #TODO: change path
-    succ_traj, full_traj = load_successes_from_disk(args.save_path, succ_traj, args.just_examine, args.repeats_per_cond)
+    succ_traj, full_traj = load_successes_from_disk(args.save_path, goal_candidates[0], succ_traj, args.just_examine, args.repeats_per_cond)
     if args.just_examine:
         print_successes(succ_traj)
         return
@@ -519,7 +518,6 @@ def main(args, goal_candidates):
 
     if args.split_type in ['train', 'abstraction', 'context_goal_composition', 'sub_goal_composition',
                            'context_verb_noun_composition']:
-        # TODO: for abstraction -- change goal_library.py file for templates
         # receptacle_candidates.remove('Plate')
         # receptacle_candidates.remove('Bowl')
         receptacle_candidates.remove('Shelf')
@@ -550,7 +548,7 @@ def main(args, goal_candidates):
         # TODO: Verify verb_noun and context_verb_noun compositions for simple subgoals (place_simple)
         subgoals = gtype.replace('then', 'and').replace('simple', 'and_').split('_and_')
 
-        if args.split_type in ['train', 'sub_goal_composition', 'context_goal_composition']:
+        if args.split_type in ['train', 'sub_goal_composition', 'context_goal_composition', 'abstraction']:
             if ('heat' in subgoals and pickup_obj in ['Egg']) or \
                 ('clean' in subgoals and pickup_obj in ['Plate']) or \
                 ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']) or \
@@ -621,8 +619,13 @@ def main(args, goal_candidates):
         num_place_fails = 0  # count of errors related to placement failure for no valid positions.
 
         # continue until we're (out of tries + have never succeeded) or (have gathered the target number of instances)
+        if len(succ_traj) > args.num_generate_traj:
+            print("\n ============= Moving to the next goal/task generation ============ \n")
+            return
         while tries_remaining > 0 and target_remaining > 0:
-
+            if len(succ_traj) > args.num_generate_traj:
+                print("\n ================ Moving to the next goal/task generation ================= \n")
+                return
             # environment setup
             constants.pddl_goal_type = gtype
             print("PDDLGoalType: " + constants.pddl_goal_type)
@@ -713,7 +716,8 @@ def main(args, goal_candidates):
                 if len(succ_traj) > args.num_generate_traj:
                     print('==================== Stop ===========================')
                     if not os.path.exists(args.save_path_csv):
-                        os.mkdir(args.save_path_csv)
+                        #os.mkdir(args.save_path_csv)
+                        makedirs(args.save_path_csv)
                     # csv_id = gtype + '|' + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_id = args.split_type + '_' + csv_id
@@ -723,6 +727,9 @@ def main(args, goal_candidates):
                     return
 
             except Exception as e:
+                if len(succ_traj) > args.num_generate_traj:
+                    print('\n================ Moving to the next goal/task generation ===========\n')
+                    return
                 import traceback
                 traceback.print_exc()
                 print("Error: " + repr(e))
@@ -791,7 +798,7 @@ def main(args, goal_candidates):
             else:
                 print("Reloading trajectories from disk because of parallel processes...")
                 succ_traj = pd.DataFrame(columns=succ_traj.columns)  # Drop all rows.
-                succ_traj, full_traj = load_successes_from_disk(args.save_path, succ_traj, False, args.repeats_per_cond)
+                succ_traj, full_traj = load_successes_from_disk(args.save_path, goal_candidates[0], succ_traj, False, args.repeats_per_cond)
                 print("... Loaded %d trajectories" % len(succ_traj.index))
                 n_until_load_successes = args.async_load_every_n_samples
                 print_successes(succ_traj)
@@ -800,6 +807,13 @@ def main(args, goal_candidates):
                                                   receptacle_candidates, scene_candidates)
                 print("... Created fresh instance of sample_task_params generator")
 
+def makedirs(path):
+    """Fix to change umask in order for makedirs to work. """
+    try:
+        original_umask = os.umask(0)
+        os.makedirs(path, 0o777)
+    finally:
+        os.umask(original_umask)
 
 def create_dirs(gtype, pickup_obj, movable_obj, receptacle_obj, scene_num):
     task_id = 'trial_T' + datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -807,7 +821,7 @@ def create_dirs(gtype, pickup_obj, movable_obj, receptacle_obj, scene_num):
 
     constants.save_path = os.path.join(constants.DATA_SAVE_PATH, save_name, RAW_IMAGES_FOLDER)
     if not os.path.exists(constants.save_path):
-        os.makedirs(constants.save_path)
+        makedirs(constants.save_path)
 
     print("Saving images to: " + constants.save_path)
     return task_id
@@ -885,7 +899,7 @@ if __name__ == "__main__":
                         help="this collection will run in parallel with others, so load from disk on every new sample")
     parser.add_argument("-n", "--num_threads", type=int, default=1, help="number of processes for parallel mode")
     parser.add_argument('--json_file', type=str, default="", help="path to json file with trajectory dump")
-    parser.add_argument('--split_type', type=str, default="sub_goal_composition", help="train-test split type",
+    parser.add_argument('--split_type', type=str, default="abstraction", help="train-test split type",
                         choices=["train", "sub_goal_composition", "verb_noun_composition",
                                  "context_goal_composition", "context_verb_noun_composition", "abstraction"])
 
@@ -896,8 +910,10 @@ if __name__ == "__main__":
     parser.add_argument("--num_generate_traj", type=int, default=20)
 
     parse_args = parser.parse_args()
-
-    parse_args.save_path = os.path.join(parse_args.save_path, parse_args.split_type)
+    if parse_args.split_type == 'train':
+        parse_args.save_path = '/fb-agios-acai-efs/dataset/train'
+    else:
+        parse_args.save_path = os.path.join(parse_args.save_path, parse_args.split_type)
 
     if parse_args.split_type in ['train', 'context_goal_composition']:
         split_goal_candidates = constants.train_split[:]

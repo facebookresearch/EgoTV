@@ -1,0 +1,7 @@
+transformers
+scikit-learn
+torchmetrics
+torchtext==0.12.0
+graphviz
+pydot
+sentencepiece

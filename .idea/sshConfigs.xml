@@ -2,7 +2,9 @@
 <project version="4">
   <component name="SshConfigs">
     <configs>
-      <sshConfig host="ec2-3-92-75-17.compute-1.amazonaws.com" id="df681c02-4593-47d2-a659-9350b6defb61" keyPath="C:\Users\rishihazra\Desktop\id_rsa.ppk" port="22" nameFormat="DESCRIPTIVE" username="rishihazra" useOpenSSHConfig="true" />
+      <sshConfig host="ec2-18-232-109-251.compute-1.amazonaws.com" id="df681c02-4593-47d2-a659-9350b6defb61" keyPath="C:\Users\rishihazra\Desktop\id_rsa.ppk" port="22" nameFormat="DESCRIPTIVE" username="rishihazra" useOpenSSHConfig="true" />
+      <sshConfig host="ec2-3-92-75-17.compute-1.amazonaws.com" id="11ca2582-5e1a-4bd6-adee-228dbf5c724e" keyPath="C:\Users\rishihazra\Desktop\id_rsa.ppk" port="22" nameFormat="DESCRIPTIVE" username="rishihazra" useOpenSSHConfig="true" />
+      <sshConfig host="ec2-204-236-251-97.compute-1.amazonaws.com" id="4173a02d-d001-44d3-b059-5d6146c2be1c" keyPath="C:\Users\rishihazra\Desktop\id_rsa.ppk" port="22" nameFormat="DESCRIPTIVE" username="rishihazra" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>

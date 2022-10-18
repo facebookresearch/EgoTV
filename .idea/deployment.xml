@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="aws1" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
       <paths name="aws1">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/rishihazra/VisionLangaugeGrounding" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="aws2">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/rishihazra/VisionLangaugeGrounding" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="aws3">
         <serverdata>
           <mappings>
             <mapping deploy="/home/rishihazra/VisionLangaugeGrounding" local="$PROJECT_DIR$" web="/" />

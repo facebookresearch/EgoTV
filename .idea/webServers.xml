@@ -2,8 +2,22 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="8f360e4a-9f46-4560-a5e3-40dcaf0e5394" name="aws1">
-        <fileTransfer accessType="SFTP" host="ec2-3-92-75-17.compute-1.amazonaws.com" port="22" sshConfigId="df681c02-4593-47d2-a659-9350b6defb61" sshConfig="rishihazra@ec2-3-92-75-17.compute-1.amazonaws.com:22 key" keyPair="true">
+      <webServer id="67f67f2f-6531-4545-9df3-ccc7c6ac0152" name="aws3">
+        <fileTransfer accessType="SFTP" host="ec2-18-232-109-251.compute-1.amazonaws.com" port="22" sshConfigId="df681c02-4593-47d2-a659-9350b6defb61" sshConfig="rishihazra@ec2-18-232-109-251.compute-1.amazonaws.com:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="64d9327c-602b-4aeb-99f0-de479fe474e9" name="aws2">
+        <fileTransfer accessType="SFTP" host="ec2-204-236-251-97.compute-1.amazonaws.com" port="22" sshConfigId="4173a02d-d001-44d3-b059-5d6146c2be1c" sshConfig="rishihazra@ec2-204-236-251-97.compute-1.amazonaws.com:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="26625cb9-88d7-48f0-a504-0d8f20b861ac" name="aws1">
+        <fileTransfer accessType="SFTP" host="ec2-3-92-75-17.compute-1.amazonaws.com" port="22" sshConfigId="11ca2582-5e1a-4bd6-adee-228dbf5c724e" sshConfig="rishihazra@ec2-3-92-75-17.compute-1.amazonaws.com:22 key" keyPair="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
