@@ -96,7 +96,7 @@ View of traj_data.json
 ```
 $ export DATA_ROOT=<path to dataset>
 $ export BASELINES=$(pwd)/VisionLangaugeGrounding/baselines
-$ cd $BASELINES/end2end/violin
+$ cd $BASELINES
 $ sudo apt install graphviz
 $ pip install -r baseline_requirements.txt # install requirements
 ```
@@ -110,6 +110,8 @@ nltk.download('punkt')
 ### Run baselines
 
 ```
+$ cd $BASELINES/end2end/violin
+
 # train
 $ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_node=$NGPUS violin_baseline.py --num_workers $NWorkers --split_type "train" --batch_size 64 --text_feature_extractor <"bert/glove"> --visual_feature_extractor <"i3d/resnet"> --run_id $run_id --sample_rate 3
 # if data split not preprocessed, specify "--preprocess" in the previous step
