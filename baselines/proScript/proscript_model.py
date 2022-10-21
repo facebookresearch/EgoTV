@@ -72,9 +72,13 @@ def validate():
     t5_model.eval()
     with torch.no_grad():
         for inputs, outputs in tqdm(val_loader, desc='Val'):
-            input_ids = tokenizer(inputs, return_tensors="pt").input_ids
-            output_pred = t5_model.generate(input_ids)
-            output_pred = tokenizer.decode(output_pred, skip_special_tokens=True)
+            inputs = tokenizer(inputs, return_tensors="pt", padding=True)
+            # input_ids = tokenizer(inputs, return_tensors="pt").input_ids
+            output_gen = t5_model.module.generate(inputs["input_ids"].cuda(),
+                                            attention_mask=inputs["attention_mask"].cuda(),
+                                            max_length = max_target_length,
+                                            do_sample=False)
+            output_pred = tokenizer.batch_decode(output_gen, skip_special_tokens=True)
             val_metrics.update(pred=output_pred, target=outputs)
             # output_ids = tokenizer(outputs)
     return val_metrics['GraphEditDistance'].compute()
@@ -137,6 +141,7 @@ if __name__ == "__main__":
         max_target_length = 50
 
     dataset = CustomDataset(data_path='', data_filename=data_filename)
+    print("Length of Dataset: {}".format(len(dataset)))
     train_size = int(args.data_split * len(dataset))
     val_size = len(dataset) - train_size
     train_set, val_set = random_split(dataset, [train_size, val_size])
@@ -153,10 +158,11 @@ if __name__ == "__main__":
     tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
     optimizer = optim.AdamW(t5_model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    metrics = MetricCollection([GraphEditDistance(dist_sync_on_step=True)]).cuda()
+    # dist_sync_on_step=True
+    metrics = MetricCollection([GraphEditDistance()]).cuda()
     # train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
-    for epoch in range(1, args.num_epochs + 1):
+    for epoch in range(1, args.epochs + 1):
         train_loader.sampler.set_epoch(epoch)
         val_loader.sampler.set_epoch(epoch)
         train_epoch()

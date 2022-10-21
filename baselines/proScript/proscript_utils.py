@@ -70,7 +70,7 @@ class GraphEditDistance(Metric):
         assert len(pred) == len(target)
         self.preds.append(pred)
         self.targets.append(target)
-        self.total += target.numel()
+        self.total += len(target)
 
     def node_subst_cost(self, node1, node2):
         # check if the nodes are equal, if yes then apply no cost, else apply 1
@@ -97,9 +97,10 @@ class GraphEditDistance(Metric):
     def edge_ins_cost(self, node):
         return torch.tensor(1.)  # here you apply the cost for edge insertion
 
-    def pydot_to_nx(self, G):
+    def pydot_to_nx(self, G_str):
         # string to pydot graph
-        G = pydot.graph_from_dot_data(G.to_string().replace(';', ';\n').replace('{', '{\n').replace('}', '}\n'))[0]
+        G_str = "digraph graph {" + G_str + "}"
+        G = pydot.graph_from_dot_data(G_str.replace(';', ';\n').replace('{', '{\n').replace('}', '}\n'))[0]
         # pydot graph to networkx graph
         return nx.drawing.nx_pydot.from_pydot(G)
 

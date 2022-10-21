@@ -34,7 +34,6 @@ def postprocess(succ_dir, goal_T, prune_trials, max_count=None, to_delete=None):
                                         queue_for_delete.append(trial_path)
                                     break  # only examine top level
                             break  # only examine top level
-
         break  # only examine top level
 
     if prune_trials:
@@ -45,6 +44,30 @@ def postprocess(succ_dir, goal_T, prune_trials, max_count=None, to_delete=None):
             print("Removing extra trial '%s'" % _d)
             shutil.rmtree(_d)
             deleted += 1
+
+
+def remove_img_dir(succ_dir):
+    # cleaning dataset: removing image directories
+    queue_for_delete = []
+    for root, goals, _ in os.walk(succ_dir):
+        for goal in goals:
+            for traj_root, trials, _ in os.walk(os.path.join(root, goal)):
+                for trial in trials:
+                    if trial.count('-') == 3:
+                        for file_path, _dirs, _ in os.walk(os.path.join(traj_root, trial)):
+                            for _d in _dirs:
+                                for trial_path, list_files, _files in os.walk(os.path.join(traj_root, trial, _d)):
+                                    if 'raw_images' in list_files:
+                                        img_dir_path = os.path.join(trial_path, 'raw_images')
+                                        queue_for_delete.append(img_dir_path)
+                                    break  # only examine top level
+                            break  # only examine top level
+        break  # only examine top level
+
+    for _d in queue_for_delete:
+        print("Removing img_dir '%s'" % _d)
+        shutil.rmtree(_d)
+
 
 def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                              cap_count=None, min_count=None):
