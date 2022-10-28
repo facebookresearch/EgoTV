@@ -6,7 +6,7 @@ def Arguments():
                         help='video sub-sample rate (higher sample rate -> fewer frames)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--weight_decay', type=float, default=1e-5, help='weight decay for Adam optimizer')
-    parser.add_argument('--epochs', type=int, default=10, help='number of epochs of training')
+    parser.add_argument('--epochs', type=int, default=40, help='number of epochs of training')
     parser.add_argument('--num_workers', type=int, default=0, help='workers for dataloaders')
     parser.add_argument('--data_split', type=float, default=0.8, help='train-val split')
     parser.add_argument('--batch_size', type=int, default=2, help='batch size for training, validation, test; '
@@ -17,9 +17,9 @@ def Arguments():
     parser.add_argument('--split_type', type=str, default='context_goal_composition',
                         help='dataset split on which model will run')
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument('--visual_feature_extractor', type=str, default='i3d', choices=['i3d', 'resnet'],
+    parser.add_argument('--visual_feature_extractor', type=str, default='mvit', choices=['i3d', 'resnet', 'mvit'],
                         help='i3d or resnet features for video (premise)')
-    parser.add_argument('--text_feature_extractor', type=str, default='glove', choices=['bert', 'glove'],
+    parser.add_argument('--text_feature_extractor', type=str, default='bert', choices=['bert', 'glove'],
                         help='bert or glove features for text (hypothesis)')
     # parser.add_argument('--i3d_aggregate', type=str, default='average', choices=['rnn', 'average'],
     #                     help='method to aggregate i3d segment features')

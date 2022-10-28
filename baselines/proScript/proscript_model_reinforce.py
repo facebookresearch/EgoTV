@@ -1,22 +1,18 @@
-# SUPERVISED TRAINING
-# sudo apt install graphviz
-# pip install graphviz
-# pip install pydot
-# pip install sentencepiece
-# pip install nltk
-# import nltk
-# nltk.download('punkt')
+# training using REINFORCE
 from process_dataset import proScript_process
 from proscript_args import Arguments
 from proscript_utils import GraphEditDistance
 from torchmetrics import MetricCollection
+from get_vocab import save_vocab
 import os
 import sys
 import csv
 import random
+import json
 from tqdm import tqdm
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, random_split
 from transformers import T5Tokenizer, T5ForConditionalGeneration
@@ -25,6 +21,46 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 sys.path.append(os.environ['DATA_ROOT'])
+
+
+class CustomLoss():
+    def __init__(self):
+        super().__init__()
+        self.m = nn.LogSoftmax(dim=1)
+        self.loss = nn.NLLLoss()
+
+    def batch_ll(self, logits, labels):
+        batch_graph_prob = []
+        batch_size = logits.shape[0]
+        for sample_ind in range(batch_size):
+            batch_graph_prob.append(-self.loss(self.m(logits[sample_ind].contiguous()), labels[sample_ind]))
+        return torch.stack(batch_graph_prob)
+
+    def compute_reward(self, pred_labels, outputs):
+        output_pred = tokenizer.batch_decode(pred_labels, skip_special_tokens=True)
+        metrics.update(pred=output_pred, target=outputs)
+        batch_rewards = metrics['GraphEditDistance'].compute(reinforce=True)
+        metrics.reset()
+        return torch.tensor(batch_rewards, dtype=torch.float32).cuda()
+
+    def compute_loss(self, input_ids, attention_mask, outputs):
+        with torch.no_grad():
+            t5_model.eval()
+            pred_labels = t5_model.module.generate(input_ids.cuda(),
+                                                   attention_mask=attention_mask.cuda(),
+                                                   max_length=max_target_length,
+                                                   do_sample=True,
+                                                   bad_words_ids=bad_words_ids)  # greedy generation
+        # forward pass
+        t5_model.train()
+        logits = t5_model(input_ids=input_ids.cuda(), labels=pred_labels.cuda()).logits  # [b, seq_len, vocab_size]
+        # breakpoint()
+        # compute custom loss
+        # breakpoint()
+        batch_log_lik = self.batch_ll(logits, pred_labels)  # [batch_size]
+        batch_reward = self.compute_reward(pred_labels, outputs)  # [batch_size]
+        loss = -torch.dot(batch_log_lik, batch_reward) / len(batch_log_lik)
+        return loss, batch_reward.mean()
 
 
 class CustomDataset(Dataset):
@@ -43,49 +79,40 @@ class CustomDataset(Dataset):
 def train_epoch():
     t5_model.train()
     train_loss = []
-    for inputs, _, outputs in tqdm(train_loader, desc='Train'):
-        input_encoding = tokenizer(inputs,
+    train_rewards = []
+    for inputs, outputs, _ in tqdm(train_loader, desc='Train'):
+        input_tokenized = tokenizer(inputs,
                                    padding="longest",
                                    max_length=max_source_length,
                                    truncation=True,
-                                   return_tensors="pt")
-        input_ids, attention_mask = input_encoding.input_ids, input_encoding.attention_mask
-        output_encodings = tokenizer(outputs,
-                                     padding="longest",
-                                     max_length=max_target_length,
-                                     truncation=True,
-                                     return_tensors="pt")
-        labels = output_encodings.input_ids
-        labels[labels == tokenizer.pad_token_id] = -100
-        loss = t5_model(input_ids=input_ids.cuda(), attention_mask=attention_mask.cuda(), labels=labels.cuda()).loss
+                                   return_tensors="pt",
+                                   add_special_tokens=False)
+        input_ids, attention_mask = input_tokenized.input_ids, input_tokenized.attention_mask
+
+        loss, rewards = custom_loss.compute_loss(input_ids, attention_mask, outputs)
+        # loss = t5_model(input_ids=input_ids.cuda(), labels=true_labels.cuda()).loss
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         train_loss.append(loss.item())
+        train_rewards.append(rewards.item())
     dist.barrier()
-    if epoch % 2 == 0:
-        test_ged = test()
-        dist.barrier()
-        if is_main_process():
-            print('Epoch: {} | Train Loss: {} | Test GED: {}'.format(epoch, np.array(train_loss).mean(), test_ged))
-
-
-def test():
-    t5_model.eval()
-    with torch.no_grad():
-        for inputs, _, outputs in tqdm(test_loader, desc='Test'):
-            inputs_tokenized = tokenizer(inputs, return_tensors="pt", padding=True)
-            # input_ids = tokenizer(inputs, return_tensors="pt").input_ids
-            output_gen = t5_model.module.generate(inputs_tokenized["input_ids"].cuda(),
-                                                  attention_mask=inputs_tokenized["attention_mask"].cuda(),
-                                                  max_length=max_target_length,
-                                                  do_sample=False)  # greedy generation
-            output_pred = tokenizer.batch_decode(output_gen, skip_special_tokens=True)
-            test_metrics.update(pred=output_pred, target=outputs)
-            # output_ids = tokenizer(outputs)
+    if is_main_process():
+        print('Epoch: {} | Train Loss: {} | Train Rewards: {}'.format(epoch,
+                                                                      np.array(train_loss).mean(),
+                                                                      np.array(train_rewards).mean()))
+        if epoch % 1 == 0:
             ind = random.randint(0, len(inputs)-1)
-            print('input: {} \n pred: {} \n true: {}'.format(inputs[ind], output_pred[ind], outputs[ind]))
-    return test_metrics['GraphEditDistance'].compute()
+            with torch.no_grad():
+                t5_model.eval()
+                pred_labels = t5_model.module.generate(input_tokenized["input_ids"].cuda(),
+                                                       max_length=max_target_length,
+                                                       do_sample=False,
+                                                       bad_words_ids=bad_words_ids)  # greedy generation
+                # breakpoint()
+                pred = tokenizer.decode(pred_labels[ind], skip_special_tokens=True)
+                # breakpoint()
+                print('input: {} \n pred: {} \n true: {}'.format(inputs[ind], pred, outputs[ind]))
 
 
 def cleanup():
@@ -147,7 +174,7 @@ if __name__ == "__main__":
             proScript_process(dir=test_data_path, data_filename=test_filename)
     # fixed based on train data
     max_source_length = 50
-    max_target_length = 150
+    max_target_length = 130
 
     dataset = CustomDataset(data_path='', data_filename=data_filename)
     test_dataset = CustomDataset(data_path='', data_filename=test_filename)
@@ -165,19 +192,28 @@ if __name__ == "__main__":
 
     t5_model = T5ForConditionalGeneration.from_pretrained("t5-small").cuda()
     t5_model = DDP(t5_model, device_ids=[local_rank])
+    # t5_model = CustomTrainer(model=t5_model, train_dataset=)
     # transformers use layer norm (and not batch norm) which is local -- no need to sync across all instances
-    tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    tokenizer = T5Tokenizer.from_pretrained("t5-small", add_prefix_space=True)
+
+    # limiting output vocab
+    t5_vocab = list(tokenizer.get_vocab())
+    if not os.path.isfile('my_vocab.json'):
+        print("\n=========== Processing Vocab file for Transformer ==========\n")
+        save_vocab(data_filename)
+    my_vocab = json.load(open('my_vocab.json', 'r'))
+    bad_words_ids = tokenizer([token for token in t5_vocab if token not in my_vocab]).input_ids
 
     optimizer = optim.AdamW(t5_model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    metrics = MetricCollection([GraphEditDistance(dist_sync_on_step=True)]).cuda()
+    custom_loss = CustomLoss()
+    metrics = MetricCollection([GraphEditDistance()]).cuda()
     # train_metrics = metrics.clone(prefix='train_')
-    test_metrics = metrics.clone(prefix='test_')
+    # test_metrics = metrics.clone(prefix='test_')
     for epoch in range(1, args.epochs + 1):
         train_loader.sampler.set_epoch(epoch)
         test_loader.sampler.set_epoch(epoch)
         train_epoch()
-        # train_metrics.reset()
-        test_metrics.reset()
+
     cleanup()
     log_file.close()
     print('Done!')

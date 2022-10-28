@@ -887,7 +887,7 @@ if __name__ == "__main__":
     # settings
     parser.add_argument('--force_unsave', action='store_true', help="don't save any data (for debugging purposes)")
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--save_path', type=str, default="/fb-agios-acai-efs/dataset/test_splits/",
+    parser.add_argument('--save_path', type=str, required=True, default="/fb-agios-acai-efs/dataset/test_splits/",
                         help="where to save the generated data")
     parser.add_argument('--save_path_csv', type=str, default="/fb-agios-acai-efs/dataset/test_splits/csv_files",
                         help="where to save the csv files of all generated trajectories for dataset stats")

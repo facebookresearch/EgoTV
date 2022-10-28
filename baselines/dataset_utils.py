@@ -1,10 +1,8 @@
 import os
 import re
 import json
-
-import numpy as np
+import cv2
 from tqdm import tqdm
-import torch
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 from sklearn import metrics
@@ -67,7 +65,30 @@ def transform_image(video_frame, type='rgb'):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
+    elif type == 'mvit':
+        transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225]),
+        ])
     return transform(video_frame)
+
+
+def sample_vid(filename, sample_rate=1):
+    video_frames = []
+    video = cv2.VideoCapture(os.path.join(filename, 'video.mp4'))
+    # print(video.get(cv2.CAP_PROP_FPS))
+    success = video.grab()
+    fno = 0
+    while success:
+        if fno % sample_rate == 0:
+            _, img = video.retrieve()
+            video_frames.append(transform_image(img))
+        success = video.grab()
+        fno += 1
+    return video_frames
 
 
 def dictfilt(x, y):
