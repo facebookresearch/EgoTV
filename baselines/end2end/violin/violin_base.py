@@ -51,13 +51,13 @@ class ViolinBase(nn.Module):
         assert ret.size() == torch.Size([outputs.size()[0], outputs.size()[2]])
         return ret
 
-    def forward(self, vid_processed, hypothesis_processed):
-        state_hidden, state_lens = hypothesis_processed
-        vid_feat, vid_lens = vid_processed
-        if self.attention:
+    def forward(self, vid_feats, text_feats):
+        state_hidden, state_lens = text_feats
+        vid_feat, vid_lens = vid_feats
+        if self.attention:  # violin baseline
             state_encoded = self.bert_fc(state_hidden)
             vid_projected = self.video_fc(vid_feat)
-            vid_encoded, _ = self.lstm_raw(vid_projected.permute(1, 0, 2).contiguous(), vid_lens)
+            vid_encoded, _ = self.lstm_raw(vid_projected, vid_lens)
             u_va, _ = self.bidaf(state_encoded, state_lens, vid_encoded, vid_lens)
             # concat_vid = torch.cat([state_encoded, u_va], dim=-1)
             # _, vec_vid = self.vid_ctx_rnn(concat_vid, state_lens)
@@ -65,7 +65,7 @@ class ViolinBase(nn.Module):
             _, vec_vid = self.vid_ctx_rnn(concat_all, state_lens)
             return self.final_fc(vec_vid).view(-1)
         else:
-            _, vid_agg = self.vid_ctx_rnn(vid_feat.permute(1, 0, 2).contiguous(), vid_lens)
+            _, vid_agg = self.vid_ctx_rnn(vid_feat, vid_lens)
             _, state_agg = self.state_rnn(state_hidden, state_lens)
             concat = torch.cat([state_agg, vid_agg], dim=-1)
             return self.final_fc(concat).view(-1)

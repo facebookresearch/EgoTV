@@ -9,6 +9,7 @@
 from process_dataset import proScript_process
 from proscript_args import Arguments
 from proscript_utils import GraphEditDistance
+from ..distributed_utils import *
 from torchmetrics import MetricCollection
 import os
 import sys
@@ -86,28 +87,6 @@ def test():
             ind = random.randint(0, len(inputs)-1)
             print('input: {} \n pred: {} \n true: {}'.format(inputs[ind], output_pred[ind], outputs[ind]))
     return test_metrics['GraphEditDistance'].compute()
-
-
-def cleanup():
-    dist.destroy_process_group()
-
-
-def is_dist_avail_and_initialized():
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
-        return False
-    return True
-
-
-def get_rank():
-    if not is_dist_avail_and_initialized():
-        return 0
-    return dist.get_rank()
-
-
-def is_main_process():
-    return get_rank() == 0
 
 
 if __name__ == "__main__":

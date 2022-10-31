@@ -25,6 +25,9 @@ def prepare_dataloader(data, batch_size, num_workers):
 
 
 def preprocess_dataset(path, split_type):
+    save_file = os.path.join(path, 'filenames.json')
+    if os.path.isfile(save_file):
+        return
     print("==================== Processing {} data ===================".format(split_type))
     all_files = []
     for root, goals, _ in tqdm(os.walk(path)):
@@ -44,7 +47,7 @@ def preprocess_dataset(path, split_type):
                     break  # only examine top level
         break  # only examine top level
     print("Processed {} samples in the {} split".format(len(all_files), split_type))
-    json.dump(all_files, open(os.path.join(path, 'filenames.json'), 'w'))
+    json.dump(all_files, open(save_file, 'w'))
 
 
 def transform_image(video_frame, type='rgb'):

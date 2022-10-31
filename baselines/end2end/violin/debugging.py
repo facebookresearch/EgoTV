@@ -97,13 +97,15 @@ def process_batch(data_batch, label_batch):
         video_frames = torch.stack(video_frames) # [t, c, h, w]
         # process video features using resnet/i3d
         if args.visual_feature_extractor == 'resnet':
-            vid_lengths.append(len(video_frames))
+            # vid_lengths.append(len(video_frames))
             if not args.finetune:
                 with torch.no_grad():
                     #mrcnn_model([video_frames[0]])
-                    video_features_batch.append(visual_model(video_frames).view(-1, vid_feat_size))  # [t, 512]
+                    video_segments = visual_model(video_frames).view(-1, vid_feat_size)
             else:
-                video_features_batch.append(visual_model(video_frames).view(-1, vid_feat_size))
+                video_segments = visual_model(video_frames).view(-1, vid_feat_size)
+            video_features_batch.append(video_segments)  # [t, 512]
+            vid_lengths.append(len(video_segments))
         elif args.visual_feature_extractor == 'i3d':
             # obtaining action-segment information
             #assert len(traj['images']) == len(video_frames) - 10
@@ -179,39 +181,12 @@ def process_batch(data_batch, label_batch):
             hypotheses = (pad_sequence([global_vectors.get_vecs_by_tokens(x)
                                        for x in tokenizer_out]).permute(1, 0, 2),
                           torch.tensor([len(x) for x in tokenizer_out]))
-    # pad_sequence(video_frames_batch) -> [max_seq_len, batch_size, resnet_dim/i3d_dim]
-    video_features_batch = (pad_sequence(video_features_batch), torch.tensor(vid_lengths))
+    # pad_sequence(video_frames_batch) -> [batch_size, max_seq_len, embed_dim]
+    video_features_batch = (pad_sequence(video_features_batch).permute(1, 0, 2).contiguous(), torch.tensor(vid_lengths))
     return video_features_batch, hypotheses, torch.tensor(labels)
 
 
-features = []
-def save_features(mod, inp, outp):
-    features.append(outp)
-
 if __name__ == '__main__':
-    # dist_url = "env://"  # default
-    # # only works with torch.distributed.launch // torch.run
-    # rank = int(os.environ["RANK"])
-    # world_size = int(os.environ['WORLD_SIZE'])
-    # local_rank = int(os.environ['LOCAL_RANK'])
-    # dist.init_process_group(
-    #     backend="nccl",
-    #     init_method=dist_url,
-    #     world_size=world_size,
-    #     rank=rank)
-    # # this will make all .cuda() calls work properly
-    # torch.cuda.set_device(local_rank)
-    # # synchronizes all the threads to reach this point before moving on
-    # dist.barrier()
-    # mrcnn_pth = os.path.join(os.environ['BASELINES'], 'maskRCNN/mrcnn_alfred_all_004.pth')
-    # mrcnn_model = load_pretrained_model(mrcnn_pth, num_classes=106)
-    # you can also hook layers inside the roi_heads
-    # layer_to_hook = 'roi_heads'
-    # mrcnn_model.roi_heads.box_head.fc7.register_forward_hook(save_features)
-    # mrcnn_model.roi_heads.box_predictor.cls_score.register_forward_hook(save_features)
-    # # mrcnn_model.roi_heads.box_predictor.bbox_pred.register_forward_hook(save_features)
-    # mrcnn_model.eval()
-
     args = Arguments()
     if args.split_type == 'train':
         path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
@@ -270,10 +245,6 @@ if __name__ == '__main__':
         vid_feat_size = 512  # 512 for resnet 18, 34; 2048 for resnet50, 101
         visual_model = resnet(pretrained=True)
         visual_model = nn.Sequential(*list(visual_model.children())[:-1])
-        if not args.finetune:
-            visual_model.eval()
-        # resnet_model = nn.SyncBatchNorm.convert_sync_batchnorm(resnet_model)
-        # resnet_model = DDP(resnet_model, device_ids=[local_rank])
     elif args.visual_feature_extractor == 'i3d':
         # i3d model
         vid_feat_size = 1024
@@ -282,9 +253,11 @@ if __name__ == '__main__':
         visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
         visual_model.replace_logits(157)
     elif args.visual_feature_extractor == 'mvit':
-        # MViT-S ("https://arxiv.org/pdf/2104.11227.pdf")
+        # MViT ("https://arxiv.org/pdf/2104.11227.pdf")
+        # TODO: [shallow version, with pretrained, with aggregation]
         vid_feat_size = 768
-        visual_model = mvit_v2_s()
+        weights = 'KINETICS400_V1' if args.pretrained_mvit else None
+        visual_model = mvit_v2_s(weights=weights)
     else:
         raise NotImplementedError
 
