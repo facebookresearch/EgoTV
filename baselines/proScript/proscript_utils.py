@@ -30,10 +30,10 @@ class GraphEditDistance(Metric):
             return torch.tensor(0.)
         return torch.tensor(1.)
 
-    def node_del_cost(self, node):
+    def node_del_cost(self):
         return torch.tensor(1.)  # here you apply the cost for node deletion
 
-    def node_ins_cost(self, node):
+    def node_ins_cost(self):
         return torch.tensor(1.)  # here you apply the cost for node insertion
 
     # arguments for edges
@@ -43,19 +43,26 @@ class GraphEditDistance(Metric):
             return torch.tensor(0.)
         return torch.tensor(1.)
 
-    def edge_del_cost(self, node):
+    def edge_del_cost(self):
         return torch.tensor(1.)  # here you apply the cost for edge deletion
 
-    def edge_ins_cost(self, node):
+    def edge_ins_cost(self):
         return torch.tensor(1.)  # here you apply the cost for edge insertion
 
     def pydot_to_nx(self, G_str):
         # string to pydot graph
+        # G_str = G_str.replace("\n", "")
         G_str = "digraph graphDSL {" + G_str + "}"
-        G = pydot.graph_from_dot_data(G_str.replace(';', ';\n').replace('{', '{\n').replace('}', '}\n'))[1]
+        # G_str.replace(';', ';\n').replace('{', '{\n').replace('}', '}\n')
+        G = pydot.graph_from_dot_data(G_str)[0]
         G.set_type('digraph')
         # pydot graph to networkx graph
         return nx.drawing.nx_pydot.from_pydot(G)
+
+    @staticmethod
+    def generate_adj_mat(nx_graph):
+        # adjacency matrix from networkx graph
+        return nx.to_numpy_array(nx_graph)
 
     def graph_edit_distance(self, G1, G2):
         G1 = self.pydot_to_nx(G1)
@@ -70,10 +77,10 @@ class GraphEditDistance(Metric):
 
     def compute(self, reinforce=False):
         # dist = []
-            # if reinforce:
-                # dist.append(self.graph_edit_distance(pred, target))
+        # if reinforce:
+        # dist.append(self.graph_edit_distance(pred, target))
         if reinforce:
-            return [-1. if x!=y else 0. for (x, y) in zip(self.preds, self.targets)]
+            return [-1. if x != y else 0. for (x, y) in zip(self.preds, self.targets)]
         else:
             for pred, target in zip(self.preds, self.targets):
                 self.dist += self.graph_edit_distance(pred, target) / self.total

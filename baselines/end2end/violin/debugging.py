@@ -225,7 +225,6 @@ if __name__ == '__main__':
     # text feature extractor for the hypothesis
     if args.text_feature_extractor == 'bert':
         embed_size = 768
-        # bert base model
         # TODO: also try TinyBert
         text_model = DistilBertModel.from_pretrained("distilbert-base-uncased")
         # bert_model = DDP(bert_model, device_ids=[local_rank])

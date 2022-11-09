@@ -34,7 +34,7 @@ def test_model(test_loader):
 
 
 def iterate(dataloader):
-    for data_batch, label_batch in dataloader:
+    for data_batch, label_batch in tqdm(dataloader):
         yield process_batch(data_batch, label_batch)
 
 
@@ -98,14 +98,14 @@ if __name__ == '__main__':
     args = Arguments()
     print("============ attention is {} ============".format(str(args.attention)))
     path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
-    ckpt_file = 'violin_{}_{}_{}_best_{}.pth'.format(args.visual_feature_extractor,
+    ckpt_file = 'violin_{}_{}{}_best_{}.pth'.format(args.visual_feature_extractor,
                                                      args.text_feature_extractor,
-                                                     'attention' if args.attention else '',
+                                                     '_attention' if args.attention else '',
                                                      str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'violin_{}_{}_{}_log_test_{}.txt'.format(args.visual_feature_extractor,
+    logger_filename = 'violin_{}_{}{}_log_test_{}.txt'.format(args.visual_feature_extractor,
                                                           args.text_feature_extractor,
-                                                          'attention' if args.attention else '',
+                                                          '_attention' if args.attention else '',
                                                           str(args.run_id))
     logger_path = os.path.join(os.environ['BASELINES'], logger_filename)
     log_file = open(logger_path, "w")

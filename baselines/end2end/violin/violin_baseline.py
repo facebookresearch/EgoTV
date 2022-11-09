@@ -72,7 +72,7 @@ def validate(model, val_loader):
 
 
 def iterate(dataloader):
-    for data_batch, label_batch in dataloader:
+    for data_batch, label_batch in tqdm(dataloader):
         yield process_batch(data_batch, label_batch)
 
 

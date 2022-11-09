@@ -1,4 +1,3 @@
-# SUPERVISED TRAINING
 # sudo apt install graphviz
 # pip install graphviz
 # pip install pydot
@@ -9,12 +8,10 @@
 from process_dataset import proScript_process
 from proscript_args import Arguments
 from proscript_utils import GraphEditDistance
-from ..distributed_utils import *
 from torchmetrics import MetricCollection
 import os
 import sys
 import csv
-import random
 from tqdm import tqdm
 import numpy as np
 import torch
@@ -38,13 +35,13 @@ class CustomDataset(Dataset):
         return len(self.file_tuples)
 
     def __getitem__(self, item):
-        return self.file_tuples[item]  # tuple: (input_hypothesis, output_graph_DOT, output_dsl_graph_DOT)
+        return self.file_tuples[item]  # tuple: (input_hypothesis, output_graph_DOT)
 
 
 def train_epoch():
     t5_model.train()
     train_loss = []
-    for inputs, _, outputs in tqdm(train_loader, desc='Train'):
+    for inputs, outputs in tqdm(train_loader, desc='Train'):
         input_encoding = tokenizer(inputs,
                                    padding="longest",
                                    max_length=max_source_length,
@@ -64,29 +61,49 @@ def train_epoch():
         optimizer.step()
         train_loss.append(loss.item())
     dist.barrier()
-    if epoch % 2 == 0:
-        test_ged = test()
-        dist.barrier()
-        if is_main_process():
-            print('Epoch: {} | Train Loss: {} | Test GED: {}'.format(epoch, np.array(train_loss).mean(), test_ged))
+    validate()
+    dist.barrier()
+    val_ged = validate()
+    if is_main_process():
+        print('Epoch: {} | Train Loss: {} | Val GED: {}'.format(epoch, np.array(train_loss).mean(), val_ged))
 
 
-def test():
+def validate():
     t5_model.eval()
     with torch.no_grad():
-        for inputs, _, outputs in tqdm(test_loader, desc='Test'):
-            inputs_tokenized = tokenizer(inputs, return_tensors="pt", padding=True)
+        for inputs, outputs in tqdm(val_loader, desc='Val'):
+            inputs = tokenizer(inputs, return_tensors="pt", padding=True)
             # input_ids = tokenizer(inputs, return_tensors="pt").input_ids
-            output_gen = t5_model.module.generate(inputs_tokenized["input_ids"].cuda(),
-                                                  attention_mask=inputs_tokenized["attention_mask"].cuda(),
-                                                  max_length=max_target_length,
-                                                  do_sample=False)  # greedy generation
+            output_gen = t5_model.module.generate(inputs["input_ids"].cuda(),
+                                            attention_mask=inputs["attention_mask"].cuda(),
+                                            max_length = max_target_length,
+                                            do_sample=False)
             output_pred = tokenizer.batch_decode(output_gen, skip_special_tokens=True)
-            test_metrics.update(pred=output_pred, target=outputs)
+            val_metrics.update(pred=output_pred, target=outputs)
             # output_ids = tokenizer(outputs)
-            ind = random.randint(0, len(inputs)-1)
-            print('input: {} \n pred: {} \n true: {}'.format(inputs[ind], output_pred[ind], outputs[ind]))
-    return test_metrics['GraphEditDistance'].compute()
+    return val_metrics['GraphEditDistance'].compute()
+
+
+def cleanup():
+    dist.destroy_process_group()
+
+
+def is_dist_avail_and_initialized():
+    if not dist.is_available():
+        return False
+    if not dist.is_initialized():
+        return False
+    return True
+
+
+def get_rank():
+    if not is_dist_avail_and_initialized():
+        return 0
+    return dist.get_rank()
+
+
+def is_main_process():
+    return get_rank() == 0
 
 
 if __name__ == "__main__":
@@ -107,40 +124,33 @@ if __name__ == "__main__":
 
     args = Arguments()
     data_filename = "proscript_data.tsv"
-    test_filename = "proscript_test_{}.tsv".format(args.test_split)
     logger_filename = "proScript_log_{}.txt".format(args.run_id)
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
 
+    # TODO: fix source length, target length
     if args.preprocess:
+        print("\n========= Processing Dataset ========\n")
         train_data_path = os.path.join(os.environ['DATA_ROOT'], 'train')
-        test_data_path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.test_split)
-        if not os.path.isfile(data_filename):
-            print("\n========= Processing Train Dataset ========\n")
-            max_source_length, max_target_length = \
-                proScript_process(dir=train_data_path, data_filename=data_filename)
-            print('\nmax_source_length: {} | max_target_length: {}\n'.format(max_source_length, max_target_length))
-        if not os.path.isfile(test_filename):
-            print("\n========= Processing Test Dataset {} ========\n".format(args.test_split))
-            proScript_process(dir=test_data_path, data_filename=test_filename)
-    # fixed based on train data
-    max_source_length = 50
-    max_target_length = 150
+        max_source_length, max_target_length = \
+            proScript_process(dir=train_data_path, data_filename=data_filename)
+        print('\nmax_source_length: {} | max_target_length: {}\n'.format(max_source_length, max_target_length))
+    else:
+        max_source_length = 20
+        max_target_length = 50
 
     dataset = CustomDataset(data_path='', data_filename=data_filename)
-    test_dataset = CustomDataset(data_path='', data_filename=test_filename)
-    print("Length of Train Dataset: {}".format(len(dataset)))  # 5363 samples (only positive entailed text)
-    print("Length of Test Dataset: {}\n".format(len(test_dataset)))
-    # train_size = int(args.data_split * len(dataset))
-    # val_size = len(dataset) - train_size
-    # train_set, val_set = random_split(dataset, [train_size, val_size])
-    train_sampler, test_sampler = DistributedSampler(dataset=dataset, shuffle=True), \
-                                  DistributedSampler(dataset=test_dataset, shuffle=True)
-    train_loader, test_loader = DataLoader(dataset, batch_size=args.batch_size, sampler=train_sampler,
-                                           num_workers=args.num_workers, pin_memory=True), \
-                                DataLoader(test_dataset, batch_size=args.batch_size, sampler=test_sampler,
-                                           num_workers=args.num_workers, shuffle=False, pin_memory=True)
+    print("Length of Dataset: {}".format(len(dataset)))
+    train_size = int(args.data_split * len(dataset))
+    val_size = len(dataset) - train_size
+    train_set, val_set = random_split(dataset, [train_size, val_size])
+    train_sampler, val_sampler = DistributedSampler(dataset=train_set, shuffle=True), \
+                                 DistributedSampler(dataset=val_set, shuffle=True)
+    train_loader, val_loader = DataLoader(train_set, batch_size=args.batch_size, sampler=train_sampler,
+                                          num_workers=args.num_workers, pin_memory=True), \
+                               DataLoader(val_set, batch_size=args.batch_size, sampler=val_sampler,
+                                          num_workers=args.num_workers, shuffle=False, pin_memory=True)
 
     t5_model = T5ForConditionalGeneration.from_pretrained("t5-small").cuda()
     t5_model = DDP(t5_model, device_ids=[local_rank])
@@ -148,15 +158,16 @@ if __name__ == "__main__":
     tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
     optimizer = optim.AdamW(t5_model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    metrics = MetricCollection([GraphEditDistance(dist_sync_on_step=True)]).cuda()
+    # dist_sync_on_step=True
+    metrics = MetricCollection([GraphEditDistance()]).cuda()
     # train_metrics = metrics.clone(prefix='train_')
-    test_metrics = metrics.clone(prefix='test_')
+    val_metrics = metrics.clone(prefix='val_')
     for epoch in range(1, args.epochs + 1):
         train_loader.sampler.set_epoch(epoch)
-        test_loader.sampler.set_epoch(epoch)
+        val_loader.sampler.set_epoch(epoch)
         train_epoch()
         # train_metrics.reset()
-        test_metrics.reset()
+        val_metrics.reset()
     cleanup()
     log_file.close()
     print('Done!')

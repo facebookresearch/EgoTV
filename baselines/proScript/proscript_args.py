@@ -7,7 +7,7 @@ def Arguments():
     parser.add_argument('--weight_decay', type=float, default=1e-5, help='weight decay for Adam optimizer')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs of training')
     parser.add_argument('--num_workers', type=int, default=0, help='workers for dataloaders')
-    parser.add_argument('--data_split', type=float, default=0.8, help='train-val split')
+    parser.add_argument('--data_split', type=float, default=0.9, help='train-val split')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size for training, validation, test; '
                                                                    'batch size is divided across the number of workers')
     parser.add_argument('--preprocess', action='store_true', required=True,
