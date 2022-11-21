@@ -88,8 +88,22 @@ class NeSyBase(nn.Module):
         return log_prob
 
     def best_alignment(self):
-
         pass
+
+    def topo_sort_util(self, node, adj_mat, visited, stack):
+        visited[node] = True
+        for adj_n in adj_mat[node]:
+            if not visited[adj_n]:
+                self.topo_sort_util(adj_n, adj_mat, visited, stack)
+        stack.insert(0, node)
+
+    def topo_sort(self, nodes, adj_mat):
+        visited = [False] * len(nodes)
+        stack = []
+        for node in nodes:
+            if not visited[node]:
+                self.topo_sort_util(node, adj_mat, visited, stack)
+
 
     def recurse(self, level_ind, start_ind, levels_start, levels, levels_end, vid_feature):
         # TODO: optimize it by creating a matrix/dict with keys {level_ind, start_ind} for reuse

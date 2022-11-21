@@ -20,10 +20,11 @@ def Arguments():
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--pretrained_mvit', type=str, default=True,
                         help='if True, load pretrained weights for MViT from Kinetics400 mvit model')
-    parser.add_argument('--text_feature_extractor', type=str, default='glove', choices=['bert', 'glove'],
+    parser.add_argument('--text_feature_extractor', type=str, default='clip', choices=['clip'],
                         help='bert or glove features graph arguments')
+    parser.add_argument('--fp_seg', type=int, default=8, help='frames per segment')
     # '''<command> --finetune''' to set finetune
-    parser.add_argument('--finetune', action='store_true', help='whether to finetune resnet/i3d model '
+    parser.add_argument('--finetune', action='store_true', help='whether to finetune clip model '
                                                                 'in the specific setup')
     parser.add_argument('--run_id', type=int, default=5, required=False, help='run_id of the model run')
     return parser.parse_args()

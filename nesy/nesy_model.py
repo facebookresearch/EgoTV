@@ -58,6 +58,7 @@ class NeSyBase(nn.Module):
                                          nn.LogSigmoid())
         self.relation_query = nn.Sequential(nn.Linear(2 * self.text_embed_size + self.vid_embed_size, 1),
                                             nn.LogSigmoid())
+        self.all_sorts = []
 
     def query(self, segment_ids, nodes, vid_feature):
         """
@@ -138,6 +139,68 @@ class NeSyBase(nn.Module):
                                                         arr[level_ind + 1, k + 1])
 
         return arr[0][0].contiguous()
+
+    @staticmethod
+    def topo_sort_util(node, adj_mat, visited, stack):
+        visited[node] = True
+        for adj_n in adj_mat[node]:
+            if not visited[adj_n]:
+                NeSyBase.topo_sort_util(adj_n, adj_mat, visited, stack)
+        stack.insert(0, node)
+
+    @staticmethod
+    def topo_sort(graph):
+        nodes = graph.nodes
+        edges = set(graph.edges)
+        adj_mat = {k: [] for k in nodes}
+        for edge in edges:
+            src_node, dest_node, _ = edge
+            adj_mat[src_node].append(dest_node)
+        visited = {k: False for k in adj_mat.keys()}
+        stack = []
+        for node in nodes:
+            if not visited[node]:
+                NeSyBase.topo_sort_util(node, adj_mat, visited, stack)
+        return stack
+
+    @classmethod
+    def all_topo_sorts(cls, graph):
+        # get all possible topological sortings of the graphs
+        nodes = graph.nodes
+        edges = set(graph.edges)
+        adj_mat = {k: [] for k in nodes}
+        in_degree = {k: 0 for k in nodes}
+        for edge in edges:
+            src_node, dest_node, _ = edge
+            adj_mat[src_node].append(dest_node)
+            in_degree[dest_node] += 1
+
+        visited = {k: False for k in nodes}
+        curr_path = []
+        cls.all_sorts = []
+        cls.all_topo_sorts_util(nodes, edges, adj_mat, in_degree, visited, curr_path)
+        return cls.all_sorts
+
+
+    @classmethod
+    def all_topo_sorts_util(cls, nodes, edges, adj_mat, in_degree, visited, curr_path):
+        for node in nodes:
+            if in_degree[node] == 0 and not visited[node]:
+                for adj_n in adj_mat[node]:
+                    in_degree[adj_n] -= 1
+
+                curr_path.append(node)
+                visited[node] = True
+                cls.all_topo_sorts_util(nodes, edges, adj_mat,
+                                                in_degree, visited, curr_path)
+
+                # backtrack
+                for adj_n in adj_mat[node]:
+                    in_degree[adj_n] += 1
+                curr_path.pop()
+                visited[node] = False
+        if len(curr_path) == len(nodes):
+            cls.all_sorts.append(curr_path.copy())
 
 
     @staticmethod
