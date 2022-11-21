@@ -8,7 +8,7 @@ from dataset_utils import *
 from distributed_utils import *
 from feature_extraction import *
 from end2end.violin.rnn import RNNEncoder
-from without_dp_model_v3 import NeSyBase
+from without_dp_model_v2 import NeSyBase
 import json
 import math
 import torch

@@ -1,5 +1,3 @@
-import itertools
-import re
 import torch
 import torch.nn as nn
 
@@ -29,7 +27,7 @@ class NeSyBase(nn.Module):
         self.vid_ctx_rnn = rnn_enc(2 * vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
                                    rnn_type="lstm")
         self.text_ctx_rnn = rnn_enc(vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
-                                   rnn_type="lstm")
+                                    rnn_type="lstm")
         # positional encoding
         # self.positional_encode = PositionalEncoding(num_hiddens=2 * hsize, dropout=0.5)
         # multi-headed attention
@@ -40,51 +38,43 @@ class NeSyBase(nn.Module):
 
         self.num_states = 4  # hot, cold, cleaned, sliced
         self.num_relations = 2  # InReceptacle, Holds
-        # TODO: make it deeper?
-        # self.state_query = nn.Sequential(nn.Linear(2 * hsize, self.num_states),
-        #                                  nn.LogSoftmax(dim=-1))
-        # self.relation_query = nn.Sequential(nn.Linear(2 * hsize, self.num_relations),
-        #                                     nn.LogSoftmax(dim=-1))
-        # TODO: could also use bidaf attention to combine the logits from clip queries and video segments
-        self.aligned_agg = rnn_enc(4 * hsize, hsize, bidirectional=False, n_layers=1,
-                                   rnn_type="lstm")
-        self.final_fc = nn.Sequential(
-            nn.Linear(hsize, hsize2),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(hsize2, 1),
-            nn.Sigmoid()
-        )
 
+        self.state_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
+                                         nn.ReLU(),
+                                         nn.Dropout(0.5),
+                                         nn.Linear(hsize, 1))
+        self.relation_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
+                                            nn.ReLU(),
+                                            nn.Dropout(0.5),
+                                            nn.Linear(hsize, 1))
 
     def forward(self, vid_feats, text_feats, segment_labels):
         ent_probs = []
         for vid_feat, text_feat, seg_labs in zip(vid_feats, text_feats, segment_labels):
             # each vid_feat is [num_segments, frames_per_segment, 512]
             b, vid_len, _ = vid_feat.shape
-            vid_lens = torch.full((b,), vid_len)
+            vid_lens = torch.full((b,), vid_len).cuda()
             _, vid_feat = self.vid_ctx_rnn(vid_feat, vid_lens)  # aggregate
-            vid_feat = vid_feat.unsqueeze(0)
+            vid_feat = vid_feat.unsqueeze(0)  # [1, num_segments, 512]
             #  vid_feat = [num_segments, 2*hsize]
             # vid_feat = self.positional_encode(vid_feat.unsqueeze(0))
             # integrating temporal component into each segment encoding
             # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
-            alignment_vid_feat = vid_feat[:, seg_labs <= 5, :]
+            # alignment_vid_feat = vid_feat[:, seg_labs <= 5, :]
 
             # each seg_text_feats is [num_segments, 20, 512]
             seg_text_feats, seg_text_lens = text_feat
             _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
-            seg_text_feats = seg_text_feats.unsqueeze(0)
-            alignment_text_feat = seg_text_feats[:, seg_labs <= 5, :]
+            seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_segments, 512]
 
-            try:
-                concat_feats = torch.cat((alignment_vid_feat, alignment_text_feat), dim=-1)
-                _, aligned_aggregated = self.aligned_agg(concat_feats, torch.tensor((len(alignment_vid_feat),)))
-            except RuntimeError:
-                print(seg_labs)
-                concat_feats = torch.cat((vid_feat, seg_text_feats), dim=-1)
-                _, aligned_aggregated = self.aligned_agg(concat_feats, torch.tensor((len(vid_feat),)))
-                # breakpoint()
-            ent_probs.append(self.final_fc(aligned_aggregated))
+            concat_feats = torch.cat((vid_feat, seg_text_feats), dim=-1)  # [1, num_segments, 1024]
+            aligned_aggregated = torch.tensor(0.).cuda()
+            for ind, seg_lab in enumerate(seg_labs):
+                if seg_lab.item() <= 3:
+                    aligned_aggregated += self.state_query(concat_feats[:,ind,:])[0][0] / len(seg_labs)
+                elif seg_lab.item() in [4, 5]:
+                    aligned_aggregated += self.relation_query(concat_feats[:,ind,:])[0][0] / len(seg_labs)
+
+            ent_probs.append(torch.sigmoid(aligned_aggregated))
 
         return torch.stack(ent_probs).view(-1)
