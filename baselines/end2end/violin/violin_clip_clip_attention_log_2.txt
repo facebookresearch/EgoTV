@@ -1,0 +1,65 @@
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=2, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=1, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=3, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=1, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.608158528804779 | Val Acc: 0.648510217666626 | Train F1: 0.42424243688583374 | Val F1: 0.6315789222717285
+Epoch: 2 | Train Acc: 0.6573426723480225 | Val Acc: 0.7132216095924377 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.6879953145980835 | Val Acc: 0.7090316414833069 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7131701707839966 | Val Acc: 0.7327746748924255 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.726456880569458 | Val Acc: 0.74301677942276 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 6 | Train Acc: 0.7467365860939026 | Val Acc: 0.7672253251075745 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 7 | Train Acc: 0.7668997645378113 | Val Acc: 0.790037214756012 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 8 | Train Acc: 0.8044288754463196 | Val Acc: 0.8403165936470032 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 9 | Train Acc: 0.8231934905052185 | Val Acc: 0.8370577096939087 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 10 | Train Acc: 0.8468531370162964 | Val Acc: 0.8528863787651062 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 11 | Train Acc: 0.8663170337677002 | Val Acc: 0.8715083599090576 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 12 | Train Acc: 0.8862470984458923 | Val Acc: 0.9040968418121338 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 13 | Train Acc: 0.8896270394325256 | Val Acc: 0.909217894077301 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 14 | Train Acc: 0.8954545259475708 | Val Acc: 0.9143389463424683 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 15 | Train Acc: 0.9009323716163635 | Val Acc: 0.9236499071121216 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 16 | Train Acc: 0.9171328544616699 | Val Acc: 0.9236499071121216 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 17 | Train Acc: 0.9085081815719604 | Val Acc: 0.9134078025817871 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.5961538553237915 | Val Acc: 0.659217894077301 | Train F1: 0.3399999737739563 | Val F1: 0.7037037014961243
+Epoch: 2 | Train Acc: 0.656410276889801 | Val Acc: 0.6778398752212524 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.6942890286445618 | Val Acc: 0.7048417329788208 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7002331018447876 | Val Acc: 0.7174115180969238 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.7234265804290771 | Val Acc: 0.7509310841560364 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 6 | Train Acc: 0.7610722780227661 | Val Acc: 0.8114525079727173 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 7 | Train Acc: 0.7818182110786438 | Val Acc: 0.7918994426727295 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 8 | Train Acc: 0.8166666626930237 | Val Acc: 0.8519552946090698 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 9 | Train Acc: 0.8428904414176941 | Val Acc: 0.851489782333374 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 10 | Train Acc: 0.854778528213501 | Val Acc: 0.8775604963302612 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 11 | Train Acc: 0.871095597743988 | Val Acc: 0.8868715167045593 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 12 | Train Acc: 0.8783217072486877 | Val Acc: 0.9022346138954163 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 13 | Train Acc: 0.8835664391517639 | Val Acc: 0.9064245820045471 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 14 | Train Acc: 0.9022144675254822 | Val Acc: 0.9203910827636719 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 15 | Train Acc: 0.9085081815719604 | Val Acc: 0.923184335231781 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 16 | Train Acc: 0.9122377634048462 | Val Acc: 0.9315642714500427 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 17 | Train Acc: 0.9144521951675415 | Val Acc: 0.9264432191848755 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 18 | Train Acc: 0.9159673452377319 | Val Acc: 0.9362197518348694 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.6050116419792175 | Val Acc: 0.6387336850166321 | Train F1: 0.13071896135807037 | Val F1: 0.7202572822570801
+Epoch: 2 | Train Acc: 0.6602563858032227 | Val Acc: 0.6964617967605591 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.6987179517745972 | Val Acc: 0.7085661292076111 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7128205299377441 | Val Acc: 0.7192737460136414 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.7254078984260559 | Val Acc: 0.7658286690711975 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 6 | Train Acc: 0.75 | Val Acc: 0.7728118896484375 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 7 | Train Acc: 0.7696969509124756 | Val Acc: 0.7881750464439392 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 8 | Train Acc: 0.7756410241127014 | Val Acc: 0.7811918258666992 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 9 | Train Acc: 0.7923076748847961 | Val Acc: 0.8198323845863342 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 10 | Train Acc: 0.8157342672348022 | Val Acc: 0.8472998142242432 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 11 | Train Acc: 0.835198163986206 | Val Acc: 0.7965549230575562 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 12 | Train Acc: 0.8403263688087463 | Val Acc: 0.873836100101471 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 13 | Train Acc: 0.8627039790153503 | Val Acc: 0.8864059448242188 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 14 | Train Acc: 0.8716782927513123 | Val Acc: 0.8999068737030029 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 15 | Train Acc: 0.8808857798576355 | Val Acc: 0.8980447053909302 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 16 | Train Acc: 0.8933566212654114 | Val Acc: 0.9273743033409119 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 17 | Train Acc: 0.9016317129135132 | Val Acc: 0.9273743033409119 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 18 | Train Acc: 0.9057109355926514 | Val Acc: 0.9269087314605713 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=True, batch_size=64, checkpoint_dir='clip_clip_attention', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=True, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Epoch: 18 | Train Acc: 0.9206293821334839 | Val Acc: 0.9329608678817749 | Train F1: 0.9049429893493652 | Val F1: 0.9348658323287964
+Epoch: 19 | Train Acc: 0.9236596822738647 | Val Acc: 0.9362197518348694 | Train F1: 0.0 | Val F1: 0.0

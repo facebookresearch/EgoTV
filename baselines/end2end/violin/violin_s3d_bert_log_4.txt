@@ -1,0 +1,46 @@
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3d_bert', data_split=0.8, epochs=40, finetune=False, local_rank=0, lr=0.001, num_workers=4, preprocess=False, resume=False, run_id=4, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.6029137372970581 | Val Acc: 0.6489757895469666 | Train F1: 0.1428571492433548 | Val F1: 0.7248322367668152
+Epoch: 2 | Train Acc: 0.6804195642471313 | Val Acc: 0.6927374005317688 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.7088578343391418 | Val Acc: 0.6955307126045227 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7362470626831055 | Val Acc: 0.7607076168060303 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.751748263835907 | Val Acc: 0.7453445196151733 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 6 | Train Acc: 0.7919580340385437 | Val Acc: 0.7974860072135925 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 7 | Train Acc: 0.8022144436836243 | Val Acc: 0.8002793192863464 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 8 | Train Acc: 0.8279720544815063 | Val Acc: 0.8282122611999512 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 9 | Train Acc: 0.8467366099357605 | Val Acc: 0.858473002910614 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 10 | Train Acc: 0.8799533843994141 | Val Acc: 0.8645251393318176 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 11 | Train Acc: 0.9003496766090393 | Val Acc: 0.9013035297393799 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 12 | Train Acc: 0.9159673452377319 | Val Acc: 0.8980447053909302 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 13 | Train Acc: 0.918181836605072 | Val Acc: 0.9306331276893616 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3d_bert', data_split=0.8, epochs=40, finetune=False, local_rank=0, lr=0.001, num_workers=4, preprocess=False, resume=True, run_id=4, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 13 | Train Acc: 0.9308857917785645 | Val Acc: 0.9539105892181396 | Train F1: 0.9465649127960205 | Val F1: 0.9527559280395508
+Epoch: 14 | Train Acc: 0.9520978927612305 | Val Acc: 0.9501861929893494 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 15 | Train Acc: 0.9541957974433899 | Val Acc: 0.9418063163757324 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 16 | Train Acc: 0.9608391523361206 | Val Acc: 0.9590316414833069 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 17 | Train Acc: 0.9681817889213562 | Val Acc: 0.9655493497848511 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 18 | Train Acc: 0.9751748442649841 | Val Acc: 0.9781191945075989 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 19 | Train Acc: 0.9734265804290771 | Val Acc: 0.9636871218681335 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 20 | Train Acc: 0.9736596941947937 | Val Acc: 0.9692737460136414 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 21 | Train Acc: 0.9749417304992676 | Val Acc: 0.973929226398468 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 22 | Train Acc: 0.9822843670845032 | Val Acc: 0.973929226398468 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 23 | Train Acc: 0.9819347262382507 | Val Acc: 0.9851024150848389 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 24 | Train Acc: 0.9885780811309814 | Val Acc: 0.9837057590484619 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 25 | Train Acc: 0.9890443086624146 | Val Acc: 0.9906890392303467 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 26 | Train Acc: 0.988228440284729 | Val Acc: 0.9804469347000122 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 27 | Train Acc: 0.9896270632743835 | Val Acc: 0.9892923831939697 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 28 | Train Acc: 0.9926573634147644 | Val Acc: 0.9897578954696655 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 29 | Train Acc: 0.9937062859535217 | Val Acc: 0.9906890392303467 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3d_bert', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=4, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=True, run_id=4, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 29 | Train Acc: 0.9896270632743835 | Val Acc: 0.9925512075424194 | Train F1: 0.9881422519683838 | Val F1: 0.9849624037742615
+Epoch: 30 | Train Acc: 0.991724967956543 | Val Acc: 0.9967411756515503 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 31 | Train Acc: 0.9914918541908264 | Val Acc: 0.994413435459137 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 32 | Train Acc: 0.9928904175758362 | Val Acc: 0.9925512075424194 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 33 | Train Acc: 0.9944055676460266 | Val Acc: 0.9976722598075867 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 34 | Train Acc: 0.9953380227088928 | Val Acc: 0.9967411756515503 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 35 | Train Acc: 0.9947552680969238 | Val Acc: 0.9962756037712097 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 36 | Train Acc: 0.9942890405654907 | Val Acc: 0.99301677942276 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 37 | Train Acc: 0.9939393997192383 | Val Acc: 0.9976722598075867 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 38 | Train Acc: 0.9941725134849548 | Val Acc: 0.9939478635787964 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3d_bert', data_split=0.8, epochs=40, finetune=False, howto=False, local_rank=0, lr=0.001, num_workers=4, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=True, run_id=4, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 38 | Train Acc: 0.9918414950370789 | Val Acc: 0.9976722598075867 | Train F1: 1.0 | Val F1: 0.9955946803092957
+Epoch: 39 | Train Acc: 0.9871794581413269 | Val Acc: 0.9771881103515625 | Train F1: 0.0 | Val F1: 0.0

@@ -1,64 +1,6 @@
 from transformers import T5Tokenizer, T5ForConditionalGeneration
-t5_model = T5ForConditionalGeneration.from_pretrained("t5-small")
-tokenizer = T5Tokenizer.from_pretrained("t5-small")
-import networkx as nx
-import pydot
-
-
-def nmatch(n1, n2):
-    return n1==n2
-
-def ematch(e1, e2):
-    return e1==e2
-
-def node_subst_cost(node1, node2):
-    # check if the nodes are equal, if yes then apply no cost, else apply 1
-    if node1 == node2:
-        return 0
-    return 1
-
-def node_del_cost(node):
-    return 1  # here you apply the cost for node deletion
-
-def node_ins_cost(node):
-    return 1  # here you apply the cost for node insertion
-
-# arguments for edges
-def edge_subst_cost(edge1, edge2):
-    # check if the edges are equal, if yes then apply no cost, else apply 3
-    if edge1==edge2:
-        return 0
-    return 1
-
-def edge_del_cost(node):
-    return 1  # here you apply the cost for edge deletion
-
-def edge_ins_cost(node):
-    return 1  # here you apply the cost for edge insertion
-
-def pydot_to_nx(G_str):
-    # string to pydot graph
-    G_str = "digraph graphDSL {" + G_str + "}"
-    G = pydot.graph_from_dot_data(G_str.replace(';', ';\n').replace('{', '{\n').replace('}', '}\n'))[0]
-    G.set_type('digraph')
-    # G1.write_png("out2.png")
-    # pydot graph to networkx graph
-    return nx.drawing.nx_pydot.from_pydot(G)
-
-def graph_edit_distance(G1, G2):
-    G1 = pydot_to_nx(G1)
-    G2 = pydot_to_nx(G2)
-    return nx.graph_edit_distance(G1, G2,
-                                  node_subst_cost=node_subst_cost,
-                                  node_del_cost=node_del_cost,
-                                  node_ins_cost=node_ins_cost,
-                                  edge_subst_cost=edge_subst_cost,
-                                  edge_del_cost=edge_del_cost,
-                                  edge_ins_cost=edge_ins_cost)
-
-g1 = '"Step 1 StateQuery(apple,sliced)";"Step 2 StateQuery(apple,clean)";"Step 2 StateQuery(apple,cold)";"Step 2 StateQuery(apple,sliced)" -> "Step 3 StateQuery(apple,clean)";"Step 2 StateQuery(apple,cold)" -> "Step 2 StateQuery(apple,clean)";'
-g2 = '"Step 1 StateQuery(apple,sliced)";"Step 2 StateQuery(apple,clean)";"Step 3 StateQuery(apple,cold)";"Step 1 StateQuery(apple,sliced)" -> "Step 2 StateQuery(apple,clean)";"Step 1 StateQuery(apple,sliced)" -> "Step 3 StateQuery(apple,cold)";'
-graph_edit_distance(G1=g1, G2=g2)
+t5_model = T5ForConditionalGeneration.from_pretrained("t5-11b")
+tokenizer = T5Tokenizer.from_pretrained("t5-11b")
 
 # i1 = 'apple is picked, then heated, then cleaned in a SinkBasin, then sliced'
 # g1 = 'digraph graph {"Step 1 heat apple";"Step 2 clean apple";"Step 3 slice apple";"Step 1 heat apple" -> "Step 2 clean apple";"Step 2 clean apple" -> "Step 3 slice apple";}'
@@ -66,7 +8,7 @@ graph_edit_distance(G1=g1, G2=g2)
 # g2 = 'digraph graph {"Step 1 heat apple";"Step 2 slice apple";"Step 1 heat apple" -> "Step 2 slice apple";}'
 # i3 = 'apple is picked, heated, then sliced'
 # g3 = 'digraph graph {"Step 1 heat apple";"Step 2 slice apple";"Step 1 heat apple" -> "Step 2 slice apple";}'
-#
+
 # i1 = 'a sliced tomato'
 # g1 = 'Step 1 slice tomato'
 # i2 = 'apple is cooled in a Fridge'

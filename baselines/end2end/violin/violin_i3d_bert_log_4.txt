@@ -1,0 +1,18 @@
+Namespace(attention=False, batch_size=64, data_split=0.8, epochs=30, finetune=False, local_rank=0, lr=0.001, num_workers=4, preprocess=False, run_id=4, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.6006993055343628 | Val Acc: 0.660614550113678 | Train F1: 0.6612465977668762 | Val F1: 0.6590908765792847
+Epoch: 2 | Train Acc: 0.6627039909362793 | Val Acc: 0.6801676154136658 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.7054778337478638 | Val Acc: 0.7411545515060425 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7386946678161621 | Val Acc: 0.7360334992408752 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.7642191052436829 | Val Acc: 0.7937616109848022 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 6 | Train Acc: 0.7885780930519104 | Val Acc: 0.7728118896484375 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 7 | Train Acc: 0.809440553188324 | Val Acc: 0.816107988357544 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 8 | Train Acc: 0.8099067807197571 | Val Acc: 0.8212290406227112 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 9 | Train Acc: 0.8314685225486755 | Val Acc: 0.8193668723106384 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 10 | Train Acc: 0.8320512771606445 | Val Acc: 0.8286778330802917 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 11 | Train Acc: 0.8637529015541077 | Val Acc: 0.8705772757530212 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 12 | Train Acc: 0.8756410479545593 | Val Acc: 0.8919925689697266 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 13 | Train Acc: 0.8980186581611633 | Val Acc: 0.8756983280181885 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 14 | Train Acc: 0.9010489583015442 | Val Acc: 0.8882681727409363 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 15 | Train Acc: 0.9191142320632935 | Val Acc: 0.910614550113678 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 16 | Train Acc: 0.9271561503410339 | Val Acc: 0.9101489782333374 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 17 | Train Acc: 0.9322843551635742 | Val Acc: 0.9348230957984924 | Train F1: 0.0 | Val F1: 0.0

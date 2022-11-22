@@ -1,0 +1,8 @@
+=> loading checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar'
+=> loading checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar'
+=> loading checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar'
+=> loading checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar'
+=> loaded checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar' (epoch 19)
+=> loaded checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar' (epoch 19)
+=> loaded checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar' (epoch 19)
+=> loaded checkpoint 'checkpoint/s3dHowTo_bert_attention_1/epoch0019.pth.tar' (epoch 19)

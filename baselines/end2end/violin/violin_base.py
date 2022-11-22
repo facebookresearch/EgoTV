@@ -28,7 +28,9 @@ class ViolinBase(nn.Module):
             )
             self.lstm_raw = RNNEncoder(embed_size, hsize1, bidirectional=True,
                                        dropout_p=0, n_layers=1, rnn_type='lstm')
+
             self.bidaf = BidafAttn(hsize1 * 2, method="dot")
+
             self.vid_ctx_rnn = RNNEncoder(hsize1 * 2 * 3, hsize2, bidirectional=True, dropout_p=0, n_layers=1,
                                           rnn_type="lstm")
         else:
@@ -36,7 +38,7 @@ class ViolinBase(nn.Module):
                                         rnn_type="lstm")
             self.vid_ctx_rnn = RNNEncoder(vid_feat_size, hsize1, bidirectional=True, dropout_p=0, n_layers=1,
                                           rnn_type="lstm")
-
+        # Linear classifier
         self.final_fc = nn.Sequential(
             nn.Linear(hsize2 * 2, hsize2),
             nn.ReLU(),
@@ -51,21 +53,21 @@ class ViolinBase(nn.Module):
         assert ret.size() == torch.Size([outputs.size()[0], outputs.size()[2]])
         return ret
 
-    def forward(self, vid_feats, text_feats):
-        state_hidden, state_lens = text_feats
-        vid_feat, vid_lens = vid_feats
-        if self.attention:  # violin baseline
-            state_encoded = self.bert_fc(state_hidden)
-            vid_projected = self.video_fc(vid_feat)
-            vid_encoded, _ = self.lstm_raw(vid_projected, vid_lens)
+    def forward(self, vid_processed, hypothesis_processed):
+        state_hidden, state_lens = hypothesis_processed
+        vid_feat, vid_lens = vid_processed
+        if self.attention:
+            state_encoded = self.bert_fc(state_hidden) # text final layer
+            vid_projected = self.video_fc(vid_feat) # video final layer
+            vid_encoded, _ = self.lstm_raw(vid_projected.permute(1, 0, 2).contiguous(), vid_lens) # LSTM encode
             u_va, _ = self.bidaf(state_encoded, state_lens, vid_encoded, vid_lens)
             # concat_vid = torch.cat([state_encoded, u_va], dim=-1)
             # _, vec_vid = self.vid_ctx_rnn(concat_vid, state_lens)
-            concat_all = torch.cat([state_encoded, u_va, state_encoded * u_va], dim=-1)
-            _, vec_vid = self.vid_ctx_rnn(concat_all, state_lens)
+            concat_all = torch.cat([state_encoded, u_va, state_encoded * u_va], dim=-1) #concate text, attended visual, product
+            _, vec_vid = self.vid_ctx_rnn(concat_all, state_lens) # LSTM encode again
             return self.final_fc(vec_vid).view(-1)
         else:
-            _, vid_agg = self.vid_ctx_rnn(vid_feat, vid_lens)
+            _, vid_agg = self.vid_ctx_rnn(vid_feat.permute(1, 0, 2).contiguous(), vid_lens)
             _, state_agg = self.state_rnn(state_hidden, state_lens)
             concat = torch.cat([state_agg, vid_agg], dim=-1)
             return self.final_fc(concat).view(-1)

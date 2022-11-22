@@ -1,0 +1,89 @@
+conda activate rishi
+export BASELINES=/home/brian27/nobackup/meta_code/VisionLangaugeGrounding/baselines
+cd $BASELINES/end2end/violin
+export DATA_ROOT=/nobackup/projects/public/howto100m/datasets/Thor
+
+
+run_id=2
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+text_feat='bert'
+for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
+# for var in 'context_goal_composition'
+do
+	echo $var
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 test_baseline.py --num_workers 16 --split_type $var --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $text_feat --run_id $run_id 
+	ps -ef | grep 'test_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=5
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+text_feat='bert'
+for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
+# for var in 'context_goal_composition'
+do
+	echo $var
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 test_baseline.py --num_workers 16 --split_type $var --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $text_feat --run_id $run_id 
+	ps -ef | grep 'test_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=6
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+text_feat='bert'
+for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
+# for var in 'context_goal_composition'
+do
+	echo $var
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 test_baseline.py --num_workers 16 --split_type $var --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $text_feat --run_id $run_id 
+	ps -ef | grep 'test_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=6
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+text_feat='bert'
+for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
+# for var in 'context_goal_composition'
+do
+	echo $var
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 test_baseline.py --num_workers 16 --split_type $var --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $text_feat --run_id $run_id 
+	ps -ef | grep 'test_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='clip'
+echo "=================== clip, clip, no attention ==================="
+text_feat='clip'
+for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
+# for var in 'context_goal_composition'
+do
+	echo $var
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 test_baseline.py --num_workers 16 --split_type $var --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $text_feat --run_id $run_id 
+	ps -ef | grep 'test_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=4
+vis_feat='s3d'
+echo "=================== clip, clip, no attention ==================="
+text_feat='bert'
+for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
+# for var in 'context_goal_composition'
+do
+	echo $var
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 test_baseline.py --num_workers 16 --split_type $var --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $text_feat --run_id $run_id 
+	ps -ef | grep 'test_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=7
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+text_feat='bert'
+for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
+# for var in 'context_goal_composition'
+do
+	echo $var
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 test_baseline.py --num_workers 16 --split_type $var --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $text_feat --run_id $run_id 
+	ps -ef | grep 'test_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done

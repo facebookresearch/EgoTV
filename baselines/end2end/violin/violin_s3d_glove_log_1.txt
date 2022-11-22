@@ -1,0 +1,53 @@
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=0, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=False, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.6106060743331909 | Val Acc: 0.6429236531257629 | Train F1: 0.3316583037376404 | Val F1: 0.6184738874435425
+Epoch: 2 | Train Acc: 0.6665500998497009 | Val Acc: 0.7067039012908936 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.711771547794342 | Val Acc: 0.7355679869651794 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7371794581413269 | Val Acc: 0.7458100318908691 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.7587412595748901 | Val Acc: 0.783053994178772 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 6 | Train Acc: 0.7869464159011841 | Val Acc: 0.8054003715515137 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 7 | Train Acc: 0.8043123483657837 | Val Acc: 0.8258845210075378 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 8 | Train Acc: 0.8136363625526428 | Val Acc: 0.8137802481651306 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 9 | Train Acc: 0.8233100175857544 | Val Acc: 0.8356610536575317 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 10 | Train Acc: 0.8263403177261353 | Val Acc: 0.8081936836242676 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 11 | Train Acc: 0.8275058269500732 | Val Acc: 0.8356610536575317 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 12 | Train Acc: 0.8287878632545471 | Val Acc: 0.8426443338394165 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 13 | Train Acc: 0.8296037316322327 | Val Acc: 0.8282122611999512 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 14 | Train Acc: 0.8285547494888306 | Val Acc: 0.8347299695014954 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 15 | Train Acc: 0.8362470865249634 | Val Acc: 0.8282122611999512 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 16 | Train Acc: 0.8377622365951538 | Val Acc: 0.8314711451530457 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 17 | Train Acc: 0.832983672618866 | Val Acc: 0.8319366574287415 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=0, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 17 | Train Acc: 0.8400932550430298 | Val Acc: 0.8342644572257996 | Train F1: 0.8732393980026245 | Val F1: 0.8015563488006592
+Epoch: 18 | Train Acc: 0.8413752913475037 | Val Acc: 0.8300744891166687 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 19 | Train Acc: 0.8385781049728394 | Val Acc: 0.8482308983802795 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 20 | Train Acc: 0.846969723701477 | Val Acc: 0.8375232815742493 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 21 | Train Acc: 0.8376457095146179 | Val Acc: 0.8417132496833801 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 22 | Train Acc: 0.8458042144775391 | Val Acc: 0.8440409898757935 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 23 | Train Acc: 0.8474358916282654 | Val Acc: 0.8519552946090698 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 24 | Train Acc: 0.8506993055343628 | Val Acc: 0.8417132496833801 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 25 | Train Acc: 0.8412587642669678 | Val Acc: 0.8426443338394165 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 26 | Train Acc: 0.8434731960296631 | Val Acc: 0.8445065021514893 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 27 | Train Acc: 0.8431235551834106 | Val Acc: 0.8370577096939087 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 28 | Train Acc: 0.8513985872268677 | Val Acc: 0.8398510217666626 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 29 | Train Acc: 0.8481351733207703 | Val Acc: 0.8449720740318298 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 30 | Train Acc: 0.8505827784538269 | Val Acc: 0.8356610536575317 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 31 | Train Acc: 0.8488345146179199 | Val Acc: 0.8431098461151123 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 32 | Train Acc: 0.8439394235610962 | Val Acc: 0.8398510217666626 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 33 | Train Acc: 0.8533799648284912 | Val Acc: 0.8431098461151123 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=0, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 33 | Train Acc: 0.844755232334137 | Val Acc: 0.8621973991394043 | Train F1: 0.8654545545578003 | Val F1: 0.8547008633613586
+Epoch: 34 | Train Acc: 0.8472027778625488 | Val Acc: 0.8542830348014832 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 35 | Train Acc: 0.8477855324745178 | Val Acc: 0.8454376459121704 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 36 | Train Acc: 0.8475524187088013 | Val Acc: 0.8486964702606201 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 37 | Train Acc: 0.8484848737716675 | Val Acc: 0.8505586385726929 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 38 | Train Acc: 0.8518648147583008 | Val Acc: 0.8365921974182129 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 39 | Train Acc: 0.8470862507820129 | Val Acc: 0.8496275544166565 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 40 | Train Acc: 0.8493006825447083 | Val Acc: 0.8510242104530334 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=2, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=1, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=3, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=2, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=1, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=3, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='s3dHowTo_glove', data_split=0.8, epochs=40, finetune=False, howto=True, local_rank=0, lr=0.001, num_workers=4, preprocess=False, pretrain_path='/nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth', resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='glove', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 40 | Train Acc: 0.8508158326148987 | Val Acc: 0.8552141785621643 | Train F1: 0.8802816867828369 | Val F1: 0.8856088519096375

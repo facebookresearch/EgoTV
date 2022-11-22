@@ -1,0 +1,15 @@
+Namespace(attention=False, batch_size=64, checkpoint_dir='i3d_bert', data_split=0.8, epochs=40, finetune=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=5, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Epoch: 32 | Train Acc: 0.9860140085220337 | Val Acc: 0.9878957271575928 | Train F1: 0.9928571581840515 | Val F1: 0.9963369965553284
+Epoch: 33 | Train Acc: 0.9910256266593933 | Val Acc: 0.9902234673500061 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 34 | Train Acc: 0.984149158000946 | Val Acc: 0.9864990711212158 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 35 | Train Acc: 0.9822843670845032 | Val Acc: 0.9860334992408752 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 36 | Train Acc: 0.972377598285675 | Val Acc: 0.9874301552772522 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 37 | Train Acc: 0.9868298172950745 | Val Acc: 0.9869646430015564 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 38 | Train Acc: 0.9796037077903748 | Val Acc: 0.9860334992408752 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='i3d_bert', data_split=0.8, epochs=40, finetune=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=5, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Epoch: 38 | Train Acc: 0.9892773628234863 | Val Acc: 0.9925512075424194 | Train F1: 0.992647111415863 | Val F1: 0.9877551198005676
+Epoch: 39 | Train Acc: 0.9932401180267334 | Val Acc: 0.9939478635787964 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='i3d_bert', data_split=0.8, epochs=40, finetune=False, local_rank=3, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=5, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='i3d_bert', data_split=0.8, epochs=40, finetune=False, local_rank=2, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=5, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='i3d_bert', data_split=0.8, epochs=40, finetune=False, local_rank=1, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=5, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Epoch: 40 | Train Acc: 0.9935897588729858 | Val Acc: 0.9962756037712097 | Train F1: 0.0 | Val F1: 0.0

@@ -1,0 +1,180 @@
+conda activate rishi
+export BASELINES=/home/brian27/nobackup/meta_code/VisionLangaugeGrounding/baselines
+cd $BASELINES/end2end/violin
+export DATA_ROOT=/nobackup/projects/public/howto100m/datasets/Thor
+
+run_id=4
+vis_feat='i3d'
+echo "=================== i3d, bert/glove, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 30
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=5
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 16 --split_type 'train' --batch_size 64 --sample_rate 3 \
+    --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir i3d_bert 
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=5
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 16 --split_type 'train' --batch_size 64 --sample_rate 3 \
+    --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir i3d_bert --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=6
+vis_feat='i3d'
+echo "=================== i3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 16 --split_type 'train' --batch_size 4 --sample_rate 3 \
+    --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir i3d_bert_finetune --finetune --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='s3d'
+echo "=================== i3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 16 --split_type 'train' --batch_size 2 --sample_rate 3 \
+    --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir s3d_bert_finetune --finetune --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='clip'
+echo "=================== i3d, bert, no attention ==================="
+for var in 'clip' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 16 --split_type 'train' --batch_size 4 --sample_rate 3 \
+    --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir clip_clip_finetune --finetune --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='clip'
+echo "=================== i3d, bert, no attention ==================="
+for var in 'clip' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 16 --split_type 'train' --batch_size 64 --sample_rate 3 \
+    --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir clip_clip --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=2
+vis_feat='clip'
+echo "=================== i3d, bert, no attention ==================="
+for var in 'clip' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 16 --split_type 'train' --batch_size 64 --sample_rate 3 \
+    --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir clip_clip_attention --attention --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=4
+vis_feat='s3d'
+echo "=================== s3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor \
+    $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir s3d_bert --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=6
+vis_feat='s3d'
+echo "=================== s3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor \
+    $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 60 \
+    --checkpoint_dir s3d_bert_attention --attention --resume
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+
+run_id=5
+vis_feat='s3d'
+echo "=================== s3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor \
+    $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 60 \
+    --checkpoint_dir s3dHowTo_bert --howto --resume \
+    --pretrain_path /nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='s3d'
+echo "=================== s3d, bert, no attention ==================="
+for var in 'glove' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor \
+    $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 40 \
+    --checkpoint_dir s3dHowTo_glove --howto --resume \
+    --pretrain_path /nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='s3d'
+echo "=================== s3d, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py \
+    --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor \
+    $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 60 \
+    --checkpoint_dir s3dHowTo_bert_attention --attention --howto --resume \
+    --pretrain_path /nobackup/users/brian27/ECCV22/mil_nce/S3D_HowTo100M/s3d_howto100m.pth
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='clip'
+echo "=================== clip, bert, no attention ==================="
+for var in 'bert' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 30
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+
+run_id=1
+vis_feat='clip'
+echo "=================== clip, clip, no attention ==================="
+for var in 'clip' 
+do
+	CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 violin_baseline.py --num_workers 4 --split_type 'train' --batch_size 64 --sample_rate 3 --visual_feature_extractor $vis_feat --text_feature_extractor $var --run_id $run_id --epochs 30
+	ps -ef | grep 'violin_baseline.py' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+done
+

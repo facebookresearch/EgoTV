@@ -1,0 +1,1 @@
+Namespace(attention=True, batch_size=64, data_split=0.8, epochs=10, finetune=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, run_id=2, sample_rate=3, split_type='abstraction', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)

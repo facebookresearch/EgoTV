@@ -1,0 +1,12 @@
+=> no checkpoint found at 'True'
+=> no checkpoint found at 'True'
+=> no checkpoint found at 'True'
+=> no checkpoint found at 'True'
+=> loading checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar'
+=> loading checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar'
+=> loading checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar'
+=> loading checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar'
+=> loaded checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar' (epoch 0)
+=> loaded checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar' (epoch 0)
+=> loaded checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar' (epoch 0)
+=> loaded checkpoint 'checkpoint/clip_clip_finetune_1/epoch0000.pth.tar' (epoch 0)

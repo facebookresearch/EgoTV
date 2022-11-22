@@ -1,0 +1,24 @@
+Namespace(attention=False, batch_size=4, checkpoint_dir='clip_clip_finetune', data_split=0.8, epochs=40, finetune=True, local_rank=2, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='clip_clip', data_split=0.8, epochs=40, finetune=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Epoch: 24 | Train Acc: 0.9745920896530151 | Val Acc: 0.9748603105545044 | Train F1: 0.9696969389915466 | Val F1: 0.9770992398262024
+Epoch: 25 | Train Acc: 0.974708616733551 | Val Acc: 0.9799813628196716 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 26 | Train Acc: 0.977622389793396 | Val Acc: 0.9785847067832947 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 27 | Train Acc: 0.9803030490875244 | Val Acc: 0.9757914543151855 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 28 | Train Acc: 0.9694638848304749 | Val Acc: 0.9818435907363892 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 29 | Train Acc: 0.9824009537696838 | Val Acc: 0.9837057590484619 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 30 | Train Acc: 0.9867132902145386 | Val Acc: 0.9860334992408752 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 31 | Train Acc: 0.986480176448822 | Val Acc: 0.9860334992408752 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 32 | Train Acc: 0.9890443086624146 | Val Acc: 0.9878957271575928 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 33 | Train Acc: 0.989393949508667 | Val Acc: 0.9906890392303467 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 34 | Train Acc: 0.9916083812713623 | Val Acc: 0.9911545515060425 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 35 | Train Acc: 0.9921911358833313 | Val Acc: 0.9869646430015564 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='clip_clip', data_split=0.8, epochs=40, finetune=False, local_rank=0, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Epoch: 35 | Train Acc: 0.9833333492279053 | Val Acc: 0.9902234673500061 | Train F1: 0.9841269850730896 | Val F1: 0.9802371263504028
+Epoch: 36 | Train Acc: 0.9919580221176147 | Val Acc: 0.9925512075424194 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 37 | Train Acc: 0.9932401180267334 | Val Acc: 0.9948789477348328 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 38 | Train Acc: 0.9916083812713623 | Val Acc: 0.9864990711212158 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 39 | Train Acc: 0.9857808947563171 | Val Acc: 0.9892923831939697 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 40 | Train Acc: 0.988228440284729 | Val Acc: 0.9869646430015564 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=64, checkpoint_dir='clip_clip', data_split=0.8, epochs=40, finetune=False, local_rank=3, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='clip_clip', data_split=0.8, epochs=40, finetune=False, local_rank=2, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)
+Namespace(attention=False, batch_size=64, checkpoint_dir='clip_clip', data_split=0.8, epochs=40, finetune=False, local_rank=1, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='clip', visual_feature_extractor='clip', weight_decay=1e-05)

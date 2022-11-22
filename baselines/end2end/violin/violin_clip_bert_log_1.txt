@@ -1,0 +1,2 @@
+Namespace(attention=False, batch_size=64, data_split=0.8, epochs=30, finetune=False, local_rank=0, lr=0.001, num_workers=4, preprocess=False, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='clip', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.5921911597251892 | Val Acc: 0.5921787619590759 | Train F1: 0.21468926966190338 | Val F1: 0.41379308700561523

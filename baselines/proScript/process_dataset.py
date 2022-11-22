@@ -1,36 +1,22 @@
-from dsl import StateQuery, RelationQuery
-from predicate import Atom
-from proscript_utils import pred_args_map
 import os
 import json
 import pydot
 from tqdm import tqdm
 from nltk.tokenize import word_tokenize
 
-map_subgoals = pred_args_map()
-
 
 def get_output(goal, pickup, recep=None):
     # nodes
     graph = pydot.Dot("graph", graph_type="digraph")
-    graph_dsl = pydot.Dot("graphDSL", graph_type="digraph")
-    goal = goal.replace("_simple", "")
     nodes = goal.replace('then', 'and').split('_and_')[:]
-    node_strs, node_strs_dsl = [], []
+    node_strs = []
     for ind, node in enumerate(nodes):
         if node == 'place':
             node_str = "Step {} {} {} in {}".format(ind + 1, node, pickup, recep)
-            node_dsl = Atom(RelationQuery, (pickup, recep, map_subgoals[node]))
-            node_str_dsl = "Step {} {}".format(ind + 1, node_dsl)
         else:
-            node_str = "Step {} {} {}".format(ind + 1, node, pickup)
-            node_dsl = Atom(StateQuery, (pickup, map_subgoals[node]))
-            node_str_dsl = "Step {} {}".format(ind + 1, node_dsl)
-
+            node_str = "Step {} {} {}".format(ind+1, node, pickup)
         graph.add_node(pydot.Node(node_str))
-        graph_dsl.add_node(pydot.Node(node_str_dsl))
         node_strs.append(node_str)
-        node_strs_dsl.append(node_str_dsl)
 
     # edges
     order_list = goal.split('_then_')
@@ -46,19 +32,13 @@ def get_output(goal, pickup, recep=None):
             subgoals2 = [subgoals2]
 
         for s1 in subgoals1:
-            ind_1 = nodes.index(s1)
-            s1_str = node_strs[ind_1]
-            s1_str_dsl = node_strs_dsl[ind_1]
+            s1_str = node_strs[nodes.index(s1)]
             for s2 in subgoals2:
-                ind_2 = nodes.index(s2)
-                s2_str = node_strs[ind_2]
-                s2_str_dsl = node_strs_dsl[ind_2]
+                s2_str =  node_strs[nodes.index(s2)]
                 graph.add_edge(pydot.Edge(src=s1_str, dst=s2_str))
-                graph_dsl.add_edge(pydot.Edge(src=s1_str_dsl, dst=s2_str_dsl))
 
     # graph.write_png("output.png")
-    return graph.to_string().replace('\n', '').replace('digraph graph {', '').replace('}', ''), \
-           graph_dsl.to_string().replace('\n', '').replace('digraph graphDSL {', '').replace('}', '')
+    return graph.to_string().replace('\n','').replace('digraph graph {', '').replace('}', '')
     # pydot.graph_from_dot_data(graph.to_string().replace(';', ';\n').replace('{', '{\n').replace('}', '}\n'))[0]
     # proscript_data_path.write('\n')
 
@@ -87,11 +67,8 @@ def proScript_process(dir, data_filename):
                                         if 'video.mp4' in _files:
                                             json_path = os.path.join(trial_path, 'traj_data.json')
                                             traj = json.load(open(json_path, 'r'))
-                                            graph_str, graph_str_dsl = \
-                                                get_output(goal, pickup.lower(), receptacle.lower())
-                                            data_filename.write("%s\t%s\t%s\n" % (traj['template']['pos'],
-                                                                                  graph_str,
-                                                                                  graph_str_dsl))
+                                            graph_str = get_output(goal, pickup.lower(), receptacle.lower())
+                                            data_filename.write("%s\t%s\n" % (traj['template']['pos'], graph_str))
                                             source_len_max = max(source_len_max,
                                                                  len(word_tokenize(traj['template']['pos'])))
                                             target_len_max = max(target_len_max, len(word_tokenize(graph_str)))
@@ -102,6 +79,6 @@ def proScript_process(dir, data_filename):
     return source_len_max, target_len_max
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     dir = '../../alfred/gen/dataset/context_goal_composition'
     proScript_process(dir, data_filename="proscript_data.tsv")

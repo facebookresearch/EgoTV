@@ -1,0 +1,2 @@
+Namespace(attention=False, batch_size=64, checkpoint_dir='', data_split=0.8, epochs=10, finetune=False, howto=False, local_rank=2, lr=0.001, num_workers=16, preprocess=False, pretrain_path='s3d/S3D_kinetics400.pt', resume=False, run_id=6, sample_rate=3, split_type='abstraction', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Test Acc: 0.5369822382926941 | Test F1: 0.13513512909412384

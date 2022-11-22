@@ -1,0 +1,7 @@
+Namespace(attention=False, batch_size=2, checkpoint_dir='s3d_bert_finetune', data_split=0.8, epochs=40, finetune=True, local_rank=0, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=1, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='s3d', weight_decay=1e-05)
+Epoch: 0 | Train Acc: 0.630652666091919 | Val Acc: 0.6596834063529968 | Train F1: 0.0 | Val F1: 0.5
+Epoch: 1 | Train Acc: 0.6707459092140198 | Val Acc: 0.6727188229560852 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 2 | Train Acc: 0.7076923251152039 | Val Acc: 0.7402234673500061 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.7475524544715881 | Val Acc: 0.7560521364212036 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7755244970321655 | Val Acc: 0.7909683585166931 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.7934731841087341 | Val Acc: 0.7844506502151489 | Train F1: 0.0 | Val F1: 0.0

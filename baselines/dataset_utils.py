@@ -1,10 +1,10 @@
 import os
 import re
 import json
-import cv2
-from collections import Counter
-from operator import itemgetter
+
+import numpy as np
 from tqdm import tqdm
+import torch
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 from sklearn import metrics
@@ -27,9 +27,6 @@ def prepare_dataloader(data, batch_size, num_workers):
 
 
 def preprocess_dataset(path, split_type):
-    save_file = os.path.join(path, 'filenames.json')
-    if os.path.isfile(save_file):
-        return
     print("==================== Processing {} data ===================".format(split_type))
     all_files = []
     for root, goals, _ in tqdm(os.walk(path)):
@@ -49,12 +46,20 @@ def preprocess_dataset(path, split_type):
                     break  # only examine top level
         break  # only examine top level
     print("Processed {} samples in the {} split".format(len(all_files), split_type))
-    json.dump(all_files, open(save_file, 'w'))
+    json.dump(all_files, open(os.path.join(path, 'filenames.json'), 'w'))
 
 
 def transform_image(video_frame, type='rgb'):
     if type == 'rgb':
-        transform = transforms.Compose([
+        transform =  transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+    elif type == 'video':
+        transform =  transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize(256),
             transforms.CenterCrop(224),
@@ -70,56 +75,11 @@ def transform_image(video_frame, type='rgb'):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-    elif type == 'mvit':
-        transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225]),
-        ])
     return transform(video_frame)
-
-
-def sample_vid(filename, sample_rate=1):
-    video_frames = []
-    video = cv2.VideoCapture(os.path.join(filename, 'video.mp4'))
-    # print(video.get(cv2.CAP_PROP_FPS))
-    success = video.grab()
-    fno = 0
-    while success:
-        if fno % sample_rate == 0:
-            _, img = video.retrieve()
-            video_frames.append(transform_image(img))
-        success = video.grab()
-        fno += 1
-    return video_frames
-
-
-def extract_segment_labels(trajectory, sample_rate):
-    action_labs = []
-    count_labs = [x['high_idx'] for ind, x in enumerate(trajectory['images']) if ind % sample_rate == 0]
-    for split_ind in range(0, len(count_labs), 16):
-        if split_ind >= len(count_labs) - 16:
-            max_lab = max(Counter(count_labs[split_ind:len(count_labs)]).items(), key=itemgetter(1))[0]
-        else:
-            max_lab = max(Counter(count_labs[split_ind:split_ind + 16]).items(), key=itemgetter(1))[0]
-        action = trajectory['plan']['high_pddl'][max_lab]['discrete_action']['action']
-        action_labs.append(action_mapping(action))
-    return action_labs
-
-
-def action_mapping(action):
-    action_map = {'HeatObject': 0, 'SliceObject': 1,
-                  'CoolObject': 2, 'CleanObject': 3,
-                  'PutObject': 4, 'PickupObject': 5,
-                  'GotoLocation': 6}
-    return action_map[action]
 
 
 def dictfilt(x, y):
     return dict([(i, x[i]) for i in x if i in set(y)])
-
 
 def tokenize_and_pad(sent_batch, tokenizer, feature_extractor_type):
     if feature_extractor_type == 'bert':
@@ -142,7 +102,6 @@ def calc_metrics(true_labels, pred_labels):
     f1_score = metrics.f1_score(true_labels, pred_labels)
     train_acc = metrics.accuracy_score(true_labels, pred_labels)
     return confusion_matrix, round_val([precision, recall, f1_score, train_acc], 3)
-
 
 def clean_str(string):
     """ Tokenization/string cleaning for strings.

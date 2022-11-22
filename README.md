@@ -31,17 +31,13 @@ $ bash install_requirements.sh
 
 [comment]: <> (```)
 
-### Generate dataset
+Generate dataset
 ```
 $ cd $GENERATE_DATA/gen
-$ python scripts/generate_trajectories.py --save_path <your save path> --split_type <split_type>
-
-# append the following to generate with multiprocessing for faster generation
-# --num_threads <num_threads> --in_parallel 
+$ python scripts/generate_trajectories.py
 ```
-The data is generated in: save_path
-Here, split_type can be one of the following ["train", "sub_goal_composition", "verb_noun_composition",
-                                 "context_goal_composition", "context_verb_noun_composition", "abstraction"]
+
+The data is generated in: alfred/gen/dataset/
 
 ### Generate Layouts
 If you want to generate new layouts (aside from the generated layouts in alfred/gen/layouts/),
@@ -59,7 +55,7 @@ $ python layouts/precompute_layout_locations.py
 * Run the following commands:
 ```
 $ cd $GENERATE_DATA/gen
-$ python scripts/generate_trajectories.py --save_path <your save path>
+$ python scripts/generate_trajectories.py
 ```
 
 To simply run the fastforward planner on the generated pddl problem
@@ -75,6 +71,7 @@ dataset/
 │   ├── abstraction
 │   ├── context_goal_composition
 │   ├── context_verb_noun_composition
+│   ├── csv_files
 │   ├── sub_goal_composition
 │   └── verb_noun_composition
 └── train
@@ -82,6 +79,7 @@ dataset/
 |   │   └── Apple-None-None-27
 |   │       └── trial_T20220917_235349_019133
 |   │           ├── pddl_states
+|   │           ├── raw_images
 |   │           ├── traj_data.json
 |   │           └── video.mp4
 ```
@@ -124,9 +122,6 @@ $ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_
 # if data split not preprocessed, specify "--preprocess" in the previous step
 # for attention-based models, specify "--attention" in the previous step
 ```
-
-Note: to run the I3D model, you must download the pretrained model (rgb_imagenet.pt) from this repository: 
-[https://github.com/piergiaj/pytorch-i3d/tree/master/models](https://github.com/piergiaj/pytorch-i3d/tree/master/models)
 
 Alternatively, modify and run from root
 ```

@@ -1,0 +1,20 @@
+Namespace(attention=False, batch_size=4, checkpoint_dir='i3d_bert_finetune', data_split=0.8, epochs=40, finetune=True, local_rank=0, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=6, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Epoch: 27 | Train Acc: 0.8840326070785522 | Val Acc: 0.8873370289802551 | Train F1: 0.8571428656578064 | Val F1: 0.9000000357627869
+Epoch: 28 | Train Acc: 0.8833333253860474 | Val Acc: 0.8747672438621521 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 29 | Train Acc: 0.8792541027069092 | Val Acc: 0.891526997089386 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 30 | Train Acc: 0.8771561980247498 | Val Acc: 0.8775604963302612 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 31 | Train Acc: 0.8827505707740784 | Val Acc: 0.8905959129333496 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 32 | Train Acc: 0.8869463801383972 | Val Acc: 0.8905959129333496 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 33 | Train Acc: 0.8882284164428711 | Val Acc: 0.8803538084030151 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 34 | Train Acc: 0.8885781168937683 | Val Acc: 0.8677839636802673 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=4, checkpoint_dir='i3d_bert_finetune', data_split=0.8, epochs=40, finetune=True, local_rank=0, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=6, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Epoch: 34 | Train Acc: 0.8836829662322998 | Val Acc: 0.8822160363197327 | Train F1: 0.6153846383094788 | Val F1: 1.0
+Epoch: 35 | Train Acc: 0.8829836845397949 | Val Acc: 0.885940432548523 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 36 | Train Acc: 0.8882284164428711 | Val Acc: 0.8882681727409363 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 37 | Train Acc: 0.8891608119010925 | Val Acc: 0.9008380174636841 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 38 | Train Acc: 0.8872960209846497 | Val Acc: 0.8957169651985168 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 39 | Train Acc: 0.8888111710548401 | Val Acc: 0.8933892250061035 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 40 | Train Acc: 0.8930069804191589 | Val Acc: 0.8808193802833557 | Train F1: 0.0 | Val F1: 0.0
+Namespace(attention=False, batch_size=4, checkpoint_dir='i3d_bert_finetune', data_split=0.8, epochs=40, finetune=True, local_rank=1, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=6, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=4, checkpoint_dir='i3d_bert_finetune', data_split=0.8, epochs=40, finetune=True, local_rank=2, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=6, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Namespace(attention=False, batch_size=4, checkpoint_dir='i3d_bert_finetune', data_split=0.8, epochs=40, finetune=True, local_rank=3, lr=0.001, num_workers=16, preprocess=False, resume=True, run_id=6, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)

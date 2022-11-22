@@ -1,0 +1,16 @@
+Namespace(attention=False, batch_size=64, data_split=0.8, epochs=30, finetune=False, local_rank=0, lr=0.001, num_workers=4, preprocess=False, run_id=2, sample_rate=3, split_type='train', text_feature_extractor='bert', visual_feature_extractor='i3d', weight_decay=1e-05)
+Epoch: 1 | Train Acc: 0.6001165509223938 | Val Acc: 0.6452513933181763 | Train F1: 0.42741936445236206 | Val F1: 0.7240142822265625
+Epoch: 2 | Train Acc: 0.6844988465309143 | Val Acc: 0.6964617967605591 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 3 | Train Acc: 0.6977855563163757 | Val Acc: 0.7290502786636353 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 4 | Train Acc: 0.7392773628234863 | Val Acc: 0.7458100318908691 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 5 | Train Acc: 0.7525641322135925 | Val Acc: 0.7206704020500183 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 6 | Train Acc: 0.7547785639762878 | Val Acc: 0.7728118896484375 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 7 | Train Acc: 0.7778554558753967 | Val Acc: 0.767690896987915 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 8 | Train Acc: 0.7940559387207031 | Val Acc: 0.7886406183242798 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 9 | Train Acc: 0.8010489344596863 | Val Acc: 0.802141547203064 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 10 | Train Acc: 0.8317016363143921 | Val Acc: 0.8286778330802917 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 11 | Train Acc: 0.8458042144775391 | Val Acc: 0.8426443338394165 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 12 | Train Acc: 0.8595570921897888 | Val Acc: 0.8836126923561096 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 13 | Train Acc: 0.8863636255264282 | Val Acc: 0.8938547372817993 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 14 | Train Acc: 0.9015151262283325 | Val Acc: 0.9031657576560974 | Train F1: 0.0 | Val F1: 0.0
+Epoch: 15 | Train Acc: 0.904079258441925 | Val Acc: 0.9096834063529968 | Train F1: 0.0 | Val F1: 0.0

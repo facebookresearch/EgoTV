@@ -1,0 +1,8 @@
+=> loading checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar'
+=> loading checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar'
+=> loading checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar'
+=> loading checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar'
+=> loaded checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar' (epoch 18)
+=> loaded checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar' (epoch 18)
+=> loaded checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar' (epoch 18)
+=> loaded checkpoint 'checkpoint/clip_clip_attention_2/epoch0018.pth.tar' (epoch 18)

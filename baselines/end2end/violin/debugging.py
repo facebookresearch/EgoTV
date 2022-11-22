@@ -1,3 +1,7 @@
+# pip install transformers
+# pip install scikit-learn
+# pip install torchmetrics
+# pip install torchtext==0.10.0
 import os
 import sys
 os.environ['DATA_ROOT'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred/gen/dataset'
@@ -6,11 +10,11 @@ sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
 from violin_base import ViolinBase
+from rnn import RNNEncoder
 from i3d.pytorch_i3d import InceptionI3d
-from mvit_tx.mvit import mvit_v2_s
-# from maskRCNN.mrcnn import load_pretrained_model
+from maskRCNN.mrcnn import load_pretrained_model
 from arguments import Arguments
-import math
+import cv2
 import json
 import numpy as np
 from tqdm import tqdm
@@ -32,7 +36,12 @@ from torchtext.vocab import GloVe
 def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
     model.train()
     if args.finetune:
-        visual_model.train()
+        if args.visual_feature_extractor == 'resnet':
+            resnet_model.train()
+        elif args.visual_feature_extractor == 'i3d':
+            i3d_model.train()
+            if args.i3d_aggregate == 'rnn':
+                segment_aggregator.train()
     train_loss = []
     for video_features, hypotheses, labels in tqdm(iterate(train_loader), desc='Train'):
         output = model(video_features, hypotheses)
@@ -67,7 +76,12 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
 
 def validate(model, val_loader):
     model.eval()
-    visual_model.eval()
+    if args.visual_feature_extractor == 'resnet':
+        resnet_model.eval()
+    elif args.visual_feature_extractor == 'i3d':
+        i3d_model.eval()
+        if args.i3d_aggregate == 'rnn':
+            segment_aggregator.eval()
     with torch.no_grad():
         for video_features, hypotheses, labels in tqdm(iterate(val_loader), desc='Validation'):
             output = model(video_features, hypotheses)
@@ -93,19 +107,30 @@ def process_batch(data_batch, label_batch):
 
         # sampling frames from video
         # video_frames = [cv2.imread(frame) for frame in glob.glob(os.path.join(filepath, 'raw_images') + "/*.png")]
-        video_frames = sample_vid(filepath, args.sample_rate)
-        video_frames = torch.stack(video_frames) # [t, c, h, w]
+        video_frames = []
+        video = cv2.VideoCapture(os.path.join(filepath, 'video.mp4'))
+        success = video.grab()
+        fno = 0
+        while success:
+            if fno % args.sample_rate == 0:
+                _, img = video.retrieve()
+                video_frames.append(transform_image(img))
+            success = video.grab()
+            fno += 1
+        try:
+            video_frames = torch.stack(video_frames) # [t, c, h, w]
+        except:
+            print(filepath)
+
         # process video features using resnet/i3d
         if args.visual_feature_extractor == 'resnet':
-            # vid_lengths.append(len(video_frames))
+            vid_lengths.append(len(video_frames))
             if not args.finetune:
                 with torch.no_grad():
                     #mrcnn_model([video_frames[0]])
-                    video_segments = visual_model(video_frames).view(-1, vid_feat_size)
+                    video_features_batch.append(resnet_model(video_frames).view(-1, vid_feat_size))  # [t, 512]
             else:
-                video_segments = visual_model(video_frames).view(-1, vid_feat_size)
-            video_features_batch.append(video_segments)  # [t, 512]
-            vid_lengths.append(len(video_segments))
+                video_features_batch.append(resnet_model(video_frames).view(-1, vid_feat_size))
         elif args.visual_feature_extractor == 'i3d':
             # obtaining action-segment information
             #assert len(traj['images']) == len(video_frames) - 10
@@ -122,7 +147,7 @@ def process_batch(data_batch, label_batch):
             # # adding the index of the last frame of video
             # if len(video_frames) > vid_seg_changepoints[-1] + 1:
             #     vid_seg_changepoints.append(len(video_frames))
-            video_frames = video_frames.unsqueeze(0).permute(0, 2, 1, 3, 4).contiguous()  # [b, c, t, h, w]
+            video_frames = video_frames.unsqueeze(0).permute(0,2,1,3,4).contiguous()  # [b, c, t, h, w]
             # video_segments = []
             # s_ind, e_ind = 0, 0  # start_index, end_index
             # # decomposing the video into segments and extracting segment features using I3D
@@ -131,10 +156,10 @@ def process_batch(data_batch, label_batch):
             #     e_ind = vid_seg_changepoint
             if not args.finetune:
                 with torch.no_grad():
-                    video_segments = visual_model.extract_features(
+                    video_segments = i3d_model.extract_features(
                         video_frames).view(-1, vid_feat_size)
             else:
-                video_segments = visual_model.extract_features(
+                video_segments = i3d_model.extract_features(
                     video_frames).view(-1, vid_feat_size)
             # aggregate video features (averaging or RNN)
             # if not args.attention:
@@ -146,21 +171,6 @@ def process_batch(data_batch, label_batch):
             #     else:  # averaging all vectors for a segment
             #         video_segments = \
             #             torch.stack([video_segment.mean(dim=0) for video_segment in video_segments])
-            video_features_batch.append(video_segments)
-            vid_lengths.append(len(video_segments))
-        elif args.visual_feature_extractor == 'mvit':
-            # here b=1 since we are processing one video at a time
-            video_frames = video_frames.unsqueeze(0).permute(0, 2, 1, 3, 4).contiguous()  # [b, c, t, h, w]
-            b, c, t, h , w = video_frames.shape
-            num_segments = math.ceil(t / 16)
-            to_pad = num_segments*16 - t
-            video_frames = torch.cat((video_frames, torch.zeros(b, c, to_pad, h, w)), dim=2)
-            video_frames = video_frames.reshape(b * num_segments, c, 16, h, w)
-            if not args.finetune:
-                with torch.no_grad():
-                    video_segments = visual_model(video_frames).reshape(b*num_segments, embed_size)  # [num_segments, 768]
-            else:
-                video_segments = visual_model(video_frames).reshape(b*num_segments, embed_size)  # [num_segments, 768]
             video_features_batch.append(video_segments)
             vid_lengths.append(len(video_segments))
 
@@ -175,18 +185,45 @@ def process_batch(data_batch, label_batch):
         # last_hidden_state: [batch_size, max_seq_len, 768/300]
         tokenizer_out = tokenize_and_pad(hypotheses, tokenizer, args.text_feature_extractor)
         if args.text_feature_extractor == 'bert':
-            hypotheses = (text_model(**dictfilt(tokenizer_out.data, ("input_ids", "attention_mask"))).last_hidden_state,
+            hypotheses = (bert_model(**dictfilt(tokenizer_out.data, ("input_ids", "attention_mask"))).last_hidden_state,
                           tokenizer_out.data['length'])
         elif args.text_feature_extractor == 'glove':
             hypotheses = (pad_sequence([global_vectors.get_vecs_by_tokens(x)
                                        for x in tokenizer_out]).permute(1, 0, 2),
                           torch.tensor([len(x) for x in tokenizer_out]))
-    # pad_sequence(video_frames_batch) -> [batch_size, max_seq_len, embed_dim]
-    video_features_batch = (pad_sequence(video_features_batch).permute(1, 0, 2).contiguous(), torch.tensor(vid_lengths))
+    # pad_sequence(video_frames_batch) -> [max_seq_len, batch_size, resnet_dim/i3d_dim]
+    video_features_batch = (pad_sequence(video_features_batch), torch.tensor(vid_lengths))
     return video_features_batch, hypotheses, torch.tensor(labels)
 
 
+features = []
+def save_features(mod, inp, outp):
+    features.append(outp)
+
 if __name__ == '__main__':
+    # dist_url = "env://"  # default
+    # # only works with torch.distributed.launch // torch.run
+    # rank = int(os.environ["RANK"])
+    # world_size = int(os.environ['WORLD_SIZE'])
+    # local_rank = int(os.environ['LOCAL_RANK'])
+    # dist.init_process_group(
+    #     backend="nccl",
+    #     init_method=dist_url,
+    #     world_size=world_size,
+    #     rank=rank)
+    # # this will make all .cuda() calls work properly
+    # torch.cuda.set_device(local_rank)
+    # # synchronizes all the threads to reach this point before moving on
+    # dist.barrier()
+    # mrcnn_pth = os.path.join(os.environ['BASELINES'], 'maskRCNN/mrcnn_alfred_all_004.pth')
+    # mrcnn_model = load_pretrained_model(mrcnn_pth, num_classes=106)
+    # you can also hook layers inside the roi_heads
+    # layer_to_hook = 'roi_heads'
+    # mrcnn_model.roi_heads.box_head.fc7.register_forward_hook(save_features)
+    # mrcnn_model.roi_heads.box_predictor.cls_score.register_forward_hook(save_features)
+    # # mrcnn_model.roi_heads.box_predictor.bbox_pred.register_forward_hook(save_features)
+    # mrcnn_model.eval()
+
     args = Arguments()
     if args.split_type == 'train':
         path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
@@ -217,20 +254,22 @@ if __name__ == '__main__':
     train_set, val_set = random_split(dataset, [train_size, val_size])
     # train_sampler, val_sampler = DistributedSampler(dataset=train_set, shuffle=True), \
     #                              DistributedSampler(dataset=val_set, shuffle=True)
-    train_loader, val_loader = DataLoader(train_set, batch_size=2,
+    train_loader, val_loader = DataLoader(train_set, batch_size=args.batch_size,
                                           num_workers=args.num_workers, pin_memory=True), \
-                               DataLoader(val_set, batch_size=2,
+                               DataLoader(val_set, batch_size=args.batch_size,
                                           num_workers=args.num_workers, shuffle=False, pin_memory=True)
 
     # text feature extractor for the hypothesis
     if args.text_feature_extractor == 'bert':
         embed_size = 768
+        # bert base model
         # TODO: also try TinyBert
-        text_model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+        bert_model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+        # bert_model = nn.SyncBatchNorm.convert_sync_batchnorm(bert_model) # Convert BatchNorm to SyncBatchNorm
         # bert_model = DDP(bert_model, device_ids=[local_rank])
         # TODO: get vocabulary file for bert tokenizer: BertTokenizer(vocab_file=?)
         tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
-        text_model.eval()
+        bert_model.eval()
     elif args.text_feature_extractor == 'glove':
         embed_size = 300
         tokenizer = get_tokenizer("basic_english")
@@ -242,26 +281,32 @@ if __name__ == '__main__':
     if args.visual_feature_extractor == 'resnet':
         # resnet model
         vid_feat_size = 512  # 512 for resnet 18, 34; 2048 for resnet50, 101
-        visual_model = resnet(pretrained=True)
-        visual_model = nn.Sequential(*list(visual_model.children())[:-1])
+        resnet_model = resnet(pretrained=True)
+        resnet_model = nn.Sequential(*list(resnet_model.children())[:-1])
+        if not args.finetune:
+            resnet_model.eval()
+        # resnet_model = nn.SyncBatchNorm.convert_sync_batchnorm(resnet_model)
+        # resnet_model = DDP(resnet_model, device_ids=[local_rank])
     elif args.visual_feature_extractor == 'i3d':
         # i3d model
         vid_feat_size = 1024
         kinetics_pretrained = 'i3d/rgb_imagenet.pt'
-        visual_model = InceptionI3d(400, in_channels=3)
-        visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
-        visual_model.replace_logits(157)
-    elif args.visual_feature_extractor == 'mvit':
-        # MViT ("https://arxiv.org/pdf/2104.11227.pdf")
-        # TODO: [shallow version, with pretrained, with aggregation]
-        vid_feat_size = 768
-        weights = 'KINETICS400_V1' if args.pretrained_mvit else None
-        visual_model = mvit_v2_s(weights=weights)
+        i3d_model = InceptionI3d(400, in_channels=3)
+        i3d_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
+        i3d_model.replace_logits(157)
+        if not args.finetune:
+            i3d_model.eval()
+        # i3d_model.cuda()
+        # i3d_model = nn.SyncBatchNorm.convert_sync_batchnorm(i3d_model)
+        # i3d_model = DDP(i3d_model, device_ids=[local_rank])
+        if args.i3d_aggregate == 'rnn':
+            segment_aggregator = \
+                RNNEncoder(vid_feat_size, vid_feat_size, bidirectional=False, dropout_p=0, n_layers=1, rnn_type='lstm')
+            # segment_aggregator.cuda()
+            # segment_aggregator = nn.SyncBatchNorm.convert_sync_batchnorm(segment_aggregator)
+            # segment_aggregator = DDP(segment_aggregator, device_ids=[local_rank])
     else:
         raise NotImplementedError
-
-    if not args.finetune:
-        visual_model.eval()
 
     # violin base model
     model = ViolinBase(hsize1=hsize1, hsize2=hsize2, embed_size=embed_size,
@@ -271,7 +316,12 @@ if __name__ == '__main__':
 
     all_params = list(model.parameters())
     if args.finetune:
-        all_params += list(visual_model.parameters())
+        if args.visual_feature_extractor == 'i3d':
+            all_params += list(i3d_model.parameters())
+            if args.i3d_aggregate == 'rnn':
+                all_params += list(segment_aggregator.parameters())
+        elif args.visual_feature_extractor == 'resnet':
+            all_params += list(resnet_model.parameters())
     optimizer = optim.Adam(all_params, lr=args.lr, weight_decay=args.weight_decay)
     bce_loss = nn.BCELoss()
     metrics = MetricCollection([Accuracy(threshold=0.5),

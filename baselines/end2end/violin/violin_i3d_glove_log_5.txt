@@ -1,0 +1,1 @@
+Namespace(attention=False, batch_size=2, checkpoint_dir='', data_split=0.8, epochs=10, finetune=False, local_rank=0, lr=0.001, num_workers=0, preprocess=False, run_id=5, sample_rate=5, split_type='context_goal_composition', text_feature_extractor='glove', visual_feature_extractor='i3d', weight_decay=1e-05)
