@@ -4,7 +4,6 @@ os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaug
 sys.path.append(os.environ['BASELINES'])
 from proScript.proscript_utils import GraphEditDistance
 from nesy_model import NeSyBase
-import itertools
 import numpy as np
 
 
@@ -31,8 +30,8 @@ def test_level_grouping():
     bin_assignment[1, 0, :] = np.array([0.2, 0.4, 0.5, 0.0, 0.0])
     bin_assignment[1, 1, :] = np.array([0.0, 0.2, 0.4, 0.9, 0.0])
     bin_assignment[1, 2, :] = np.array([0.0, 0.0, 0.3, 0.8, 0.3])
-    sol, alignment = recurse3(all_sorts, bin_assignment)
-    if sol == bin_assignment.sum():
+    sorted_seq_ind, best_score, best_alignment = recurse(all_sorts, bin_assignment)
+    if round(best_score, 2) == 1.8 and best_alignment == (2, 3, 4) and len(all_sorts) == 2 and sorted_seq_ind == 0:
         print("Test Case 1: PASSED")
     else:
         print("Test Case 1: FAILED")
@@ -42,13 +41,22 @@ def test_level_grouping():
               '"Step 2 StateQuery(tomato,clean)";'
               '"Step 3 StateQuery(tomato,hot)";']
     graph = ged.pydot_to_nx(tf_out[0])
-    # levels, levels_start, levels_end = NeSyBase.group_nodes_into_levels(graph=graph, num_segments=num_segments)
-    sorted_nodes = NeSyBase.topo_sort(graph)
-    rand_indices = np.array([0, 1, 4])
-    bin_assignment = np.zeros(num_segments)
-    bin_assignment[rand_indices] = 1
-    sol, alignment = recurse3(sorted_nodes, bin_assignment)
-    if sol == bin_assignment.sum():
+    all_sorts = NeSyBase.all_topo_sorts(graph)
+    bin_assignment = np.zeros((len(all_sorts), len(graph.nodes), num_segments))
+    bin_assignment[0, 0, :] = np.array([0.4, 0.5, 0.6, 0.0, 0.0])
+    bin_assignment[0, 1, :] = np.array([0.0, 0.2, 0.4, 0.6, 0.0])
+    bin_assignment[0, 2, :] = np.array([0.0, 0.0, 0.3, 0.8, 0.6])
+
+    bin_assignment[1, 0, :] = np.array([0.2, 0.4, 0.5, 0.0, 0.0])
+    bin_assignment[1, 1, :] = np.array([0.0, 0.2, 0.4, 0.9, 0.0])
+    bin_assignment[1, 2, :] = np.array([0.0, 0.0, 0.3, 0.8, 0.3])
+
+    bin_assignment[2, 0, :] = np.array([0.9, 0.4, 0.5, 0.0, 0.0])
+    bin_assignment[2, 1, :] = np.array([0.0, 0.9, 0.4, 0.9, 0.0])
+    bin_assignment[2, 2, :] = np.array([0.0, 0.0, 0.1, 0.8, 0.3])
+
+    sorted_seq_ind, best_score, best_alignment = recurse(all_sorts, bin_assignment)
+    if best_score == 2.6 and len(all_sorts) == 6 and best_alignment == (0, 1, 3) and sorted_seq_ind == 2:
         print("Test Case 2: PASSED")
     else:
         print("Test Case 2: FAILED")
@@ -63,13 +71,24 @@ def test_level_grouping():
               '"Step 1 StateQuery(apple,hot)" -> "Step 4 StateQuery(apple,clean)";']
     graph = ged.pydot_to_nx(tf_out[0])
     num_segments = 6
-    # levels, levels_start, levels_end = NeSyBase.group_nodes_into_levels(graph=graph, num_segments=num_segments)
-    sorted_nodes = NeSyBase.topo_sort(graph)
-    rand_indices = np.array([0, 1, 3, 5])
-    bin_assignment = np.zeros(num_segments)
-    bin_assignment[rand_indices] = 1
-    sol, alignment = recurse3(sorted_nodes, bin_assignment)
-    if sol == bin_assignment.sum():
+    all_sorts = NeSyBase.all_topo_sorts(graph)
+    bin_assignment = np.zeros((len(all_sorts), len(graph.nodes), num_segments))
+    bin_assignment[0, 0, :] = np.array([0.4, 0.5, 0.6, 0.0, 0.0, 0.0])
+    bin_assignment[0, 1, :] = np.array([0.0, 0.2, 0.4, 0.6, 0.0, 0.0])
+    bin_assignment[0, 2, :] = np.array([0.0, 0.0, 0.3, 0.8, 0.6, 0.0])
+    bin_assignment[0, 3, :] = np.array([0.0, 0.0, 0.0, 0.8, 0.6, 0.1])
+
+    bin_assignment[1, 0, :] = np.array([0.2, 0.4, 0.5, 0.0, 0.0, 0.0])
+    bin_assignment[1, 1, :] = np.array([0.0, 0.2, 0.4, 0.9, 0.0, 0.0])
+    bin_assignment[1, 2, :] = np.array([0.0, 0.0, 0.3, 0.8, 0.3, 0.0])
+    bin_assignment[1, 3, :] = np.array([0.0, 0.0, 0.0, 0.8, 0.6, 0.2])
+
+    bin_assignment[2, 0, :] = np.array([0.1, 0.4, 0.5, 0.0, 0.0, 0.0])
+    bin_assignment[2, 1, :] = np.array([0.0, 0.9, 0.4, 0.9, 0.0, 0.0])
+    bin_assignment[2, 2, :] = np.array([0.0, 0.0, 0.1, 0.8, 0.3, 0.0])
+    bin_assignment[2, 3, :] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.3])
+    sorted_seq_ind, best_score, best_alignment = recurse(all_sorts, bin_assignment)
+    if best_score == 2.3 and len(all_sorts) == 6 and best_alignment == (1, 2, 3, 4) and sorted_seq_ind == 0:
         print("Test Case 3: PASSED")
     else:
         print("Test Case 3: FAILED")
@@ -85,13 +104,20 @@ def test_level_grouping():
               '"Step 3 StateQuery(potato,sliced)" -> "Step 4 RelationQuery(potato,plate,inReceptacle)";']
     graph = ged.pydot_to_nx(tf_out[0])
     num_segments = 8
-    # levels, levels_start, levels_end = NeSyBase.group_nodes_into_levels(graph=graph, num_segments=num_segments)
-    sorted_nodes = NeSyBase.topo_sort(graph)
-    rand_indices = np.array([2, 4, 5, 7])
-    bin_assignment = np.zeros(num_segments)
-    bin_assignment[rand_indices] = 1
-    sol, alignment = recurse3(sorted_nodes, bin_assignment)
-    if sol == bin_assignment.sum():
+    all_sorts = NeSyBase.all_topo_sorts(graph)
+    bin_assignment = np.zeros((len(all_sorts), len(graph.nodes), num_segments))
+    bin_assignment[0, 0, :] = np.array([0.4, 0.5, 0.6, 0.0, 0.0, 0.1, 0.0, 0.0])
+    bin_assignment[0, 1, :] = np.array([0.0, 0.2, 0.4, 0.6, 0.0, 0.1, 0.0, 0.0])
+    bin_assignment[0, 2, :] = np.array([0.0, 0.0, 0.3, 0.8, 0.6, 0.1, 0.0, 0.0])
+    bin_assignment[0, 3, :] = np.array([0.0, 0.0, 0.0, 0.8, 0.6, 0.1, 0.7, 0.0])
+
+    bin_assignment[1, 0, :] = np.array([0.2, 0.4, 0.5, 0.0, 0.0, 0.2, 0.0, 0.0])
+    bin_assignment[1, 1, :] = np.array([0.0, 0.2, 0.4, 0.9, 0.0, 0.2, 0.0, 0.0])
+    bin_assignment[1, 2, :] = np.array([0.0, 0.0, 0.3, 0.8, 0.3, 0.2, 0.0, 0.0])
+    bin_assignment[1, 3, :] = np.array([0.0, 0.0, 0.0, 0.8, 0.6, 0.1, 0.0, 0.6])
+
+    sorted_seq_ind, best_score, best_alignment = recurse(all_sorts, bin_assignment)
+    if best_score == 2.5  and len(all_sorts) == 2 and best_alignment == (2, 3, 4, 6) and sorted_seq_ind == 0:
         print("Test Case 4: PASSED")
     else:
         print("Test Case 4: FAILED")
@@ -100,94 +126,32 @@ def test_level_grouping():
     tf_out = ['"Step 1 StateQuery(potato,hot)";']
     graph = ged.pydot_to_nx(tf_out[0])
     num_segments = 5
-    # levels, levels_start, levels_end = NeSyBase.group_nodes_into_levels(graph=graph, num_segments=num_segments)
-    sorted_nodes = NeSyBase.topo_sort(graph)
-    rand_indices = np.array([1, 2, 3, 4])
-    bin_assignment = np.zeros(num_segments)
-    bin_assignment[rand_indices] = 1
-    sol, alignment = recurse3(sorted_nodes, bin_assignment)
-    if sol == bin_assignment.sum():
+    all_sorts = NeSyBase.all_topo_sorts(graph)
+    bin_assignment = np.zeros((len(all_sorts), len(graph.nodes), num_segments))
+    bin_assignment[0, 0, :] = np.array([0.4, 0.5, 0.7, 0.0, 0.0])
+
+    sorted_seq_ind, best_score, best_alignment = recurse(all_sorts, bin_assignment)
+    if best_score == 0.7 and len(all_sorts) == 1 and best_alignment[0] == 2 and sorted_seq_ind == 0:
         print("Test Case 5: PASSED")
     else:
         print("Test Case 5: FAILED")
 
 
 def query(node_ind, segment_ind, bin_assignment):
-    # net = 0.
-    # for perm_ind in perm:
-    #     net += bin_assignment[perm_ind]
-    # return net
     return bin_assignment[node_ind, segment_ind]
 
 
-# def recurse(level_ind, start_ind, levels_start, levels, levels_end, bin_assignment):
-#     # TODO: optimize it by creating a matrix/dict with keys {level_ind, start_ind} for reuse
-#     """
-#     generates all permutations within a level based on the start_ind and
-#     recurses for the max probability based on the current_permutation and
-#     max_prob of the next level
-#     """
-#     # handling corner cases
-#     if level_ind >= len(levels):
-#         return 0.
-#     assert start_ind >= levels_start[level_ind]
-#
-#     end_ind = levels_end[level_ind]
-#     # -sys.maxsize + 1
-#     max_val_level = -100.
-#     nodes = levels[level_ind]  # in that level
-#     num_nodes = len(nodes)
-#     all_perm = itertools.permutations(range(start_ind, end_ind+1), num_nodes)
-#     for perm in all_perm:
-#         k = max(perm)
-#         # bin_ind = [x for x in np.where(np.array(bin_assignment) == 1)[0] if x >= start_ind and x < end_ind+1]
-#         max_val_level = max(max_val_level,
-#                             query(perm, bin_assignment) + recurse(level_ind=level_ind + 1,
-#                                                                   start_ind=k + 1,
-#                                                                   levels_start=levels_start,
-#                                                                   levels=levels,
-#                                                                   levels_end=levels_end,
-#                                                                   bin_assignment=bin_assignment))
-#     if max_val_level == -100.:
-#         print('What ... Why ... How ... ?')
-#     return max_val_level
-
-
-# def recurse2(levels, levels_end, bin_assignment, levels_start):
-#     # TODO: optimize it by creating a matrix/dict with keys {level_ind, start_ind} for reuse
-#     """
-#     optimized recurse: stores values of sub-problems
-#     """
-#     path_opt = [[None]] * len(levels)
-#     arr = np.zeros((len(levels)+1, len(bin_assignment)+1))
-#     for level_ind in range(len(levels)-1, -1, -1):
-#         num_nodes = len(levels[level_ind])
-#         end_ind = levels_end[level_ind]
-#         for segment_ind in range(len(bin_assignment)-1, levels_start[level_ind]-1, -1):
-#             start_ind = segment_ind
-#             all_perm = itertools.permutations(range(start_ind, end_ind + 1), num_nodes)
-#             for perm in all_perm:
-#                 k = max(perm)
-#                 if level_ind <= len(levels) - 1:
-#                     V_opt_next = arr[level_ind + 1, k + 1]
-#                     V_opt = query(perm, bin_assignment) + V_opt_next
-#                     if arr[level_ind][start_ind] < V_opt:
-#                         path_opt[level_ind] = perm
-#                         arr[level_ind][start_ind] = V_opt
-#     return arr[0][0]
-
-def recurse3(all_sorts, bin_assignment):
-    # TODO: optimize it by creating a matrix/dict with keys {level_ind, start_ind} for reuse
+def recurse(all_sorts, bin_assignment):
     """
     optimized recurse: stores values of sub-problems
     """
-    path_opt = [[]] * len(all_sorts)
-    max_arr = [[]] * len(all_sorts)
+    max_arr = [[]] * len(all_sorts)  # keep track of max for each sorted sequence
+    parent_dict = [[]] * len(all_sorts)  # keeps track of the best path for each sorted sequence
+    num_segments = len(bin_assignment[0, 0])
     for ind, sorted_nodes in enumerate(all_sorts):
         num_nodes = len(sorted_nodes)
-        path_opt[ind] = {k: None for k in sorted_nodes}
-        num_segments = len(bin_assignment[0, 0])
-        arr = np.zeros((num_nodes+1, num_segments+1))
+        parent_dict[ind] = {k1: {k2 : tuple() for k2 in range(num_segments)} for k1 in sorted_nodes}
+        arr = np.zeros((num_nodes+1, num_segments+1))  # array keeps track of cumulative max for each cell
         start_ind = dict(zip(sorted_nodes, np.arange(0, num_nodes, 1)))
         end_ind = dict(zip(sorted_nodes, [num_segments - num_nodes + i  for i in range(num_nodes)]))
         for node_ind, node in zip(np.arange(num_nodes-1, -1, -1), reversed(sorted_nodes)):
@@ -196,15 +160,26 @@ def recurse3(all_sorts, bin_assignment):
                 V_opt_curr = query(node_ind, segment_ind, bin_assignment[ind]) + \
                              arr[node_ind+1][segment_ind+1]
                 V_opt_next = arr[node_ind][segment_ind+1]
-                if V_opt_curr > V_opt_next:
+                if V_opt_curr >= V_opt_next:
                     arr[node_ind][segment_ind] = V_opt_curr
-                    path_opt[ind][node] = segment_ind
+                    if node_ind == num_nodes - 1:
+                        parent_dict[ind][node][segment_ind] = (segment_ind,)
+                    else:
+                        parent_dict[ind][node][segment_ind] = \
+                            (segment_ind,) + parent_dict[ind][sorted_nodes[node_ind + 1]][segment_ind+1]
                 else:
                     arr[node_ind][segment_ind] = V_opt_next
-                    # path_opt[node_ind] = segment_ind
+                    parent_dict[ind][node][segment_ind] = parent_dict[ind][sorted_nodes[node_ind]][segment_ind+1]
+                # else:
+                #     arr[node_ind][segment_ind] = V_opt_curr
+                #     parent_dict[ind][node][segment_ind] = \
+                #         ((segment_ind,) + parent_dict[ind][sorted_nodes[node + 1]][segment_ind],
+                #          parent_dict[ind][sorted_nodes[node + 1]][segment_ind+1])
+                #     # parent_dict[ind][node] = parent_dict[ind][sorted_nodes[node + 1]]
         max_arr[ind] = arr[0][0]
     max_sort_ind = np.array(max_arr).argmax()
-    return max_arr[max_sort_ind], path_opt[max_sort_ind]
+    #TODO: could be more than one optimum paths
+    return max_sort_ind, max_arr[max_sort_ind], parent_dict[max_sort_ind][all_sorts[max_sort_ind][0]][0]
 
 
 if __name__ == '__main__':
