@@ -2,12 +2,17 @@ import os
 import re
 import json
 import cv2
+import random
+import torch
+from sklearn import metrics
 from collections import Counter
 from operator import itemgetter
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
-from sklearn import metrics
+from typing import List, Tuple
 
 
 class CustomDataset(Dataset):
@@ -96,29 +101,130 @@ def sample_vid(filename, sample_rate=1):
     return video_frames
 
 
-def extract_segment_labels(trajectory, sample_rate):
+def plot_bb(img, x1, y1, x2, y2):
+    plt.imshow(img)
+    ax = plt.gca()
+    rect = Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=1, edgecolor='r', facecolor='none')
+    ax.add_patch(rect)
+    plt.show()
+
+
+def sample_vid_with_roi(filename, sample_rate, bboxes):
+    # TODO: generalize to bbox of multiple objects
+    video_frames, roi = [], []
+    video = cv2.VideoCapture(os.path.join(filename, 'video.mp4'))
+    # print(video.get(cv2.CAP_PROP_FPS))
+    success = video.grab()
+    fno = 0
+    while success:
+        if fno % sample_rate == 0:
+            _, img = video.retrieve()
+            video_frames.append(transform_image(img))
+            # TODO: see if the alignment is accurate
+            bbox = bboxes[fno]
+            # if bbox is not None:
+            try:
+                # TODO: generalize to multiple bboxes and not just [0]
+                x1, y1, x2, y2 = list(map(lambda x: int(x), bbox[0]))[:]
+                roi.append(transform_image(img[y1:y2, x1:x2, :]))
+                # Want to test if the slicing is correct? go ahead and uncomment the next line
+                # plot_bb(img, x1, y1, x2, y2)
+            except:
+                roi.append(torch.zeros(3, 224, 224))
+        success = video.grab()
+        fno += 1
+        if fno >= len(bboxes):
+            # print('break executed, fno={}'.format(fno))
+            break
+    assert len(video_frames) == len(roi)
+    return video_frames, roi
+
+
+def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_args, positive=False, supervised=True):
+    """
+    used for supervised NeSy model
+    returns:
+    actions_labs: (dominant) action labels for each segment
+    segment_args: dominant action arguments for each segment
+    roi_bb: RoI bounding box coordinates corresponding to action arguments
+    """
     action_labs = []
-    count_labs = [x['high_idx'] for ind, x in enumerate(trajectory['images']) if ind % sample_rate == 0]
-    for split_ind in range(0, len(count_labs), 16):
-        if split_ind >= len(count_labs) - 16:
+    roi_bb = []
+    count_labs = []
+    segment_args = []
+
+    # extract label, bbox per frame based on sample_rate
+    for ind, x in enumerate(trajectory['images']):
+        if ind % sample_rate == 0:
+            count_labs.append(x['high_idx'])
+        bb_dict = x['bbox']
+        for action_arg in action_args:
+            # TODO: generalize to multiple args (for RelationQuery)
+            bb = []
+            for obj_id, bbox in bb_dict.items():
+                if action_arg in obj_id:
+                    bb.append(bbox)
+            if len(bb) != 0:
+                roi_bb.append(bb)
+            else:
+                roi_bb.append(None)
+    if not supervised:
+        return roi_bb
+    # assert len(roi_bb) == len(count_labs)
+    # getting dominant action label in each video segment
+    # (each segment has #frames = frames_per_segment)
+    for split_ind in range(0, len(count_labs), frames_per_segment):
+        if split_ind >= len(count_labs) - frames_per_segment:
             max_lab = max(Counter(count_labs[split_ind:len(count_labs)]).items(), key=itemgetter(1))[0]
         else:
-            max_lab = max(Counter(count_labs[split_ind:split_ind + 16]).items(), key=itemgetter(1))[0]
-        action = trajectory['plan']['high_pddl'][max_lab]['discrete_action']['action']
-        action_labs.append(action_mapping(action))
-    return action_labs
+            max_lab = max(Counter(count_labs[split_ind:split_ind + frames_per_segment]).items(), key=itemgetter(1))[0]
+        if not positive:
+            action = random.sample(['HeatObject', 'SliceObject', 'CoolObject',
+                                    'CleanObject', 'PutObject', 'PickupObject', 'GotoLocation'], 1)[0]
+        else:
+            discrete_action = trajectory['plan']['high_pddl'][max_lab]['discrete_action']
+            # TODO: consider ['args'][1] for receptacle for putObject
+            action = discrete_action['action']
+        segment_args.append(action + ' ' + ' '.join(action_args))
+        action_labs.append(action)
+
+    return action_labs, roi_bb, segment_args
 
 
 def action_mapping(action):
     action_map = {'HeatObject': 0, 'SliceObject': 1,
                   'CoolObject': 2, 'CleanObject': 3,
                   'PutObject': 4, 'PickupObject': 5,
-                  'GotoLocation': 6}
+                  'GotoLocation': 6, 'NoOp': 6}
     return action_map[action]
 
 
 def dictfilt(x, y):
     return dict([(i, x[i]) for i in x if i in set(y)])
+
+
+def train_log_process(filepath):
+    lines = open(filepath, 'r').readlines()[1:]
+    # Epoch: 1 | Train Acc: 0.5652528405189514 | Val Acc: 0.6091205477714539 | Train F1: 0.5888705253601074 | Val F1: 0.4636015295982361
+    val_acc, val_f1 = 0, 0
+    for line in lines:
+        split_line = line.split(' | ')
+        val_acc = max(val_acc, float(split_line[2].split('Val Acc:')[1]))
+        val_f1 = max(val_f1, float(split_line[4].split('Val F1:')[1]))
+    return val_acc, val_f1
+
+def task_axis_stats(task_type):
+    """
+    return ordering and complexity of each task
+    heat_simple: complexity = 1, ordering = 0
+    heat_and_place: complexity = 2, ordering = 0
+    heat_and_slice_and_place: complexity = 3, ordering = 0
+    heat_then_clean_and_place : complexity = 3, ordering = 1
+    heat_then_clean_then_place: complexity = 3, ordering = 2
+    """
+    complexity = len(task_type.replace('then', 'and').split('_and_'))
+    ordering = task_type.count('then')
+    return complexity, ordering
 
 
 def tokenize_and_pad(sent_batch, tokenizer, feature_extractor_type):
@@ -142,6 +248,45 @@ def calc_metrics(true_labels, pred_labels):
     f1_score = metrics.f1_score(true_labels, pred_labels)
     train_acc = metrics.accuracy_score(true_labels, pred_labels)
     return confusion_matrix, round_val([precision, recall, f1_score, train_acc], 3)
+
+
+def translate(step):
+    node, segment_ind = step
+    node = re.sub('Step \d+ ', '', node)
+    node = re.sub(r"[()]", " ", node).strip().split(" ")
+    query, pred_args = node[0], ','.join(node[1:])
+    split_text = [pred_args.split(',')[0], pred_args.split(',')[-1]]
+    arg_translate = {'heat': 'HeatObject', 'cool': 'CoolObject', 'slice': 'SliceObject', 'clean': 'CleanObject',
+                     'place': 'PutObject', 'pick': 'PickupObject'}
+    return arg_translate[split_text[-1]], query, segment_ind
+
+def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List], ent_labels):
+    """
+    checks if the predicted (dynamic programming-based) alignment is correct
+    for positively entailed hypotheses
+    """
+    state_pred_labs, state_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
+    relation_pred_labs, relation_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
+    ind = 0
+    for pred, true in zip(pred_alignment, segment_labels):
+        if ent_labels[ind].item() == 1:
+            for step in pred:
+                pred_action, query, segment_ind = translate(step)
+                if query == 'StateQuery':
+                    state_pred_labs.append(torch.tensor(1.))
+                    if true[segment_ind] == pred_action:
+                            state_true_labs.append(torch.tensor(1))
+                    else:
+                        state_true_labs.append(torch.tensor(0))
+                else:  # query == 'RelationQuery'
+                    relation_pred_labs.append(torch.tensor(1))
+                    if true[segment_ind] == pred_action:
+                            relation_true_labs.append(torch.tensor(1))
+                    else:
+                        relation_true_labs.append(torch.tensor(0))
+        ind += 1
+    return torch.stack(state_pred_labs), torch.stack(state_true_labs), \
+           torch.stack(relation_pred_labs), torch.stack(relation_true_labs)
 
 
 def clean_str(string):
