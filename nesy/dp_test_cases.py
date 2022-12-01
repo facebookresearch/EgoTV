@@ -131,7 +131,7 @@ def test_level_grouping():
     bin_assignment[0, 0, :] = np.array([0.4, 0.5, 0.7, 0.0, 0.0])
 
     sorted_seq_ind, best_score, best_alignment = recurse(all_sorts, bin_assignment)
-    if best_score == 0.7 and len(all_sorts) == 1 and best_alignment[0] == 2 and sorted_seq_ind == 0:
+    if best_score == 0.7 and len(all_sorts) == 1 and best_alignment == 2 and sorted_seq_ind == 0:
         print("Test Case 5: PASSED")
     else:
         print("Test Case 5: FAILED")

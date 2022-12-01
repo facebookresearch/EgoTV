@@ -1,0 +1,216 @@
+import re
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from feature_extraction import extract_text_features
+
+
+class PositionalEncoding(nn.Module):
+    """Positional encoding."""
+    def __init__(self, num_hiddens, dropout, max_len=1000):
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        # Create a long enough P
+        self.P = torch.zeros((1, max_len, num_hiddens))
+        X = torch.arange(max_len, dtype=torch.float32).reshape(
+            -1, 1) / torch.pow(10000, torch.arange(
+            0, num_hiddens, 2, dtype=torch.float32) / num_hiddens)
+        self.P[:, :, 0::2] = torch.sin(X)
+        self.P[:, :, 1::2] = torch.cos(X)
+
+    def forward(self, X):
+        X = X + self.P[:, :X.shape[1], :].to(X.device)
+        return self.dropout(X)
+
+
+class NeSyBase(nn.Module):
+    def __init__(self, vid_embed_size, hsize, rnn_enc, text_model):
+        super(NeSyBase, self).__init__()
+        # TODO: generalize to 'k' bounding boxes instead of 2
+        self.vid_ctx_rnn = rnn_enc(2 * vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
+                                   rnn_type="lstm")
+        self.text_ctx_rnn = rnn_enc(vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
+                                    rnn_type="lstm")
+        self.text_model = text_model
+
+        # positional encoding
+        # self.positional_encode = PositionalEncoding(num_hiddens=self.vid_embed_size, dropout=0.5)
+        # # multi-headed attention
+        # self.multihead_attn = nn.MultiheadAttention(embed_dim=self.vid_embed_size,
+        #                                             num_heads=8,
+        #                                             dropout=0.5,
+        #                                             batch_first=True)
+
+        self.num_states = 4  # hot, cold, cleaned, sliced
+        self.num_relations = 2  # InReceptacle, Holds
+
+        self.state_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
+                                         nn.ReLU(),
+                                         nn.Dropout(0.5),
+                                         nn.Linear(hsize, 1))
+        self.relation_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
+                                            nn.ReLU(),
+                                            nn.Dropout(0.5),
+                                            nn.Linear(hsize, 1))
+
+        self.all_sorts = []
+
+    def query(self, query_type, seg_text_feats, vid_feature):
+        """
+        given segment video features and query features
+        output a logit for querying the segment with the text features
+        """
+        if query_type == 'StateQuery':
+            return self.state_query(torch.cat((seg_text_feats, vid_feature), dim=-1))[0]
+        elif query_type == 'RelationQuery':
+            return self.relation_query(torch.cat((seg_text_feats, vid_feature), dim=-1))[0]
+
+    def process_nodes(self, nodes):
+        """
+        nodes: nodes of graph in DSL
+        returns: list of node args in str format
+        """
+        pred_args = []
+        queries = []
+        for node in nodes:
+            node = re.sub('Step \d+ ', '', node)
+            query_type, pred_arg, _ = re.sub(r"[()]", " ", node).split(" ")
+            pred_args.append(' '.join(pred_arg.split(',')))
+            queries.append(query_type)
+        return pred_args, queries
+
+    @classmethod
+    def all_topo_sorts(cls, graph):
+        # get all possible topological sortings of the graphs
+        nodes = graph.nodes
+        edges = set(graph.edges)
+        adj_mat = {k: [] for k in nodes}
+        in_degree = {k: 0 for k in nodes}
+        for edge in edges:
+            src_node, dest_node, _ = edge
+            adj_mat[src_node].append(dest_node)
+            in_degree[dest_node] += 1
+
+        visited = {k: False for k in nodes}
+        curr_path = []
+        cls.all_sorts = []
+        cls.all_topo_sorts_util(nodes, edges, adj_mat, in_degree, visited, curr_path)
+        return cls.all_sorts
+
+    @classmethod
+    def all_topo_sorts_util(cls, nodes, edges, adj_mat, in_degree, visited, curr_path):
+        for node in nodes:
+            if in_degree[node] == 0 and not visited[node]:
+                for adj_n in adj_mat[node]:
+                    in_degree[adj_n] -= 1
+
+                curr_path.append(node)
+                visited[node] = True
+                cls.all_topo_sorts_util(nodes, edges, adj_mat,
+                                        in_degree, visited, curr_path)
+
+                # backtrack
+                for adj_n in adj_mat[node]:
+                    in_degree[adj_n] += 1
+                curr_path.pop()
+                visited[node] = False
+        if len(curr_path) == len(nodes):
+            cls.all_sorts.append(curr_path.copy())
+
+    def dp_align(self, all_sorts, vid_feature):
+        """
+        optimized recurse: stores values of sub-problems in N*S array
+        # nodes = N
+        # segments = S
+        """
+        max_arr = [[]] * len(all_sorts)  # keeps track of max for each sorted sequence
+        parent_dict = [[]] * len(all_sorts)  # keeps track of the best path for each sorted sequence
+        num_segments = len(vid_feature[0])
+        logits_arr = [[]] * len(all_sorts)  # keeps track of logits matrix (for each cell)
+        for ind, sorted_nodes in enumerate(all_sorts):
+            nodes = all_sorts[ind]
+            pred_args, queries = self.process_nodes(nodes)
+            with torch.no_grad():
+                segment_text_feats = extract_text_features(pred_args, self.text_model, 'clip', tokenizer=None)
+            seg_text_feats, seg_text_lens = segment_text_feats
+            _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
+            seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_nodes, 512]
+
+            num_nodes = len(sorted_nodes)
+            parent_dict[ind] = {k1: {k2: tuple() for k2 in range(num_segments)} for k1 in sorted_nodes}
+            # array keeps track of cumulative max logprob for each cell
+            arr = torch.full((num_nodes, num_segments), torch.tensor(-100.))
+            logits_arr[ind] = torch.zeros((num_nodes, num_segments))
+            start_ind = dict(zip(sorted_nodes, np.arange(0, num_nodes, 1)))
+            end_ind = dict(zip(sorted_nodes, [num_segments - num_nodes + i for i in range(num_nodes)]))
+            for node_ind, node in zip(np.arange(num_nodes - 1, -1, -1), reversed(sorted_nodes)):
+                for segment_ind in range(end_ind[node], start_ind[node] - 1, -1):
+                    # TODO: relax this to arr[node_ind+1][segment_ind]
+
+                    if segment_ind == num_segments - 1:
+                        logit = self.query(queries[node_ind],
+                                            seg_text_feats[:, node_ind, :],
+                                            vid_feature[:, segment_ind, :])
+                        arr[node_ind][segment_ind] =  F.logsigmoid(logit)
+                        logits_arr[ind][node_ind][segment_ind] = logit
+                        parent_dict[ind][node][segment_ind] = (segment_ind,)
+                        continue
+
+                    logit = self.query(queries[node_ind],
+                                       seg_text_feats[:, node_ind, :],
+                                       vid_feature[:, segment_ind, :])
+                    if node_ind == num_nodes - 1:
+                        V_opt_curr = F.logsigmoid(logit)
+                        V_opt_next = arr[node_ind][segment_ind + 1]
+                        if V_opt_curr >= V_opt_next:
+                            arr[node_ind][segment_ind] = V_opt_curr
+                            parent_dict[ind][node][segment_ind] =  (segment_ind,)
+                        else:
+                            arr[node_ind][segment_ind] = V_opt_next
+                            parent_dict[ind][node][segment_ind] = \
+                                parent_dict[ind][sorted_nodes[node_ind]][segment_ind + 1]
+                    else:
+                        V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind + 1]
+                        V_opt_next = arr[node_ind][segment_ind + 1]
+                        if V_opt_curr >= V_opt_next:
+                            arr[node_ind][segment_ind] = V_opt_curr
+                            parent_dict[ind][node][segment_ind] = \
+                                    (segment_ind,) + parent_dict[ind][sorted_nodes[node_ind + 1]][segment_ind + 1]
+                        else:
+                            arr[node_ind][segment_ind] = V_opt_next
+                            parent_dict[ind][node][segment_ind] = \
+                                parent_dict[ind][sorted_nodes[node_ind]][segment_ind + 1]
+                    logits_arr[ind][node_ind][segment_ind] = logit
+
+            max_arr[ind] = arr[0][0]
+        max_sort_ind = np.array(max_arr).argmax()
+        # TODO: could be more than one optimum paths
+        best_alignment = parent_dict[max_sort_ind][all_sorts[max_sort_ind][0]][0]
+        aggregated_logits = torch.tensor(0.)
+        for i, j in zip(np.arange(num_nodes), best_alignment):
+            aggregated_logits +=  logits_arr[max_sort_ind][i][j]
+        return max_sort_ind, max_arr[max_sort_ind], best_alignment, aggregated_logits
+
+    def forward(self, vid_feats, graphs):
+        ent_probs = []
+        for vid_feat, graph in zip(vid_feats, graphs):
+            # processing the video features
+            # each vid_feat is [num_segments, frames_per_segment, 512]
+            b, vid_len, _ = vid_feat.shape
+            vid_lens = torch.full((b,), vid_len)
+            _, vid_feat = self.vid_ctx_rnn(vid_feat, vid_lens)  # aggregate
+            vid_feat = vid_feat.unsqueeze(0)  # [1, num_segments, 512]
+            #  vid_feat = [num_segments, 2*hsize]
+            # vid_feat = self.positional_encode(vid_feat.unsqueeze(0))
+            # integrating temporal component into each segment encoding
+            # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
+
+            # dynamic programming
+            all_sorts = NeSyBase.all_topo_sorts(graph)
+            sorted_seq_ind, best_score, best_alignment, aligned_aggregated = \
+                self.dp_align(all_sorts, vid_feat)
+
+            ent_probs.append(torch.sigmoid(aligned_aggregated))
+
+        return torch.stack(ent_probs).view(-1)

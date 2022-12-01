@@ -1,7 +1,5 @@
 import os
 import sys
-os.environ['DATA_ROOT'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred/gen/dataset'
-os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/baselines'
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
@@ -31,7 +29,7 @@ def iterate(dataloader):
 
 if __name__ == '__main__':
     sr = 1  # sample_rate
-    path = os.path.join(os.environ['DATA_ROOT'], 'context_goal_composition')
+    path = os.path.join(os.environ['DATA_ROOT'], 'train')
     dataset = CustomDataset(data_path=path)
     train_size = int(0.9 * len(dataset))
     val_size = len(dataset) - train_size
@@ -39,5 +37,5 @@ if __name__ == '__main__':
     val_loader =  DataLoader(val_set, batch_size=256, shuffle=False, pin_memory=True)
     mean_c, min_c = iterate(val_loader)
     print('Mean Count: {} | Min Count: {}'.format(mean_c, min_c))
-    # sr = 2, mean_count = 22, min_count = 7.2
-    # sr = 1, mean_count = 43, min_count = 14.8
+    # sr = 2, mean_count = 22, min_count = 7.18
+    # sr = 1, mean_count =
