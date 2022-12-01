@@ -5,12 +5,12 @@ os.environ['DATA_ROOT'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaug
 os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/baselines'
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
-from proScript.proscript_utils import GraphEditDistance
+from proScript.utils import GraphEditDistance
 from nesy_arguments import Arguments
 from dataset_utils import *
 from feature_extraction import *
 from end2end.violin.rnn import RNNEncoder
-from without_dp_model_v2 import NeSyBase
+from without_dp_model import NeSyBase
 import json
 import math
 import torch

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from proScript.utils import GraphEditDistance
 from feature_extraction import extract_text_features
 
 
@@ -75,8 +76,12 @@ class NeSyBase(nn.Module):
         queries = []
         for node in nodes:
             node = re.sub('Step \d+ ', '', node)
-            query_type, pred_arg, _ = re.sub(r"[()]", " ", node).split(" ")
-            pred_args.append(' '.join(pred_arg.split(',')))
+            node = re.sub(r"[()]", " ", node).strip().split(" ")
+            query_type, pred_arg = node[0], ','.join(node[1:])
+            if 'inReceptacle' in pred_arg:
+                pred_arg = pred_arg.replace('inReceptacle', 'place')
+            split_text = [pred_arg.split(',')[0], pred_arg.split(',')[-1]]
+            pred_args.append(' '.join(split_text))
             queries.append(query_type)
         return pred_args, queries
 
@@ -171,7 +176,8 @@ class NeSyBase(nn.Module):
                             parent_dict[ind][node][segment_ind] = \
                                 parent_dict[ind][sorted_nodes[node_ind]][segment_ind + 1]
                     else:
-                        V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind + 1]
+                        V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind]  # relaxation added
+                        # V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind + 1]  # no relaxation
                         V_opt_next = arr[node_ind][segment_ind + 1]
                         if V_opt_curr >= V_opt_next:
                             arr[node_ind][segment_ind] = V_opt_curr
@@ -190,11 +196,14 @@ class NeSyBase(nn.Module):
         aggregated_logits = torch.tensor(0.)
         for i, j in zip(np.arange(num_nodes), best_alignment):
             aggregated_logits +=  logits_arr[max_sort_ind][i][j]
-        return max_sort_ind, max_arr[max_sort_ind], best_alignment, aggregated_logits
+        return max_sort_ind, max_arr[max_sort_ind], \
+               list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
 
-    def forward(self, vid_feats, graphs):
+    def forward(self, vid_feats, graphs, true_labels, train=True):
         ent_probs = []
-        for vid_feat, graph in zip(vid_feats, graphs):
+        labels = []
+        pred_alignments = []
+        for vid_feat, graph, hypothesis, label in zip(vid_feats, *graphs, true_labels):
             # processing the video features
             # each vid_feat is [num_segments, frames_per_segment, 512]
             b, vid_len, _ = vid_feat.shape
@@ -207,10 +216,18 @@ class NeSyBase(nn.Module):
             # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
 
             # dynamic programming
-            all_sorts = NeSyBase.all_topo_sorts(graph)
-            sorted_seq_ind, best_score, best_alignment, aligned_aggregated = \
-                self.dp_align(all_sorts, vid_feat)
+            try:
+                all_sorts = NeSyBase.all_topo_sorts(graph)
+                sorted_seq_ind, best_score, best_alignment, aligned_aggregated = self.dp_align(all_sorts, vid_feat)
+                pred_alignments.append(best_alignment)
+            except:
+                print(hypothesis)
+                print(GraphEditDistance.nx_to_string(graph))
+                continue
 
             ent_probs.append(torch.sigmoid(aligned_aggregated))
+            labels.append(label)
 
-        return torch.stack(ent_probs).view(-1)
+        if not train:
+            return torch.stack(ent_probs).view(-1), torch.stack(labels), pred_alignments
+        return torch.stack(ent_probs).view(-1), torch.stack(labels)

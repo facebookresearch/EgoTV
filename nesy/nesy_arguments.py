@@ -7,7 +7,7 @@ def Arguments():
                         help='video sub-sample rate (higher sample rate -> fewer frames)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--weight_decay', type=float, default=1e-5, help='weight decay for Adam optimizer')
-    parser.add_argument('--epochs', type=int, default=40, help='number of epochs of training')
+    parser.add_argument('--epochs', type=int, default=80, help='number of epochs of training')
     parser.add_argument('--num_workers', type=int, default=0, help='workers for dataloaders')
     parser.add_argument('--data_split', type=float, default=0.8, help='train-val split')
     parser.add_argument('--batch_size', type=int, default=2, help='batch size for training, validation, test; '
@@ -22,7 +22,7 @@ def Arguments():
                         help='if True, load pretrained weights for MViT from Kinetics400 mvit model')
     parser.add_argument('--text_feature_extractor', type=str, default='clip', choices=['clip'],
                         help='bert or glove features graph arguments')
-    parser.add_argument('--fp_seg', type=int, default=8, help='frames per segment')
+    parser.add_argument('--fp_seg', type=int, default=26, help='frames per segment')
     # '''<command> --finetune''' to set finetune
     parser.add_argument('--finetune', action='store_true', help='whether to finetune clip model '
                                                                 'in the specific setup')

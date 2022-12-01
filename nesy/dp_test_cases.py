@@ -2,7 +2,7 @@ import os
 import sys
 os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/baselines'
 sys.path.append(os.environ['BASELINES'])
-from proScript.proscript_utils import GraphEditDistance
+from proScript.utils import GraphEditDistance
 from nesy_model import NeSyBase
 import numpy as np
 
@@ -13,11 +13,7 @@ def test_level_grouping():
     """
     ged = GraphEditDistance()
     # Case 1 a potato is cleaned and sliced, then placed in a plate
-    tf_out = ['"Step 1 StateQuery(potato,sliced)";'
-              '"Step 2 StateQuery(potato,clean)";'
-              '"Step 3 RelationQuery(potato,plate,inReceptacle)";'
-              '"Step 1 StateQuery(potato,sliced)" -> "Step 3 RelationQuery(potato,plate,inReceptacle)";'
-              '"Step 2 StateQuery(potato,clean)" -> "Step 3 RelationQuery(potato,plate,inReceptacle)";']
+    tf_out = ['"Step 1 StateQuery(potato,sliced)";']
     graph = ged.pydot_to_nx(tf_out[0])
     num_segments = 5
     # sorted_nodes = NeSyBase.topo_sort(graph)

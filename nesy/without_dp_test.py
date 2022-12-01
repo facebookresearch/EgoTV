@@ -8,7 +8,7 @@ from dataset_utils import *
 from distributed_utils import *
 from feature_extraction import *
 from end2end.violin.rnn import RNNEncoder
-from without_dp_model_v3 import NeSyBase
+from without_dp_model import NeSyBase
 import json
 import math
 import torch
@@ -20,9 +20,9 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
 
-def test_model(val_loader):
+def test_model(test_loader):
     with torch.no_grad():
-        for video_feats, text_feats, segment_labels, ent_labels in tqdm(iterate(val_loader), desc='Validation'):
+        for video_feats, text_feats, segment_labels, ent_labels in tqdm(iterate(test_loader), desc='Test'):
             ent_preds = model(video_feats, text_feats, segment_labels)
             ent_labels = ent_labels.type(torch.int)
             test_metrics.update(preds=ent_preds, target=ent_labels)

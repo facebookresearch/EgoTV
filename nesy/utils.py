@@ -1,3 +1,4 @@
+# calculate mean frames per sub-goal
 import os
 import sys
 sys.path.append(os.environ['DATA_ROOT'])

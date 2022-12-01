@@ -4,10 +4,11 @@ os.environ['DATA_ROOT'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaug
 os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/baselines'
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
-from mvit_tx.mvit import mvit_v2_s
-from proScript.proscript_utils import GraphEditDistance
+from proScript.utils import GraphEditDistance
 from nesy_arguments import Arguments
 from dataset_utils import *
+from feature_extraction import *
+from end2end.violin.rnn import RNNEncoder
 from nesy_model_debug import NeSyBase
 import json
 import math
@@ -17,7 +18,6 @@ from tqdm import tqdm
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import random_split
-from torch.nn.utils.rnn import pad_sequence
 from torchmetrics import MetricCollection, Accuracy, F1Score
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
@@ -27,20 +27,23 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
     if args.finetune:
         visual_model.train()
     train_loss = []
-    for video_feats, graphs, labels in tqdm(iterate(train_loader), desc='Train'):
-        output = model(video_feats, graphs)
-        loss = bce_loss(torch.exp(output), labels)
+    for video_feats, graphs, labels, segment_labs in tqdm(iterate(train_loader), desc='Train'):
+        preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
+        state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs = \
+            check_alignment(pred_alignment, segment_labs, labels)
+        state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
+        relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
+        loss = bce_loss(preds, labels)
         optimizer.zero_grad()
         loss.backward()
-        # model.state_dict(keep_vars=True)
-        # {k: v.grad for k, v in zip(model.state_dict(), model.parameters())}
         optimizer.step()
-        # print('Loss: {}'.format(loss.item()))
         train_loss.append(loss.item())
         labels = labels.type(torch.int)
-        train_metrics.update(preds=output, target=labels)
+        train_metrics.update(preds=preds, target=labels)
 
     acc, f1 = train_metrics['Accuracy'].compute(), train_metrics['F1Score'].compute()
+    state_acc, state_f1 = state_query_metrics['Accuracy'].compute(), state_query_metrics['F1Score'].compute()
+    rel_acc, rel_f1 = relation_query_metrics['Accuracy'].compute(), relation_query_metrics['F1Score'].compute()
     print('Train Loss: {}'.format(np.array(train_loss).mean()))
     # dist.barrier()
     val_acc, val_f1 = validate(model, val_loader=val_loader)
@@ -66,61 +69,75 @@ def validate(model, val_loader):
     visual_model.eval()
     with torch.no_grad():
         for video_feats, graphs, labels in tqdm(iterate(val_loader), desc='Validation'):
-            output = model(video_feats, graphs)
+            preds, labels = model(video_feats, graphs, labels)
             labels = labels.type(torch.int)
-            val_metrics.update(preds=output, target=labels)
+            val_metrics.update(preds=preds, target=labels)
     return val_metrics['Accuracy'].compute(), val_metrics['F1Score'].compute()
 
 
 def iterate(dataloader):
     for data_batch, label_batch in tqdm(dataloader):
-        yield process_batch(data_batch, label_batch)
+        yield process_batch(data_batch, label_batch, frames_per_segment=args.fp_seg)
 
-def process_batch(data_batch, label_batch):
+def process_batch(data_batch, label_batch, frames_per_segment):
     hypotheses = []
     video_features_batch = []  # transforms + visual model features
     labels = []
-    vid_lengths = []
+    segment_labs_batch = []
     for filepath, label in zip(data_batch, label_batch):
-        labels.append(float(label))
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
-        # statistics.mean(Counter([x['high_idx'] for x in traj['images']]).values())
-        video_frames = sample_vid(filepath, args.sample_rate)
-        video_frames = torch.stack(video_frames) # [t, c, h, w]
+        if traj['task_type'] == 'pick_simple':
+            continue
+        #TODO: roi_bb from graph args
+        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
+                                                         [traj['pddl_params']['object_target']],
+                                                         positive=True if label == '1' else False)
+        segment_labs_batch.append(segment_labs)
+        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
+        video_frames, roi_frames = torch.stack(video_frames), torch.stack(roi_frames)  # [t, c, h, w]
         # here b=1 since we are processing one video at a time
-        video_frames = video_frames.unsqueeze(0).permute(0, 2, 1, 3, 4).contiguous()  # [b, c, t, h, w]
-        b, c, t, h , w = video_frames.shape
-        num_segments = math.ceil(t / 16)
-        to_pad = num_segments*16 - t
-        video_frames = torch.cat((video_frames, torch.zeros(b, c, to_pad, h, w)), dim=2)
-        video_frames = video_frames.reshape(b * num_segments, c, 16, h, w)
-        if not args.finetune:
-            with torch.no_grad():
-                video_segments = visual_model(video_frames).reshape(b*num_segments, vid_feat_size)  # [num_segments, 768]
-        else:
-            video_segments = visual_model(video_frames).reshape(b*num_segments, vid_feat_size)  # [num_segments, 768]
-        video_features_batch.append(video_segments)
-        vid_lengths.append(len(video_segments))
+        video_frames = extract_video_features(video_frames, model=visual_model,
+                                              feature_extractor='clip',
+                                              feat_size=vid_feat_size,
+                                              finetune=args.finetune).reshape(1, -1, vid_feat_size)
+        roi_frames = extract_video_features(roi_frames, model=visual_model,
+                                            feature_extractor='clip',
+                                            feat_size=vid_feat_size,
+                                            finetune=args.finetune).reshape(1, -1, vid_feat_size)
+        b, t, _ = video_frames.shape
+        num_segments = math.ceil(t / frames_per_segment)
+        to_pad = num_segments * frames_per_segment - t
+        video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size)), dim=1)
+        roi_frames = torch.cat((roi_frames, torch.zeros(b, to_pad, vid_feat_size)), dim=1)
+        # [num_segments, frames_per_segment, 512]
+        video_frames = video_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
+        roi_frames = roi_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
+
+        # [num_segments, frames_per_segment, k*512]
+        video_frames = torch.cat((video_frames, roi_frames), dim=-1)
+        video_features_batch.append(video_frames)
 
         # process natural language hypothesis using bert
         hypotheses.append(traj['template']['neg']) if label == '0' \
             else hypotheses.append(traj['template']['pos'])
+        labels.append(float(label))
 
     # generate graphs for hypotheses
     with torch.no_grad():
-        # TODO: remove sliced from applesclided etc in hypotheses
         # print(hypotheses)
-        inputs_tokenized = tokenizer(hypotheses, return_tensors="pt", padding=True)
+        # hypotheses[0] = 'mug is cleaned in a SinkBasin and heated, then placed in a shelf'
+        inputs_tokenized = tokenizer(hypotheses, return_tensors="pt",
+                                     padding="longest",
+                                     max_length=max_source_length,
+                                     truncation=True)
         graphs_batch = t5_model.generate(inputs_tokenized["input_ids"],
                                           attention_mask=inputs_tokenized["attention_mask"],
                                           max_length=max_target_length,
                                           do_sample=False)  # greedy generation
         graphs_batch = tokenizer.batch_decode(graphs_batch, skip_special_tokens=True)
-        graphs_batch = [ged.pydot_to_nx(graph_str) for graph_str in graphs_batch]
-    # pad_sequence(video_frames_batch) -> [batch_size, max_seq_len, embed_dim]
-    video_features_batch = (pad_sequence(video_features_batch).permute(1, 0, 2).contiguous(), torch.tensor(vid_lengths))
-    # video_features_batch = (video_features_batch, torch.tensor(vid_lengths))
-    return video_features_batch, graphs_batch, torch.tensor(labels)
+        graphs_batch = ([ged.pydot_to_nx(graph_str) for graph_str in graphs_batch], hypotheses)
+
+    return video_features_batch, graphs_batch, torch.tensor(labels), segment_labs_batch
 
 
 if __name__ == '__main__':
@@ -152,10 +169,10 @@ if __name__ == '__main__':
                                           num_workers=args.num_workers, shuffle=False, pin_memory=True)
 
     # text module to generate graph
-    max_source_length = 50
-    max_target_length = 150
+    max_source_length = 80
+    max_target_length = 300
     proscript_model_ckpt_path = os.path.join(os.environ['BASELINES'],
-                                             'proScript/proscript_best_1.json')
+                                             'proScript/proscript_best_2.json')
     t5_model = T5ForConditionalGeneration.from_pretrained(proscript_model_ckpt_path)
     # t5_model.cuda()
     # t5_model = DDP(t5_model, device_ids=[local_rank])
@@ -163,18 +180,17 @@ if __name__ == '__main__':
     # transformers use layer norm (and not batch norm) which is local -- no need to sync across all instances
     tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
-    vid_feat_size = 768
-    weights = 'KINETICS400_V1' if args.pretrained_mvit else None
-    visual_model = mvit_v2_s(weights=weights)
-    # visual_model.cuda()
-    # visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
-    # visual_model = DDP(visual_model, device_ids=[local_rank])
+    visual_model, vid_feat_size = initiate_visual_module(feature_extractor='clip')
     if not args.finetune:
         visual_model.eval()
     else:
-        visual_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('mvit'))
+        visual_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('clip'))
 
-    model = NeSyBase(text_feature_extractor=args.text_feature_extractor)
+    _, _, text_feat_size = initiate_text_module(feature_extractor='clip')
+    text_model = visual_model  # for clip model
+
+    hsize = 150
+    model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
     all_params = list(model.parameters())
     if args.finetune:
         all_params += list(visual_model.parameters())
@@ -184,6 +200,8 @@ if __name__ == '__main__':
                                 F1Score(threshold=0.5, dist_sync_on_step=True)])
     train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
+    state_query_metrics = metrics.clone(prefix='state_query_')
+    relation_query_metrics = metrics.clone(prefix='relation_query_')
 
     best_acc = 0.
     for epoch in range(1, args.epochs+1):
@@ -193,6 +211,8 @@ if __name__ == '__main__':
         best_acc = train_epoch(model, train_loader, val_loader, epoch=epoch, previous_best_acc=best_acc)
         train_metrics.reset()
         val_metrics.reset()
+        state_query_metrics.reset()
+        relation_query_metrics.reset()
     # cleanup()
     log_file.close()
     print('Done!')
