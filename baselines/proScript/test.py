@@ -63,7 +63,7 @@ if __name__ == "__main__":
     dist.barrier()
 
     args = Arguments()
-    ckpt_file = 'proscript_best_{}_{}.json'.format(str(args.run_id), args.output_type)
+    ckpt_file = 'proscript_best_{}_{}.json'.format(args.output_type, str(args.run_id))
     proscript_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
     test_filename = "proscript_test_{}.tsv".format(args.test_split)
     logger_filename = "proScript_log_{}.txt".format(args.run_id)
