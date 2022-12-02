@@ -1,0 +1,5 @@
+Namespace(lr=0.0001, weight_decay=1e-05, epochs=20, num_workers=4, data_split=0.9, batch_size=8, preprocess=True, local_rank=5, run_id=1, test_split='sub_goal_composition')
+Epoch: 5 | Train Loss: 0.10616291098688778 | Val GED: 0.2500000596046448
+Epoch: 10 | Train Loss: 0.02773746590767252 | Val GED: 0.053308822214603424
+Epoch: 15 | Train Loss: 0.0118117651742834 | Val GED: 0.012867647223174572
+Epoch: 20 | Train Loss: 0.006133768722831614 | Val GED: 0.011029412038624287

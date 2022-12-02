@@ -1,4 +1,4 @@
-from predicate import Predicate
+from proScript.predicate import Predicate
 
 StateQuery = Predicate("StateQuery", 2)
 RelationQuery = Predicate("RelationQuery", 3)

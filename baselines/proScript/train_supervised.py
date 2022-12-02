@@ -1,15 +1,15 @@
 # SUPERVISED TRAINING
 import os
 import sys
+
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from proScript.process_dataset import proScript_process
 from proScript.proscript_args import Arguments
-from proScript.proscript_utils import GraphEditDistance
+from proScript.utils import GraphEditDistance
 from distributed_utils import *
 from torchmetrics import MetricCollection
 import csv
-import random
 from tqdm import tqdm
 import numpy as np
 import torch
@@ -89,9 +89,6 @@ def test():  # validation
                                                   do_sample=False)  # greedy generation
             output_pred = tokenizer.batch_decode(output_gen, skip_special_tokens=True)
             val_metrics.update(pred=output_pred, target=outputs)
-            # output_ids = tokenizer(outputs)
-            ind = random.randint(0, len(inputs) - 1)
-            # print('input: {} \n pred: {} \n true: {}'.format(inputs[ind], output_pred[ind], outputs[ind]))
     return val_metrics['GraphEditDistance'].compute()
 
 
@@ -115,7 +112,6 @@ if __name__ == "__main__":
     ckpt_file = 'proscript_best_{}.json'.format(str(args.run_id))
     proscript_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
     data_filename = "proscript_data.tsv"
-    test_filename = "proscript_test_{}.tsv".format(args.test_split)
     logger_filename = "proScript_log_{}.txt".format(args.run_id)
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
@@ -129,30 +125,22 @@ if __name__ == "__main__":
             max_source_length, max_target_length = \
                 proScript_process(dir=train_data_path, data_filename=data_filename)
             print('\nmax_source_length: {} | max_target_length: {}\n'.format(max_source_length, max_target_length))
-        if not os.path.isfile(test_filename):
-            print("\n========= Processing Test Dataset {} ========\n".format(args.test_split))
-            proScript_process(dir=test_data_path, data_filename=test_filename)
     # fixed based on train data
     max_source_length = 80
-    max_target_length = 250
+    max_target_length = 300
 
     dataset = CustomDataset(data_path='', data_filename=data_filename)
-    test_dataset = CustomDataset(data_path='', data_filename=test_filename)
     train_size = int(args.data_split * len(dataset))
     val_size = len(dataset) - train_size
     train_set, val_set = random_split(dataset, [train_size, val_size])
     print("Length of Train Dataset: {}".format(len(train_set)))  # 5363 samples (only positive entailed text)
     print("Length of Val Dataset: {}".format(len(val_set)))
-    print("Length of Test Dataset: {}\n".format(len(test_dataset)))
-    train_sampler, val_sampler, test_sampler = DistributedSampler(dataset=train_set, shuffle=True), \
-                                               DistributedSampler(dataset=val_set, shuffle=True), \
-                                               DistributedSampler(dataset=test_dataset, shuffle=True)
-    train_loader, val_loader, _ = DataLoader(train_set, batch_size=args.batch_size, sampler=train_sampler,
-                                             num_workers=args.num_workers, pin_memory=True), \
-                                  DataLoader(val_set, batch_size=args.batch_size, sampler=val_sampler,
-                                             num_workers=args.num_workers, shuffle=False, pin_memory=True), \
-                                  DataLoader(test_dataset, batch_size=args.batch_size, sampler=test_sampler,
-                                             num_workers=args.num_workers, shuffle=False, pin_memory=True)
+    train_sampler, val_sampler = DistributedSampler(dataset=train_set, shuffle=True), \
+                                 DistributedSampler(dataset=val_set, shuffle=True)
+    train_loader, val_loader = DataLoader(train_set, batch_size=args.batch_size, sampler=train_sampler,
+                                          num_workers=args.num_workers, pin_memory=True), \
+                               DataLoader(val_set, batch_size=args.batch_size, sampler=val_sampler,
+                                          num_workers=args.num_workers, shuffle=False, pin_memory=True)
 
     t5_model = T5ForConditionalGeneration.from_pretrained("t5-small").cuda()
     t5_model = DDP(t5_model, device_ids=[local_rank])
@@ -161,16 +149,12 @@ if __name__ == "__main__":
 
     optimizer = optim.AdamW(t5_model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     metrics = MetricCollection([GraphEditDistance(dist_sync_on_step=True)]).cuda()
-    # train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
-    # test_metrics = metrics.clone(prefix='test_')
     best_ged = sys.maxsize
     for epoch in range(1, args.epochs + 1):
         train_loader.sampler.set_epoch(epoch)
         val_loader.sampler.set_epoch(epoch)
-        # test_loader.sampler.set_epoch(epoch)
         best_ged = train_epoch(previous_best_ged=best_ged)
-        # train_metrics.reset()
         val_metrics.reset()
     cleanup()
     log_file.close()

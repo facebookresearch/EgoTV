@@ -66,7 +66,7 @@ graph_edit_distance(G1=g1, G2=g2)
 # g2 = 'digraph graph {"Step 1 heat apple";"Step 2 slice apple";"Step 1 heat apple" -> "Step 2 slice apple";}'
 # i3 = 'apple is picked, heated, then sliced'
 # g3 = 'digraph graph {"Step 1 heat apple";"Step 2 slice apple";"Step 1 heat apple" -> "Step 2 slice apple";}'
-#
+
 # i1 = 'a sliced tomato'
 # g1 = 'Step 1 slice tomato'
 # i2 = 'apple is cooled in a Fridge'

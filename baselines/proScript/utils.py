@@ -64,6 +64,11 @@ class GraphEditDistance(Metric):
         # adjacency matrix from networkx graph
         return nx.to_numpy_array(nx_graph)
 
+    @staticmethod
+    def nx_to_string(nx_graph):
+        # generate string from a networkx graph
+        return nx.nx_pydot.to_pydot(nx_graph).to_string()
+
     def graph_edit_distance(self, G1, G2):
         G1 = self.pydot_to_nx(G1)
         G2 = self.pydot_to_nx(G2)
@@ -83,10 +88,14 @@ class GraphEditDistance(Metric):
             return [-1. if x != y else 0. for (x, y) in zip(self.preds, self.targets)]
         else:
             for pred, target in zip(self.preds, self.targets):
-                self.dist += self.graph_edit_distance(pred, target) / self.total
+                try:
+                    self.dist += self.graph_edit_distance(pred, target) / self.total
+                except TypeError:
+                    breakpoint()
+                    # print(self.nx_to_string(self.pydot_to_nx(pred)), self.nx_to_string(self.pydot_to_nx(target)))
         return self.dist
 
 
 def pred_args_map():
-    return {'heat': 'hot', 'cool': 'cold', 'slice': 'sliced',
-            'clean': 'clean', 'place': 'inReceptacle', 'pick': 'holds'}
+    return {'heat': 'heat', 'cool': 'cool', 'slice': 'slice',
+            'clean': 'clean', 'place': 'place', 'pick': 'pick'}

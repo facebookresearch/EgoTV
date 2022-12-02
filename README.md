@@ -11,7 +11,7 @@ $ cd $GENERATE_DATA
 
 ### Install all requirements
 ```
-$ conda create -n <virtual_env> python
+$ conda create -n <virtual_env> python==3.10.0
 $ source activate <virtual_env>
 $ bash install_requirements.sh
 ```
@@ -120,16 +120,43 @@ $ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_
 # for attention-based models, specify "--attention" in the previous step
 
 # test (split_type = {"sub_goal_composition", "verb_noun_composition", "context_verb_noun_composition", "context_goal_composition", "abstraction"})
-$ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_node=$NGPUS test_baseline.py --num_workers $NWorkers --split_type <split_type> --batch_size 128 --sample_rate 3 --run_id $run_id --text_feature_extractor <"bert/glove"> --visual_feature_extractor <"i3d/resnet">
+$ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_node=$NGPUS test_baseline.py --num_workers $NWorkers --split_type <split_type> --batch_size 128 --sample_rate 3 --run_id $run_id --text_feature_extractor <"bert/glove/clip"> --visual_feature_extractor <"i3d/resnet/mvit/clip">
 # if data split not preprocessed, specify "--preprocess" in the previous step
 # for attention-based models, specify "--attention" in the previous step
 ```
 
 Note: to run the I3D model, you must download the pretrained model (rgb_imagenet.pt) from this repository: 
 [https://github.com/piergiaj/pytorch-i3d/tree/master/models](https://github.com/piergiaj/pytorch-i3d/tree/master/models)
+```
+$ mkdir $BASELINES/i3d/models
+$ wget -P $BASELINES/i3d/models "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_imagenet.pt" "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_charades.pt"
+```
 
 Alternatively, modify and run from root
 ```
 $ ./run_train.sh
 # ./run_test.sh
+```
+
+### Run proScript
+```
+$ source activate alfred_env
+$ export DATA_ROOT=<path to dataset>
+$ export BASELINES=$(pwd)/VisionLangaugeGrounding/baselines
+$ cd $BASELINES/proScript
+
+# train
+$ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 train_supervised.py --num_workers 4 --batch_size 32 --preprocess --test_split <> --run_id <> --epochs 20
+# test
+$ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 test.py --num_workers 4 --batch_size 32 --preprocess --test_split <> --run_id <>
+```
+
+### Ablations
+```
+$ source activate alfred_env
+$ export DATA_ROOT=/fb-agios-acai-efs/dataset
+$ export BASELINES=$(pwd)/VisionLangaugeGrounding/baselines
+$ export CKPTS=/fb-agios-acai-efs/rishi/best_model_ckpts
+$ cd VisionLangaugeGrounding/ablations
+$ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 complexity_ordering.py --num_workers 0 --split_type --batch_size 16 --sample_rate 3 --visual_feature_extractor 'mvit' --text_feature_extractor 'bert' --run_id 1
 ```
