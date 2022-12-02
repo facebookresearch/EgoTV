@@ -20,7 +20,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 def test_model(test_loader):  # validation
     with torch.no_grad():
-        for inputs, _, outputs in tqdm(test_loader, desc='Test'):
+        for inputs, outputs_nl, outputs_dsl in tqdm(test_loader, desc='Test'):
             inputs_tokenized = tokenizer(inputs, return_tensors="pt",
                                          padding="longest",
                                          max_length=max_source_length,
@@ -31,16 +31,19 @@ def test_model(test_loader):  # validation
                                                   max_length=max_target_length,
                                                   do_sample=False)  # greedy generation
             output_pred = tokenizer.batch_decode(output_gen, skip_special_tokens=True)
-            test_metrics.update(pred=output_pred, target=outputs)
+            if args.output_type == 'nl':
+                test_metrics.update(pred=output_pred, target=outputs_nl)
+            elif args.output_type == 'dsl':
+                test_metrics.update(pred=output_pred, target=outputs_dsl)
             # output_ids = tokenizer(outputs)
             # print('input: {} \n pred: {} \n true: {}'.format(inputs[ind], output_pred[ind], outputs[ind]))
-    dist.barrier()
-    test_ged = test_metrics['GraphEditDistance'].compute()
-    dist.barrier()
-    if is_main_process():
-        print('Test GED: {}'.format(test_ged))
-        log_file.write('Test GED: ' + str(test_ged.item()) + "\n")
-        log_file.flush()
+        dist.barrier()
+        test_ged = test_metrics['GraphEditDistance'].compute()
+        dist.barrier()
+        if is_main_process():
+            print('Test GED: {}'.format(test_ged))
+            log_file.write('Test GED: ' + str(test_ged.item()) + "\n")
+            log_file.flush()
 
 
 if __name__ == "__main__":

@@ -16,4 +16,6 @@ def Arguments():
     parser.add_argument('--run_id', type=int, default=5, required=True, help='run_id of the model run')
     parser.add_argument('--test_split', type=str, default='sub_goal_composition', required=True,
                         help='test split graph generation')
+    parser.add_argument('--output_type', type=str, default='dsl', choices=['nl','dsl'],
+                        help='output string in natural language or domain specific language')
     return parser.parse_args()

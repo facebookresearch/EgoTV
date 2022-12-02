@@ -37,18 +37,25 @@ class CustomDataset(Dataset):
 def train_epoch(previous_best_ged):
     t5_model.train()
     train_loss = []
-    for inputs, _, outputs in tqdm(train_loader, desc='Train'):
+    for inputs, outputs_nl, outputs_dsl in tqdm(train_loader, desc='Train'):
         input_encoding = tokenizer(inputs,
                                    padding="longest",
                                    max_length=max_source_length,
                                    truncation=True,
                                    return_tensors="pt")
         input_ids, attention_mask = input_encoding.input_ids, input_encoding.attention_mask
-        output_encodings = tokenizer(outputs,
-                                     padding="longest",
-                                     max_length=max_target_length,
-                                     truncation=True,
-                                     return_tensors="pt")
+        if args.output_type == 'nl':
+            output_encodings = tokenizer(outputs_nl,
+                                         padding="longest",
+                                         max_length=max_target_length,
+                                         truncation=True,
+                                         return_tensors="pt")
+        elif args.output_type == 'dsl':
+            output_encodings = tokenizer(outputs_dsl,
+                                         padding="longest",
+                                         max_length=max_target_length,
+                                         truncation=True,
+                                         return_tensors="pt")
         labels = output_encodings.input_ids
         labels[labels == tokenizer.pad_token_id] = -100
         loss = t5_model(input_ids=input_ids.cuda(), attention_mask=attention_mask.cuda(), labels=labels.cuda()).loss
@@ -77,7 +84,7 @@ def train_epoch(previous_best_ged):
 def test():  # validation
     t5_model.eval()
     with torch.no_grad():
-        for inputs, _, outputs in tqdm(val_loader, desc='Validation'):
+        for inputs, outputs_nl, outputs_dsl in tqdm(val_loader, desc='Validation'):
             inputs_tokenized = tokenizer(inputs, return_tensors="pt",
                                          padding="longest",
                                          max_length=max_source_length,
@@ -88,7 +95,10 @@ def test():  # validation
                                                   max_length=max_target_length,
                                                   do_sample=False)  # greedy generation
             output_pred = tokenizer.batch_decode(output_gen, skip_special_tokens=True)
-            val_metrics.update(pred=output_pred, target=outputs)
+            if args.output_type == 'nl':
+                val_metrics.update(pred=output_pred, target=outputs_nl)
+            elif args.output_type == 'dsl':
+                val_metrics.update(pred=output_pred, target=outputs_dsl)
     return val_metrics['GraphEditDistance'].compute()
 
 
