@@ -24,13 +24,13 @@ def test_model(test_loader):
             output = model(video_feats, text_feats)
             labels = labels.type(torch.int).cuda()
             test_metrics.update(preds=output, target=labels)
-    dist.barrier()
-    test_acc, test_f1 = test_metrics['Accuracy'].compute(), test_metrics['F1Score'].compute()
-    dist.barrier()
-    if is_main_process():
-        print('Test Acc: {} | Test F1: {}'.format(test_acc, test_f1))
-        log_file.write('Test Acc: ' + str(test_acc.item()) + ' | Test F1: ' + str(test_f1.item()) + "\n")
-        log_file.flush()
+        dist.barrier()
+        test_acc, test_f1 = test_metrics['Accuracy'].compute(), test_metrics['F1Score'].compute()
+        dist.barrier()
+        if is_main_process():
+            print('Test Acc: {} | Test F1: {}'.format(test_acc, test_f1))
+            log_file.write('Test Acc: ' + str(test_acc.item()) + ' | Test F1: ' + str(test_f1.item()) + "\n")
+            log_file.flush()
 
 
 def iterate(dataloader):

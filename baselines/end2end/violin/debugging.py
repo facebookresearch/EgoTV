@@ -100,7 +100,6 @@ def process_batch(data_batch, label_batch):
             # vid_lengths.append(len(video_frames))
             if not args.finetune:
                 with torch.no_grad():
-                    #mrcnn_model([video_frames[0]])
                     video_segments = visual_model(video_frames).view(-1, vid_feat_size)
             else:
                 video_segments = visual_model(video_frames).view(-1, vid_feat_size)

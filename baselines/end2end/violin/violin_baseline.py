@@ -136,14 +136,14 @@ if __name__ == '__main__':
         path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
     else:
         path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
-    ckpt_file = 'violin_{}_{}_{}_best_{}.pth'.format(args.visual_feature_extractor,
+    ckpt_file = 'violin_{}_{}{}_best_{}.pth'.format(args.visual_feature_extractor,
                                                      args.text_feature_extractor,
-                                                     'attention' if args.attention else '',
+                                                     '_attention' if args.attention else '',
                                                      str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'violin_{}_{}_{}_log_{}.txt'.format(args.visual_feature_extractor,
+    logger_filename = 'violin_{}_{}{}_log_{}.txt'.format(args.visual_feature_extractor,
                                                           args.text_feature_extractor,
-                                                          'attention' if args.attention else '',
+                                                          '_attention' if args.attention else '',
                                                           str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
