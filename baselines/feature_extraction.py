@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 from i3d.pytorch_i3d import InceptionI3d
+import clip
 from mvit_tx.mvit import mvit_v2_s
 from torchvision.models import resnet18 as resnet
 from transformers import DistilBertModel, DistilBertTokenizer
@@ -22,7 +23,7 @@ def initiate_visual_module(feature_extractor, pretrained_mvit=True):
     elif feature_extractor == 'i3d':
         # i3d model
         vid_feat_size = 1024
-        kinetics_pretrained = 'i3d/rgb_imagenet.pt'
+        kinetics_pretrained = 'i3d/models/rgb_imagenet.pt'
         visual_model = InceptionI3d(400, in_channels=3)
         visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
         visual_model.replace_logits(157)
@@ -31,6 +32,9 @@ def initiate_visual_module(feature_extractor, pretrained_mvit=True):
         vid_feat_size = 768
         weights = 'KINETICS400_V1' if pretrained_mvit else None
         visual_model = mvit_v2_s(weights=weights)
+    elif feature_extractor == 'clip':
+        vid_feat_size = 512
+        visual_model, _ = clip.load("ViT-B/32")
     else:
         raise NotImplementedError
     return visual_model, vid_feat_size
@@ -48,16 +52,18 @@ def initiate_text_module(feature_extractor):
         embed_size = 300
         tokenizer = get_tokenizer("basic_english")
         text_model = GloVe(name='840B', dim=embed_size)
+    elif feature_extractor == 'clip':
+        embed_size = 512
+        text_model, _ = clip.load("ViT-B/32")
+        tokenizer = get_tokenizer("basic_english")
     else:
         raise NotImplementedError
     return text_model, tokenizer, embed_size
 
 
 def extract_video_features(video_frames, model, feature_extractor, feat_size, finetune=False, test=False):
-    # video_features_batch = []  # transforms + visual model features
-    # vid_lengths = []
     if feature_extractor == 'resnet':
-        # vid_lengths.append(len(video_frames))
+        # [B=num_frames, C=3, H=224, W=224]
         if not finetune or test:
             with torch.no_grad():
                 video_feats = model(video_frames).view(-1, feat_size)  # [t, 512]
@@ -72,9 +78,6 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
         else:
             video_feats = model.module.extract_features(
                 video_frames).view(-1, feat_size)
-
-        # video_features_batch.append(video_segments)
-        # vid_lengths.append(len(video_segments))
     elif feature_extractor == 'mvit':
         # here b=1 since we are processing one video at a time
         video_frames = video_frames.unsqueeze(0).permute(0, 2, 1, 3, 4).contiguous()  # [b, c, t, h, w]
@@ -88,24 +91,78 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
                 video_feats = model(video_frames).reshape(b * num_segments, feat_size)  # [num_segments, 768]
         else:
             video_feats = model(video_frames).reshape(b * num_segments, feat_size)  # [num_segments, 768]
-        # video_features_batch.append(video_segments)
-        # vid_lengths.append(len(video_segments))
-
-    # pad_sequence(video_frames_batch) -> [batch_size, max_seq_len, embed_dim]
-    # video_features_batch = (pad_sequence(video_features_batch).permute(1, 0, 2).contiguous(),
-    #                         torch.tensor(vid_lengths).cuda())
+    elif feature_extractor == 'clip':
+        video_frames = video_frames.unsqueeze(0)  # [b, t, c, h, w]
+        # video_frames = video_frames.half()  # half precision
+        video_frames = torch.flatten(video_frames, start_dim=0, end_dim=1)
+        if not finetune or test:
+            with torch.no_grad():  # [t, 1024]
+                video_feats = model.visual(video_frames).view(-1, feat_size)
+        else:
+            video_feats = model.visual(video_frames).view(-1, feat_size)
     return video_feats
 
 
 def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
     with torch.no_grad():
         # last_hidden_state: [batch_size, max_seq_len, embed_dim]
-        tokenizer_out = tokenize_and_pad(hypotheses, tokenizer, feature_extractor)
         if feature_extractor == 'bert':
+            tokenizer_out = tokenize_and_pad(hypotheses, tokenizer, feature_extractor)
             text_feats = (model(**dictfilt(tokenizer_out.data, ("input_ids", "attention_mask"))).last_hidden_state,
                           tokenizer_out.data['length'])
         elif feature_extractor == 'glove':
+            tokenizer_out = tokenize_and_pad(hypotheses, tokenizer, feature_extractor)
             text_feats = (pad_sequence([model.get_vecs_by_tokens(x).cuda()
                                         for x in tokenizer_out]).permute(1, 0, 2),
                           torch.tensor([len(x) for x in tokenizer_out]).cuda())
+        # elif feature_extractor == 'clip':
+        #     tokenizer_out = clip.tokenize(hypotheses, truncate=True).cuda()
+        #     text_feats = model.module.token_embedding(tokenizer_out).type(
+        #         model.module.dtype)  # [batch_size, n_ctx, dim]
+        #     text_feats = text_feats + model.module.positional_embedding.type(model.module.dtype)
+        #     text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
+        #     text_feats = model.module.transformer(text_feats)
+        #     text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
+        #     text_feats = model.module.ln_final(text_feats).type(model.module.dtype)
+        #     text_feats = text_feats @ model.module.text_projection
+        #     batch_size, _, dim = text_feats.shape
+        #     prev_n_tokens = 20  # data['text'].shape[1]
+        #
+        #     tokenizer_out = tokenizer_out[:, 1:]  # first token is a token of beginning of the sentence
+        #     text_feats = text_feats[:, 1:]  # first token is a token of beginning of the sentence
+        #
+        #     new_text = text_feats[:, :prev_n_tokens]  # 20 is max?
+        #     new_text_length = torch.zeros(batch_size).cuda()
+        #     for i in range(len(tokenizer_out)):
+        #         # take features from the eot embedding (eot_token is the highest number in each sequence)
+        #         n_eot = tokenizer_out[i].argmax().item()
+        #         new_text_length[i] = min(n_eot, prev_n_tokens)
+        #     # tuple: ([b, max_tokens, dim], [b])
+        #     text_feats = (new_text.float(),
+        #                   new_text_length)
+        elif feature_extractor == 'clip':
+            tokenizer_out = clip.tokenize(hypotheses, truncate=True)
+            text_feats = model.token_embedding(tokenizer_out).type(
+                model.dtype)  # [batch_size, n_ctx, dim]
+            text_feats = text_feats + model.positional_embedding.type(model.dtype)
+            text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
+            text_feats = model.transformer(text_feats)
+            text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
+            text_feats = model.ln_final(text_feats).type(model.dtype)
+            text_feats = text_feats @ model.text_projection
+            batch_size, _, dim = text_feats.shape
+            prev_n_tokens = 20  # data['text'].shape[1]
+
+            tokenizer_out = tokenizer_out[:, 1:]  # first token is a token of beginning of the sentence
+            text_feats = text_feats[:, 1:]  # first token is a token of beginning of the sentence
+
+            new_text = text_feats[:, :prev_n_tokens]  # 20 is max?
+            new_text_length = torch.zeros(batch_size)
+            for i in range(len(tokenizer_out)):
+                # take features from the eot embedding (eot_token is the highest number in each sequence)
+                n_eot = tokenizer_out[i].argmax().item()
+                new_text_length[i] = min(n_eot, prev_n_tokens)
+            # tuple: ([b, max_tokens, dim], [b])
+            text_feats = (new_text.float(),
+                          new_text_length)
     return text_feats

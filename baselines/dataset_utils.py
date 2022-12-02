@@ -269,21 +269,24 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
     relation_pred_labs, relation_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
     ind = 0
     for pred, true in zip(pred_alignment, segment_labels):
-        if ent_labels[ind].item() == 1:
-            for step in pred:
-                pred_action, query, segment_ind = translate(step)
-                if query == 'StateQuery':
-                    state_pred_labs.append(torch.tensor(1.))
-                    if true[segment_ind] == pred_action:
-                            state_true_labs.append(torch.tensor(1))
-                    else:
-                        state_true_labs.append(torch.tensor(0))
-                else:  # query == 'RelationQuery'
-                    relation_pred_labs.append(torch.tensor(1))
-                    if true[segment_ind] == pred_action:
-                            relation_true_labs.append(torch.tensor(1))
-                    else:
-                        relation_true_labs.append(torch.tensor(0))
+        try:
+            if ent_labels[ind].item() == 1:
+                for step in pred:
+                    pred_action, query, segment_ind = translate(step)
+                    if query == 'StateQuery':
+                        state_pred_labs.append(torch.tensor(1.))
+                        if true[segment_ind] == pred_action:
+                                state_true_labs.append(torch.tensor(1))
+                        else:
+                            state_true_labs.append(torch.tensor(0))
+                    else:  # query == 'RelationQuery'
+                        relation_pred_labs.append(torch.tensor(1))
+                        if true[segment_ind] == pred_action:
+                                relation_true_labs.append(torch.tensor(1))
+                        else:
+                            relation_true_labs.append(torch.tensor(0))
+        except KeyError:
+            continue
         ind += 1
     return torch.stack(state_pred_labs), torch.stack(state_true_labs), \
            torch.stack(relation_pred_labs), torch.stack(relation_true_labs)
