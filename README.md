@@ -150,6 +150,8 @@ $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --npro
 # test
 $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 test.py --num_workers 4 --batch_size 32 --preprocess --test_split <> --run_id <>
 ```
+<--output_type 'nl'> for natural language graph output; 
+<--output_type 'dsl'> for domain-specific language graph output (default: dsl)
 
 ### Ablations
 ```
