@@ -1,4 +1,4 @@
-# Vision Language Grounding
+# Task Tracking and Grounding
 
 ## To set-up the AI2-THOR environment
 
@@ -44,7 +44,7 @@ Here, split_type can be one of the following ["train", "sub_goal_composition", "
                                  "context_goal_composition", "context_verb_noun_composition", "abstraction"]
 
 ### Generate Layouts
-If you want to generate new layouts (aside from the generated layouts in alfred/gen/layouts/),
+If you want to generate new layouts (aside from the generated layouts in [alfred/gen/layouts](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/alfred/gen/layouts)),
 
 ```
 $ cd $GENERATE_DATA/gen
@@ -53,9 +53,9 @@ $ python layouts/precompute_layout_locations.py
 
 ### Define new goals and generate data corresponding to those goals
 
-* Define the goal conditions in alfred/gen/goal_library.py
-* Add the list of goals in alfred/gen/constants.py
-* Add the goal_variables in alfred/gen/scripts/generate_trajectories.py
+* Define the goal conditions in [alfred/gen/goal_library.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/goal_library.py)
+* Add the list of goals in [alfred/gen/constants.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/constants.py)
+* Add the goal_variables in [alfred/gen/scripts/generate_trajectories.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/scripts/generate_trajectories.py)
 * Run the following commands:
 ```
 $ cd $GENERATE_DATA/gen
@@ -86,10 +86,55 @@ dataset/
 |   │           └── video.mp4
 ```
 
+Test Splits: [$GENERATE_DATA/gen/scripts/generate_trajectories.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/scripts/generate_trajectories.py)
+
+Note no split (train or test) have overlapping examples.
+
+#### [Scenes: 1-25]
+1. sub-goal composition
+    * all tasks not in train
+
+2. verb-noun composition: 
+    * heat(egg)
+    * clean(plate)
+    * slice(lettuce)
+    * place(in, shelf)
+    
+3. context-verb-noun composition: 
+    * heat(tomato) in scenes 1-5
+    * cool(cup) in scenes 6-10
+    * place(in, coutertop) in scenes 11-15
+    * slice(potato) in scenes 16-20
+    * clean(knife, fork, spoon) in scenes 21-25
+
+4. abstraction
+    * all train tasks with highly abstracted hypothesis ([$GENERATE_DATA/gen/goal_library_abstraction.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/goal_library_abstraction.py))
+    * for the rest of the splits ([$GENERATE_DATA/gen/goal_library.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/goal_library.py))
+    
+#### [Scenes: 26-30]
+5. context-goal composition: 
+    * all train tasks in scenes in 26-30
+
+
 View of traj_data.json
 ```
 
 ```
+
+## Dataset Stats 
+For details: [ablations/data_analysis.ipynb](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/ablations/data_analysis.ipynb)
+
+* Total hours: 852 hours
+* Train: 563 hours
+* Test: 289 h
+* Average video-length > 6 min
+* Tasks: 82
+* Objects: 32 (with visual variations)
+* Receptacles: 13 (excluding movable receptacles)
+* High-level Actions: 7 (GotoLocation, PickupObject, PutObject, SliceObject, CleanObject, HeatObject, CoolObject)
+* Low-level Actions: 12 (LookUp, LookDown, MoveAhead, RotateRight, RotateLeft, OpenObject, CloseObject, ToggleObjectOn, ToggleObjectOff, SliceObject, PickupObject, PutObject)
+* Scenes: 30 (Kitchens)
+
 
 ## Baselines
 
@@ -154,6 +199,7 @@ $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --npro
 <--output_type 'dsl'> for domain-specific language graph output (default: dsl)
 
 ### Ablations
+[/ablations/](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/ablations)
 ```
 $ source activate alfred_env
 $ export DATA_ROOT=/fb-agios-acai-efs/dataset
@@ -162,3 +208,22 @@ $ export CKPTS=/fb-agios-acai-efs/rishi/best_model_ckpts
 $ cd VisionLangaugeGrounding/ablations
 $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 complexity_ordering.py --num_workers 0 --split_type --batch_size 16 --sample_rate 3 --visual_feature_extractor 'mvit' --text_feature_extractor 'bert' --run_id 1
 ```
+
+## References
+[1] Jingzhou Liu, Wenhu Chen, Yu Cheng, Zhe Gan, Licheng Yu, Yiming Yang, Jingjing Liu ["VIOLIN: A Large-Scale Dataset for Video-and-Language Inference"](https://openaccess.thecvf.com/content_CVPR_2020/papers/Liu_Violin_A_Large-Scale_Dataset_for_Video-and-Language_Inference_CVPR_2020_paper.pdf). In CVPR 2020 
+
+[2] Eric Kolve, Roozbeh Mottaghi, Winson Han, Eli VanderBilt, Luca Weihs, Alvaro Herrasti, Matt Deitke, Kiana Ehsani, Daniel Gordon, Yuke Zhu, Aniruddha Kembhavi, Abhinav Gupta, Ali Farhadi ["AI2-THOR: An Interactive 3D Environment for Visual AI"](https://arxiv.org/pdf/1712.05474.pdf)
+
+[3] Mohit Shridhar,	Jesse Thomason,	Daniel Gordon,	Yonatan Bisk, Winson Han, Roozbeh Mottaghi,	Luke Zettlemoyer, Dieter Fox ["ALFRED: A Benchmark for Interpreting Grounded Instructions for Everyday Tasks"](https://arxiv.org/abs/1912.01734) In CVPR 2020
+
+[4] Joao Carreira, Andrew Zisserman ["Quo Vadis, Action Recognition? A New Model and the Kinetics Dataset"](https://openaccess.thecvf.com/content_cvpr_2017/papers/Carreira_Quo_Vadis_Action_CVPR_2017_paper.pdf) In CVPR 2017
+
+[5] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, Ilya Sutskever ["Learning Transferable Visual Models From Natural Language Supervision"](http://proceedings.mlr.press/v139/radford21a/radford21a.pdf) In ICML 2021
+
+[6] Haoqi Fan, Bo Xiong, Karttikeya Mangalam, Yanghao Li, Zhicheng Yan, Jitendra Malik, Christoph Feichtenhofer ["Multiscale Vision Transformers"](https://openaccess.thecvf.com/content/ICCV2021/papers/Fan_Multiscale_Vision_Transformers_ICCV_2021_paper.pdf) In ICCV 2021
+
+[7] Saining Xie, Chen Sun, Jonathan Huang, Zhuowen Tu, Kevin Murphy ["Rethinking Spatiotemporal Feature Learning: Speed-Accuracy Trade-offs in Video Classification"](https://openaccess.thecvf.com/content_ECCV_2018/papers/Saining_Xie_Rethinking_Spatiotemporal_Feature_ECCV_2018_paper.pdf) In ECCV 2018
+
+[8] Keisuke Sakaguchi, Chandra Bhagavatula, Ronan Le Bras, Niket Tandon, Peter Clark, Yejin Choi ["proScript: Partially Ordered Scripts Generation"](https://aclanthology.org/2021.findings-emnlp.184/) In Findings of EMNLP 2021
+
+[9] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter J. Liu ["Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer"](https://jmlr.org/papers/volume21/20-074/20-074.pdf) In JMLR 2020
