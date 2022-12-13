@@ -95,7 +95,7 @@ def analyze_trajectories(succ_dir):
                                     high_actions.extend([x['discrete_action']['action']
                                                          for x in traj['plan']['high_pddl']])
                                     low_actions.extend([x['api_action']['action'] for x in traj['plan']['low_actions']])
-                                    vid_lens.append(round(len(traj['images']) / 60, 2))
+                                    vid_lens.append(round(len(traj['images']) / (60*5), 2))  # fps = 5
                                     break  # only examine top level
                             break  # only examine top level
         break  # only examine top level
@@ -107,6 +107,7 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
     tuple_counts = {}
     queue_for_delete = []
     high_actions, low_actions = [], []
+    sample_high_actions, sample_low_actions = [], []
     vid_lens = []
     complexity, ordering = [], []
     for root, goals, _ in os.walk(succ_dir):
@@ -133,8 +134,10 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                                     traj = json.load(open(trial_path + '/' + _files[traj_filename_ind], 'r'))
                                     high_actions.extend([x['discrete_action']['action']
                                                          for x in traj['plan']['high_pddl']])
+                                    sample_high_actions.append(len(traj['plan']['high_pddl']))
+                                    sample_low_actions.append(len(traj['plan']['low_actions']))
                                     low_actions.extend([x['api_action']['action'] for x in traj['plan']['low_actions']])
-                                    vid_lens.append(round(len(traj['images']) / 60, 2))
+                                    vid_lens.append(round(len(traj['images']) / (60*5), 2))  # fps = 5
                                     task_type = traj['task_type']
                                     complexity.append(len(task_type.replace('then', 'and').split('_and_')))
                                     ordering.append(task_type.count('then'))
@@ -169,7 +172,7 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
     tuples_at_target_count = set([t for t in tuple_counts if tuple_counts[t] >= target_count])
 
     return succ_traj, tuples_at_target_count, Counter(high_actions), \
-           Counter(low_actions), vid_lens, complexity, ordering
+           Counter(low_actions), vid_lens, complexity, ordering, sample_high_actions, sample_low_actions
 
 
 def load_fails_from_disk(succ_dir, to_write=None):
@@ -264,7 +267,7 @@ def plot_dataset_stats(succ_traj, action_counts, vid_lens):
     plt.tight_layout()
     plt.show()
 
-    succ_traj['pickup'].value_counts().plot(kind='bar', figsize=(13, 6), fontsize=12, rot=40)
+    succ_traj['pickup'].value_counts().plot(kind='bar', figsize=(16, 6), fontsize=12, rot=40)
     max_val = succ_traj['pickup'].value_counts().max()
     plt.yticks(np.arange(0, max_val + 1, int(max_val / 10)), fontsize=12)
     plt.title("all object counts", fontsize=15)

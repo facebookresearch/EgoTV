@@ -487,15 +487,17 @@ Note no split (train or test) have overlapping examples.
 ## Dataset Stats 
 For details: [ablations/data_analysis.ipynb](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/ablations/data_analysis.ipynb)
 
-* Total hours: 852 hours
-* Train: 563 hours
-* Test: 289 h
-* Average video-length > 6 min
+* Total hours: 170 hours
+  * Train: 112 hours
+  * Test: 58 h
+* Average video-length > 1 min
 * Tasks: 82
 * Objects: 32 (with visual variations)
 * Receptacles: 13 (excluding movable receptacles)
 * High-level Actions: 7 (GotoLocation, PickupObject, PutObject, SliceObject, CleanObject, HeatObject, CoolObject)
 * Low-level Actions: 12 (LookUp, LookDown, MoveAhead, RotateRight, RotateLeft, OpenObject, CloseObject, ToggleObjectOn, ToggleObjectOff, SliceObject, PickupObject, PutObject)
+* Average number of high-level actions (sub-goals) per sample: 10
+* Average number of low-level actions per sample: > 50
 * Scenes: 30 (Kitchens)
 
 
