@@ -124,7 +124,8 @@ For details: [ablations/data_analysis.ipynb](https://github.com/rutadesai/Vision
   * Test: 58 h
 * Average video-length > 1 min
 * Tasks: 82
-* Objects: 32 (with visual variations)
+* Objects > 130 (with visual variations)
+* Pickup objects: 32 (with visual variations)
 * Receptacles: 13 (excluding movable receptacles)
 * High-level Actions: 7 (GotoLocation, PickupObject, PutObject, SliceObject, CleanObject, HeatObject, CoolObject)
 * Low-level Actions: 12 (LookUp, LookDown, MoveAhead, RotateRight, RotateLeft, OpenObject, CloseObject, ToggleObjectOn, ToggleObjectOff, SliceObject, PickupObject, PutObject)
