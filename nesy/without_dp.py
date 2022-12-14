@@ -31,27 +31,6 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
         ent_preds = model(video_feats, text_feats, segment_labels)
         loss = bce_loss(ent_preds, ent_labels)
         train_loss_ent.append(loss.item())
-        # state_preds = torch.exp(torch.cat(state_preds, dim=0))
-        # state_labs = torch.cat(state_labs).long()
-        # loss += ce_loss(state_preds, state_labs)
-        # adding the state classifier loss
-        # try:
-        #     state_preds = torch.exp(torch.cat(state_preds, dim=0))
-        #     state_labs = torch.cat(state_labs).long()
-        #     state_loss = ce_loss(state_preds, state_labs)
-        #     loss += state_loss
-        #     train_loss_state.append(state_loss.item())
-        # except RuntimeError:
-        #     pass
-        # # adding the relation classifier loss
-        # try:
-        #     relation_preds = torch.exp(torch.cat(relation_preds, dim=0))
-        #     relation_labs = torch.cat(relation_labs).long()
-        #     rel_loss = ce_loss(relation_preds, relation_labs)
-        #     loss += rel_loss
-        #     train_loss_rel.append(rel_loss.item())
-        # except RuntimeError:
-        #     pass
         optimizer.zero_grad()
         loss.backward()
         # model.state_dict(keep_vars=True)
@@ -63,10 +42,6 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
 
     acc, f1 = train_metrics['Accuracy'].compute(), train_metrics['F1Score'].compute()
     print('Train Loss: {}'.format(np.array(train_loss_ent).mean()))
-    # print('Train Loss: Entailment Loss: {} | State Pred: {} | '
-    #       'Relation Pred: {}'.format(np.array(train_loss_ent).mean(),
-    #                                  np.array(train_loss_state).mean(),
-    #                                  np.array(train_loss_rel).mean()))
     dist.barrier()
     val_acc, val_f1 = validate(model, val_loader=val_loader)
     dist.barrier()

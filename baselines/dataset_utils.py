@@ -123,14 +123,17 @@ def sample_vid_with_roi(filename, sample_rate, bboxes):
             # TODO: see if the alignment is accurate
             bbox = bboxes[fno]
             # if bbox is not None:
+            roi_box = torch.zeros(3, 3, 224, 224)
             try:
-                # TODO: generalize to multiple bboxes and not just [0]
-                x1, y1, x2, y2 = list(map(lambda x: int(x), bbox[0]))[:]
-                roi.append(transform_image(img[y1:y2, x1:x2, :]))
-                # Want to test if the slicing is correct? go ahead and uncomment the next line
-                # plot_bb(img, x1, y1, x2, y2)
+                for box_ind, box in enumerate(bbox):
+                    # TODO: generalize to multiple bboxes and not just [0]
+                    x1, y1, x2, y2 = list(map(lambda x: int(x), box))[:]
+                    roi_box[box_ind] = transform_image(img[y1:y2, x1:x2, :])
+                    # Want to test if the slicing is correct? go ahead and uncomment the next line
+                    # plot_bb(img, x1, y1, x2, y2)
             except:
-                roi.append(torch.zeros(3, 224, 224))
+                pass
+            roi.append(roi_box)
         success = video.grab()
         fno += 1
         if fno >= len(bboxes):
@@ -158,16 +161,16 @@ def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_a
         if ind % sample_rate == 0:
             count_labs.append(x['high_idx'])
         bb_dict = x['bbox']
+        bb = []
         for action_arg in action_args:
-            # TODO: generalize to multiple args (for RelationQuery)
-            bb = []
             for obj_id, bbox in bb_dict.items():
-                if action_arg in obj_id:
+                if action_arg.lower() in obj_id.lower():
                     bb.append(bbox)
-            if len(bb) != 0:
-                roi_bb.append(bb)
-            else:
-                roi_bb.append(None)
+        if len(bb) != 0:
+            # TODO: selecting a fixed number of objects may lead to discarding useful info
+            roi_bb.append(bb[:3])
+        else:
+            roi_bb.append(None)
     if not supervised:
         return roi_bb
     # assert len(roi_bb) == len(count_labs)
@@ -189,6 +192,31 @@ def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_a
         action_labs.append(action)
 
     return action_labs, roi_bb, segment_args
+
+
+def retrieve_query_args(graph_batch):
+    """
+    retrieves query arguments which is then
+    used to get bounding boxes for each frame
+    """
+    args_batch = []
+    for graph in graph_batch:
+        nodes = [node for node in graph.nodes]
+        args_graph = set()
+        for node in nodes:
+            node = re.sub('Step \d+ ', '', node)
+            node = re.sub(r"[()]", " ", node).strip().split(" ")
+            query_type, pred_arg = node[0], ','.join(node[1:])
+            if query_type == 'StateQuery':
+                args_graph.update([pred_arg.split(',')[0]])
+                # args_graph.update(pred_arg.split(',')[:2])
+            elif query_type == 'RelationQuery':
+                args_graph.update(pred_arg.split(',')[:2])
+        args_graph = list(args_graph)
+        for ind, arg in enumerate(args_graph):
+            args_graph[ind] = arg.replace('sliced', '')
+        args_batch.append(list(args_graph))
+    return args_batch
 
 
 def action_mapping(action):
@@ -258,38 +286,45 @@ def translate(step):
     split_text = [pred_args.split(',')[0], pred_args.split(',')[-1]]
     arg_translate = {'heat': 'HeatObject', 'cool': 'CoolObject', 'slice': 'SliceObject', 'clean': 'CleanObject',
                      'place': 'PutObject', 'pick': 'PickupObject'}
-    return arg_translate[split_text[-1]], query, segment_ind
+    return arg_translate[split_text[-1]], query, segment_ind, split_text[-1]
 
 def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List], ent_labels):
     """
     checks if the predicted (dynamic programming-based) alignment is correct
     for positively entailed hypotheses
     """
+    state_pred_dict = {'slice': [], 'heat': [], 'cool': [], 'clean': []}
     state_pred_labs, state_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
     relation_pred_labs, relation_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
-    ind = 0
-    for pred, true in zip(pred_alignment, segment_labels):
+    for ind, (pred, true) in enumerate(zip(pred_alignment, segment_labels)):
         try:
             if ent_labels[ind].item() == 1:
                 for step in pred:
-                    pred_action, query, segment_ind = translate(step)
+                    pred_action, query, segment_ind, sub_goal = translate(step)
                     if query == 'StateQuery':
                         state_pred_labs.append(torch.tensor(1.))
+                        # try:
                         if true[segment_ind] == pred_action:
-                                state_true_labs.append(torch.tensor(1))
+                            state_true_labs.append(torch.tensor(1))
+                            state_pred_dict[sub_goal].append(1)
                         else:
                             state_true_labs.append(torch.tensor(0))
+                            state_pred_dict[sub_goal].append(0)
+                            # except IndexError:
+                        #     state_pred_labs.pop()
                     else:  # query == 'RelationQuery'
                         relation_pred_labs.append(torch.tensor(1))
+                        # try:
                         if true[segment_ind] == pred_action:
-                                relation_true_labs.append(torch.tensor(1))
+                            relation_true_labs.append(torch.tensor(1))
                         else:
                             relation_true_labs.append(torch.tensor(0))
+                        # except IndexError:
+                        #     relation_pred_labs.pop()
         except KeyError:
             continue
-        ind += 1
     return torch.stack(state_pred_labs), torch.stack(state_true_labs), \
-           torch.stack(relation_pred_labs), torch.stack(relation_true_labs)
+           torch.stack(relation_pred_labs), torch.stack(relation_true_labs), state_pred_dict
 
 
 def clean_str(string):

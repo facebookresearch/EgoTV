@@ -28,24 +28,23 @@ class PositionalEncoding(nn.Module):
 class NeSyBase(nn.Module):
     def __init__(self, vid_embed_size, hsize, rnn_enc, text_model):
         super(NeSyBase, self).__init__()
-        # TODO: generalize to 'k' bounding boxes instead of 2
-        self.vid_ctx_rnn = rnn_enc(2 * vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
+        # k = 4 (frame + 3 bounding boxes per frame)
+        self.vid_ctx_rnn = rnn_enc(4 * vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
                                    rnn_type="lstm")
         self.text_ctx_rnn = rnn_enc(vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
                                     rnn_type="lstm")
         self.text_model = text_model
-
-        # positional encoding
-        # self.positional_encode = PositionalEncoding(num_hiddens=self.vid_embed_size, dropout=0.5)
+        self.text_model.eval()
+        # # positional encoding
+        # self.positional_encode = PositionalEncoding(num_hiddens=2*hsize, dropout=0.5)
         # # multi-headed attention
-        # self.multihead_attn = nn.MultiheadAttention(embed_dim=self.vid_embed_size,
+        # self.multihead_attn = nn.MultiheadAttention(embed_dim=2*hsize,
         #                                             num_heads=8,
         #                                             dropout=0.5,
         #                                             batch_first=True)
 
-        self.num_states = 4  # hot, cold, cleaned, sliced
-        self.num_relations = 2  # InReceptacle, Holds
-
+        # num_states = 4  # hot, cold, cleaned, sliced
+        # num_relations = 2  # InReceptacle, Holds
         self.state_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
                                          nn.ReLU(),
                                          nn.Dropout(0.5),
@@ -54,7 +53,6 @@ class NeSyBase(nn.Module):
                                             nn.ReLU(),
                                             nn.Dropout(0.5),
                                             nn.Linear(hsize, 1))
-
         self.all_sorts = []
 
     def query(self, query_type, seg_text_feats, vid_feature):
@@ -75,6 +73,7 @@ class NeSyBase(nn.Module):
         pred_args = []
         queries = []
         for node in nodes:
+            # 'Step 1 StateQuery(apple,heat)'
             node = re.sub('Step \d+ ', '', node)
             node = re.sub(r"[()]", " ", node).strip().split(" ")
             query_type, pred_arg = node[0], ','.join(node[1:])
@@ -145,10 +144,17 @@ class NeSyBase(nn.Module):
             # array keeps track of cumulative max logprob for each cell
             arr = torch.full((num_nodes, num_segments), torch.tensor(-100.)).cuda()
             logits_arr[ind] = torch.zeros((num_nodes, num_segments)).cuda()
+
+            # setting the start & end indices of each node on segments
             start_ind = dict(zip(sorted_nodes, np.arange(0, num_nodes, 1)))
             end_ind = dict(zip(sorted_nodes, [num_segments - num_nodes + i for i in range(num_nodes)]))
+
+            # starting outer loop from the last node
             for node_ind, node in zip(np.arange(num_nodes - 1, -1, -1), reversed(sorted_nodes)):
+                # starting inner loop from the last segment
                 for segment_ind in range(end_ind[node], start_ind[node] - 1, -1):
+
+                    # setting the value of the last column
                     if segment_ind == num_segments - 1:
                         logit = self.query(queries[node_ind],
                                             seg_text_feats[:, node_ind, :],
@@ -161,6 +167,8 @@ class NeSyBase(nn.Module):
                     logit = self.query(queries[node_ind],
                                        seg_text_feats[:, node_ind, :],
                                        vid_feature[:, segment_ind, :])
+
+                    # setting the values of the last row (except last cell in the row)
                     if node_ind == num_nodes - 1:
                         V_opt_curr = F.logsigmoid(logit)
                         V_opt_next = arr[node_ind][segment_ind + 1]
@@ -171,9 +179,12 @@ class NeSyBase(nn.Module):
                             arr[node_ind][segment_ind] = V_opt_next
                             parent_dict[ind][node][segment_ind] = \
                                 parent_dict[ind][sorted_nodes[node_ind]][segment_ind + 1]
+
+                    # calculating the values of the remaining cells
+                    # dp[i][j] = max(query(i,j) + dp[i+1][j], dp[i][j+1])
                     else:
-                        V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind]  # relaxation added
-                        # V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind + 1]  # no relaxation
+                        # V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind]  # relaxation added
+                        V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind + 1]  # no relaxation
                         V_opt_next = arr[node_ind][segment_ind + 1]
                         if V_opt_curr >= V_opt_next:
                             arr[node_ind][segment_ind] = V_opt_curr
@@ -190,24 +201,27 @@ class NeSyBase(nn.Module):
         # TODO: could be more than one optimum paths
         best_alignment = parent_dict[max_sort_ind][all_sorts[max_sort_ind][0]][0]
         aggregated_logits = torch.tensor(0.).cuda()
+        # aggregated_logits = []
+        # length normalized aggregation of logits
         for i, j in zip(np.arange(num_nodes), best_alignment):
-            aggregated_logits +=  logits_arr[max_sort_ind][i][j]
+            aggregated_logits +=  logits_arr[max_sort_ind][i][j] / len(all_sorts[0])
+            # aggregated_logits.append(logits_arr[max_sort_ind][i][j])
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
 
-    def forward(self, vid_feats, graphs, true_labels, train=True):
+    def forward(self, vid_feats, graphs, true_labels, task_types, train=True):
         ent_probs = []
         labels = []
         pred_alignments = []
-        for vid_feat, graph, hypothesis, label in zip(vid_feats, *graphs, true_labels):
+        tasks = []
+        for vid_feat, graph, hypothesis, label, task_type in zip(vid_feats, *graphs, true_labels, task_types):
             # processing the video features
             # each vid_feat is [num_segments, frames_per_segment, 512]
             b, vid_len, _ = vid_feat.shape
             vid_lens = torch.full((b,), vid_len).cuda()
             _, vid_feat = self.vid_ctx_rnn(vid_feat, vid_lens)  # aggregate
             vid_feat = vid_feat.unsqueeze(0)  # [1, num_segments, 512]
-            #  vid_feat = [num_segments, 2*hsize]
-            # vid_feat = self.positional_encode(vid_feat.unsqueeze(0))
+            # vid_feat = self.positional_encode(vid_feat)
             # integrating temporal component into each segment encoding
             # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
 
@@ -223,7 +237,8 @@ class NeSyBase(nn.Module):
 
             ent_probs.append(torch.sigmoid(aligned_aggregated))
             labels.append(label)
+            tasks.append(task_type)
 
         if not train:
-            return torch.stack(ent_probs).view(-1), torch.stack(labels), pred_alignments
+            return torch.stack(ent_probs).view(-1), torch.stack(labels), pred_alignments, tasks
         return torch.stack(ent_probs).view(-1), torch.stack(labels)

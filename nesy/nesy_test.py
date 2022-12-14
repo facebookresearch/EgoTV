@@ -12,6 +12,7 @@ from nesy_model import NeSyBase
 import json
 import math
 import torch
+import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
 from torchmetrics import MetricCollection, Accuracy, F1Score
@@ -22,15 +23,35 @@ from torch.utils.data.distributed import DistributedSampler
 
 
 def test_model(test_loader):
+    task_metric_dict = {}
+    state_query_dict = {'slice': [], 'heat': [], 'cool': [], 'clean': []}
     with torch.no_grad():
-        for video_feats, graphs, labels, segment_labs in tqdm(iterate(test_loader), desc='Test'):
-            preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
+        for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(test_loader), desc='Test'):
+            preds, labels, pred_alignment, tasks = model(video_feats, graphs, labels, task_types, train=False)
             labels = labels.type(torch.int)
-            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs = \
+            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, state_dict = \
                 check_alignment(pred_alignment, segment_labs, labels)
+
+            for k, v in state_query_dict.items():
+                state_query_dict[k] = v + state_dict[k]
             test_metrics.update(preds=preds, target=labels)
             state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
             relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
+            for task, pred, label in zip(tasks, preds, labels):
+                pred = 1 if pred >= 0.5 else 0
+                # evaluating per task accuracy for each split
+                if not task in task_metric_dict.keys():
+                    task_metric_dict[task] = []
+                task_metric_dict[task].append(1 if pred == label else 0)
+                # evaluation sub-goal accuracy of StateQuery
+                # for key in state_query_dict.keys():
+                #     if key in task:
+                #         state_query_dict[key].append(1 if pred == label else 0)
+            for task, pred_list in task_metric_dict.items():
+                print('task: {} | accuracy: {}'.format(task, str(np.array(pred_list).sum() / len(pred_list))))
+            for sub_goal, state_list in state_query_dict.items():
+                print('sub-goal: {} | accuracy {}'.format(sub_goal, str(np.array(state_list).sum() / len(state_list))))
+
         dist.barrier()
         test_acc, test_f1 = test_metrics['Accuracy'].compute(), test_metrics['F1Score'].compute()
         state_acc, state_f1 = state_query_metrics['Accuracy'].compute(), state_query_metrics['F1Score'].compute()
@@ -53,39 +74,10 @@ def process_batch(data_batch, label_batch, frames_per_segment):
     labels = []
     task_types = []
     segment_labs_batch = []
+
     for filepath, label in zip(data_batch, label_batch):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
         task_types.append(traj['task_type'])
-        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
-                                                         [traj['pddl_params']['object_target']],
-                                                         positive=True if label == '1' else False)
-        segment_labs_batch.append(segment_labs)
-        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
-        video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
-        # here b=1 since we are processing one video at a time
-        video_frames = extract_video_features(video_frames, model=visual_model,
-                                              feature_extractor='clip',
-                                              feat_size=vid_feat_size,
-                                              finetune=args.finetune).reshape(1, -1, vid_feat_size)
-        roi_frames = extract_video_features(roi_frames, model=visual_model,
-                                            feature_extractor='clip',
-                                            feat_size=vid_feat_size,
-                                            finetune=args.finetune).reshape(1, -1, vid_feat_size)
-        b, t, _ = video_frames.shape
-        num_segments = math.ceil(t / frames_per_segment)
-
-        to_pad = num_segments * frames_per_segment - t
-        video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
-        roi_frames = torch.cat((roi_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
-        # [num_segments, frames_per_segment, 512]
-        video_frames = video_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
-        roi_frames = roi_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
-
-        # [num_segments, frames_per_segment, k*512]
-        video_frames = torch.cat((video_frames, roi_frames), dim=-1)
-        video_features_batch.append(video_frames)
-
-        # process natural language hypothesis using bert
         hypotheses.append(traj['template']['neg']) if label == '0' \
             else hypotheses.append(traj['template']['pos'])
         labels.append(float(label))
@@ -103,7 +95,40 @@ def process_batch(data_batch, label_batch, frames_per_segment):
         graphs_batch = tokenizer.batch_decode(graphs_batch, skip_special_tokens=True)
         graphs_batch = ([ged.pydot_to_nx(graph_str) for graph_str in graphs_batch], hypotheses)
 
-    return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch
+    all_arguments = retrieve_query_args(graphs_batch[0])  # retrieve query arguments from the graph batch
+
+    for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
+        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
+                                                         all_arguments[sample_ind],
+                                                         positive=True if label == '1' else False)
+        segment_labs_batch.append(segment_labs)
+        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
+        video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
+        # here b=1 since we are processing one video at a time
+        video_frames = extract_video_features(video_frames, model=visual_model,
+                                              feature_extractor='clip',
+                                              feat_size=vid_feat_size,
+                                              finetune=args.finetune).reshape(1, -1, vid_feat_size)
+        roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
+                                            feature_extractor='clip',
+                                            feat_size=vid_feat_size,
+                                            finetune=args.finetune).reshape(1, -1, 3 * vid_feat_size)
+        b, t, _ = video_frames.shape
+        num_segments = math.ceil(t / frames_per_segment)
+
+        to_pad = num_segments * frames_per_segment - t
+        # zero-padding to match the number of frames per segment
+        video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
+        roi_frames = torch.cat((roi_frames, torch.zeros(b, to_pad, 3 * vid_feat_size).cuda()), dim=1)
+        # [num_segments, frames_per_segment, 512]
+        video_frames = video_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
+        roi_frames = roi_frames.reshape(b * num_segments, frames_per_segment, 3 * vid_feat_size)
+
+        # [num_segments, frames_per_segment, k*512]
+        video_frames = torch.cat((video_frames, roi_frames), dim=-1)
+        video_features_batch.append(video_frames)
+
+    return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch, task_types
 
 
 if __name__ == '__main__':
@@ -143,7 +168,7 @@ if __name__ == '__main__':
     max_source_length = 80
     max_target_length = 300
     proscript_model_ckpt_path = os.path.join(os.environ['BASELINES'],
-                                             'proScript/proscript_best_2.json')
+                                             'proScript/proscript_best_dsl_3.json')
     t5_model = T5ForConditionalGeneration.from_pretrained(proscript_model_ckpt_path)
     t5_model.cuda()
     t5_model = DDP(t5_model, device_ids=[local_rank])

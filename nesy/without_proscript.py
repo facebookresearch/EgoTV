@@ -226,7 +226,7 @@ if __name__ == '__main__':
     max_source_length = 80
     max_target_length = 300
     proscript_model_ckpt_path = os.path.join(os.environ['BASELINES'],
-                                             'proScript/proscript_best_2.json')
+                                             'proScript/proscript_best_dsl_2.json')
     t5_model = T5ForConditionalGeneration.from_pretrained(proscript_model_ckpt_path)
     t5_model.cuda()
     t5_model = DDP(t5_model, device_ids=[local_rank])
