@@ -1,7 +1,9 @@
+import os
+import sys
+sys.path.append(os.environ['BASELINES'])
 from proScript.dsl import StateQuery, RelationQuery
 from proScript.predicate import Atom
 from proScript.utils import pred_args_map
-import os
 import json
 import pydot
 from tqdm import tqdm
@@ -28,6 +30,10 @@ def get_output(goal, pickup, recep=None):
             # the object is always picked up first
             node_str = "Step {} {} {}".format(ind + 1, 'pick', pickup)
             node_dsl = Atom(RelationQuery, (pickup, 'agent', map_subgoals['pick']))
+            node_str_dsl = "Step {} {}".format(ind + 1, node_dsl)
+        elif node == 'slice':
+            node_str = "Step {} {} {} with {}".format(ind + 1, node, pickup, 'knife')
+            node_dsl = Atom(RelationQuery, (pickup, 'knife', node))
             node_str_dsl = "Step {} {}".format(ind + 1, node_dsl)
         else:
             node_str = "Step {} {} {}".format(ind + 1, node, pickup)
