@@ -4,7 +4,7 @@ sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
 from feature_extraction import *
-from violin_base import ViolinBase
+from base import ModelBase
 from distributed_utils import *
 from arguments import Arguments
 import json
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     # violin base model
     hsize1 = 150
     hsize2 = 300
-    model = ViolinBase(hsize1=hsize1, hsize2=hsize2, embed_size=embed_size, vid_feat_size=vid_feat_size,
+    model = ModelBase(hsize1=hsize1, hsize2=hsize2, embed_size=embed_size, vid_feat_size=vid_feat_size,
                        attention=args.attention)
     model.load_state_dict(torch.load(model_ckpt_path))
     model.cuda()

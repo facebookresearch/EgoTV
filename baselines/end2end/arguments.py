@@ -17,9 +17,10 @@ def Arguments():
     parser.add_argument('--split_type', type=str, default='context_goal_composition',
                         help='dataset split on which model will run')
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument('--visual_feature_extractor', type=str, default='resnet', choices=['i3d', 'resnet', 'mvit'],
+    parser.add_argument('--visual_feature_extractor', type=str, default='resnet',
+                        choices=['i3d', 'resnet', 'mvit', 's3d', 'clip'],
                         help='i3d or resnet features for video (premise)')
-    parser.add_argument('--text_feature_extractor', type=str, default='bert', choices=['bert', 'glove'],
+    parser.add_argument('--text_feature_extractor', type=str, default='bert', choices=['bert', 'glove', 'clip'],
                         help='bert or glove features for text (hypothesis)')
     parser.add_argument('--pretrained_mvit', type=str, default=True,
                         help='if True, load pretrained weights for MViT from Kinetics400 mvit model')

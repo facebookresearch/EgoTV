@@ -6,9 +6,9 @@ from rnn import RNNEncoder
 from bidaf import BidafAttn
 
 
-class ViolinBase(nn.Module):
+class ModelBase(nn.Module):
     def __init__(self, hsize1, hsize2, embed_size, vid_feat_size, attention=True):
-        super(ViolinBase, self).__init__()
+        super(ModelBase, self).__init__()
         # hsize1 = 150
         # hsize2 = 300
         # embed_size = 768 (distilbert) or 300 (glove)

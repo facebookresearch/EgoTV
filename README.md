@@ -156,10 +156,10 @@ nltk.download('punkt')
 ### Run baselines
 
 ```
-$ cd $BASELINES/end2end/violin
+$ cd $BASELINES/end2end
 
 # train
-$ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_node=$NGPUS violin_baseline.py --num_workers $NWorkers --split_type "train" --batch_size 64 --text_feature_extractor <"bert/glove"> --visual_feature_extractor <"i3d/resnet"> --run_id $run_id --sample_rate 3
+$ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_node=$NGPUS train_baseline.py --num_workers $NWorkers --split_type "train" --batch_size 64 --text_feature_extractor <"bert/glove"> --visual_feature_extractor <"i3d/resnet"> --run_id $run_id --sample_rate 3
 # if data split not preprocessed, specify "--preprocess" in the previous step
 # for attention-based models, specify "--attention" in the previous step
 
@@ -169,11 +169,13 @@ $ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_
 # for attention-based models, specify "--attention" in the previous step
 ```
 
-Note: to run the I3D model, you must download the pretrained model (rgb_imagenet.pt) from this repository: 
-[https://github.com/piergiaj/pytorch-i3d/tree/master/models](https://github.com/piergiaj/pytorch-i3d/tree/master/models)
+Note: to run the I3D and S3D models, download the pretrained model (rgb_imagenet.pt, S3D_kinetics400.pt) from these repositories respectively: 
+* [https://github.com/piergiaj/pytorch-i3d/tree/master/models](https://github.com/piergiaj/pytorch-i3d/tree/master/models)
+* [https://github.com/kylemin/S3D](https://github.com/kylemin/S3D)
 ```
 $ mkdir $BASELINES/i3d/models
 $ wget -P $BASELINES/i3d/models "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_imagenet.pt" "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_charades.pt"
+$ wget -P $BASELINES/s3d "https://drive.google.com/uc?export=download&id=1HJVDBOQpnTMDVUM3SsXLy0HUkf_wryGO"
 ```
 
 Alternatively, modify and run from root
