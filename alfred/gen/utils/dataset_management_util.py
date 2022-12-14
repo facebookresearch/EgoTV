@@ -102,6 +102,29 @@ def analyze_trajectories(succ_dir):
     return Counter(high_actions), Counter(low_actions), vid_lens, complexity, ordering
 
 
+def object_counter(succ_dir):
+    unique_objs = set()
+    for root, goals, _ in os.walk(succ_dir):
+        for goal in goals:
+            if goal == 'fails':
+                continue
+            for traj_root, trials, _ in os.walk(os.path.join(root, goal)):
+                for trial in trials:
+                    if trial.count('-') == 3:
+                        for file_path, _dirs, _ in os.walk(os.path.join(traj_root, trial)):
+                            for _d in _dirs:
+                                for trial_path, _, _files in os.walk(os.path.join(traj_root, trial, _d)):
+                                    traj_filename_ind = _files.index('traj_data.json')
+                                    traj = json.load(open(trial_path + '/' + _files[traj_filename_ind], 'r'))
+                                    for x in traj['images']:
+                                        for y in x['bbox']:
+                                           unique_objs.add(y.split('|')[0].split('.')[0].lower())
+                                    break  # only examine top level
+                            break  # only examine top level
+        break  # only examine top level
+    return unique_objs
+
+
 def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                              cap_count=None, min_count=None):
     tuple_counts = {}
