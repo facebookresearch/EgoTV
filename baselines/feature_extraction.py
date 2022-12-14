@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 from i3d.pytorch_i3d import InceptionI3d
 import clip
+from s3d.s3d import S3D
 from mvit_tx.mvit import mvit_v2_s
 from torchvision.models import resnet18 as resnet
 from transformers import DistilBertModel, DistilBertTokenizer
@@ -27,6 +28,12 @@ def initiate_visual_module(feature_extractor, pretrained_mvit=True):
         visual_model = InceptionI3d(400, in_channels=3)
         visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
         visual_model.replace_logits(157)
+    elif feature_extractor == 's3d':
+        # s3d model
+        vid_feat_size = 1024
+        kinetics_pretrained = 's3d/S3D_kinetics400.pt'
+        visual_model = S3D(400)
+        visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
     elif feature_extractor == 'mvit':
         # MViT-S ("https://arxiv.org/pdf/2104.11227.pdf")
         vid_feat_size = 768
@@ -38,6 +45,7 @@ def initiate_visual_module(feature_extractor, pretrained_mvit=True):
     else:
         raise NotImplementedError
     return visual_model, vid_feat_size
+
 
 def initiate_text_module(feature_extractor):
     # text feature extractor for the hypothesis
@@ -69,7 +77,7 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
                 video_feats = model(video_frames).view(-1, feat_size)  # [t, 512]
         else:
             video_feats = model(video_frames).view(-1, feat_size)
-    elif feature_extractor == 'i3d':
+    elif feature_extractor in ['i3d', 's3d']:
         video_frames = video_frames.unsqueeze(0).permute(0, 2, 1, 3, 4).contiguous()  # [b, c, t, h, w]
         if not finetune or test:
             with torch.no_grad():  # [t, 1024]
@@ -93,13 +101,13 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
             video_feats = model(video_frames).reshape(b * num_segments, feat_size)  # [num_segments, 768]
     elif feature_extractor == 'clip':
         video_frames = video_frames.unsqueeze(0)  # [b, t, c, h, w]
-        # video_frames = video_frames.half()  # half precision
+        video_frames = video_frames.half()  # half precision
         video_frames = torch.flatten(video_frames, start_dim=0, end_dim=1)
         if not finetune or test:
             with torch.no_grad():  # [t, 1024]
-                video_feats = model.visual(video_frames).view(-1, feat_size)
+                video_feats = model.module.visual(video_frames).view(-1, feat_size)
         else:
-            video_feats = model.visual(video_frames).view(-1, feat_size)
+            video_feats = model.module.visual(video_frames).view(-1, feat_size)
     return video_feats
 
 
@@ -115,41 +123,16 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
             text_feats = (pad_sequence([model.get_vecs_by_tokens(x).cuda()
                                         for x in tokenizer_out]).permute(1, 0, 2),
                           torch.tensor([len(x) for x in tokenizer_out]).cuda())
-        # elif feature_extractor == 'clip':
-        #     tokenizer_out = clip.tokenize(hypotheses, truncate=True).cuda()
-        #     text_feats = model.module.token_embedding(tokenizer_out).type(
-        #         model.module.dtype)  # [batch_size, n_ctx, dim]
-        #     text_feats = text_feats + model.module.positional_embedding.type(model.module.dtype)
-        #     text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
-        #     text_feats = model.module.transformer(text_feats)
-        #     text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
-        #     text_feats = model.module.ln_final(text_feats).type(model.module.dtype)
-        #     text_feats = text_feats @ model.module.text_projection
-        #     batch_size, _, dim = text_feats.shape
-        #     prev_n_tokens = 20  # data['text'].shape[1]
-        #
-        #     tokenizer_out = tokenizer_out[:, 1:]  # first token is a token of beginning of the sentence
-        #     text_feats = text_feats[:, 1:]  # first token is a token of beginning of the sentence
-        #
-        #     new_text = text_feats[:, :prev_n_tokens]  # 20 is max?
-        #     new_text_length = torch.zeros(batch_size).cuda()
-        #     for i in range(len(tokenizer_out)):
-        #         # take features from the eot embedding (eot_token is the highest number in each sequence)
-        #         n_eot = tokenizer_out[i].argmax().item()
-        #         new_text_length[i] = min(n_eot, prev_n_tokens)
-        #     # tuple: ([b, max_tokens, dim], [b])
-        #     text_feats = (new_text.float(),
-        #                   new_text_length)
         elif feature_extractor == 'clip':
-            tokenizer_out = clip.tokenize(hypotheses, truncate=True)
-            text_feats = model.token_embedding(tokenizer_out).type(
-                model.dtype)  # [batch_size, n_ctx, dim]
-            text_feats = text_feats + model.positional_embedding.type(model.dtype)
+            tokenizer_out = clip.tokenize(hypotheses, truncate=True).cuda()
+            text_feats = model.module.token_embedding(tokenizer_out).type(
+                model.module.dtype)  # [batch_size, n_ctx, dim]
+            text_feats = text_feats + model.module.positional_embedding.type(model.module.dtype)
             text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
-            text_feats = model.transformer(text_feats)
+            text_feats = model.module.transformer(text_feats)
             text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
-            text_feats = model.ln_final(text_feats).type(model.dtype)
-            text_feats = text_feats @ model.text_projection
+            text_feats = model.module.ln_final(text_feats).type(model.module.dtype)
+            text_feats = text_feats @ model.module.text_projection
             batch_size, _, dim = text_feats.shape
             prev_n_tokens = 20  # data['text'].shape[1]
 
@@ -157,7 +140,7 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
             text_feats = text_feats[:, 1:]  # first token is a token of beginning of the sentence
 
             new_text = text_feats[:, :prev_n_tokens]  # 20 is max?
-            new_text_length = torch.zeros(batch_size)
+            new_text_length = torch.zeros(batch_size).cuda()
             for i in range(len(tokenizer_out)):
                 # take features from the eot embedding (eot_token is the highest number in each sequence)
                 n_eot = tokenizer_out[i].argmax().item()
@@ -165,4 +148,29 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
             # tuple: ([b, max_tokens, dim], [b])
             text_feats = (new_text.float(),
                           new_text_length)
+        # elif feature_extractor == 'clip':
+        #     tokenizer_out = clip.tokenize(hypotheses, truncate=True)
+        #     text_feats = model.token_embedding(tokenizer_out).type(
+        #         model.dtype)  # [batch_size, n_ctx, dim]
+        #     text_feats = text_feats + model.positional_embedding.type(model.dtype)
+        #     text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
+        #     text_feats = model.transformer(text_feats)
+        #     text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
+        #     text_feats = model.ln_final(text_feats).type(model.dtype)
+        #     text_feats = text_feats @ model.text_projection
+        #     batch_size, _, dim = text_feats.shape
+        #     prev_n_tokens = 20  # data['text'].shape[1]
+        #
+        #     tokenizer_out = tokenizer_out[:, 1:]  # first token is a token of beginning of the sentence
+        #     text_feats = text_feats[:, 1:]  # first token is a token of beginning of the sentence
+        #
+        #     new_text = text_feats[:, :prev_n_tokens]  # 20 is max?
+        #     new_text_length = torch.zeros(batch_size)
+        #     for i in range(len(tokenizer_out)):
+        #         # take features from the eot embedding (eot_token is the highest number in each sequence)
+        #         n_eot = tokenizer_out[i].argmax().item()
+        #         new_text_length[i] = min(n_eot, prev_n_tokens)
+        #     # tuple: ([b, max_tokens, dim], [b])
+        #     text_feats = (new_text.float(),
+        #                   new_text_length)
     return text_feats
