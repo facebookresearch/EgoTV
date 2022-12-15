@@ -26,5 +26,6 @@ def Arguments():
     # '''<command> --finetune''' to set finetune
     parser.add_argument('--finetune', action='store_true', help='whether to finetune clip model '
                                                                 'in the specific setup')
+    parser.add_argument('--resume', action='store_true', help='to resume training from a previously save checkpoint')
     parser.add_argument('--run_id', type=int, default=5, required=False, help='run_id of the model run')
     return parser.parse_args()

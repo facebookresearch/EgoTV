@@ -227,10 +227,10 @@ if __name__ == '__main__':
 
     hsize = 150
     model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
-    # model.load_state_dict(torch.load(model_ckpt_path))
+    if args.resume:  # to resume from a previously stored checkpoint
+        model.load_state_dict(torch.load(model_ckpt_path))
     model.cuda()
     # will have unused params for certain samples (StateQuery / RelationQuery)
-    # , find_unused_parameters=True
     model = DDP(model, device_ids=[local_rank], find_unused_parameters=True)
 
     all_params = list(model.parameters())

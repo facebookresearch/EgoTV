@@ -184,7 +184,10 @@ if __name__ == '__main__':
     hsize1 = 150
     hsize2 = 300
     model = ModelBase(hsize1=hsize1, hsize2=hsize2, embed_size=embed_size, vid_feat_size=vid_feat_size,
-                       attention=args.attention).cuda()
+                       attention=args.attention)
+    if args.resume:  # to resume from a previously stored checkpoint
+        model.load_state_dict(torch.load(model_ckpt_path))
+    model.cuda()
     model = DDP(model, device_ids=[local_rank])
 
     all_params = list(model.parameters())
