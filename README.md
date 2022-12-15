@@ -39,9 +39,9 @@ $ python scripts/generate_trajectories.py --save_path <your save path> --split_t
 # append the following to generate with multiprocessing for faster generation
 # --num_threads <num_threads> --in_parallel 
 ```
-The data is generated in: save_path
-Here, split_type can be one of the following ["train", "sub_goal_composition", "verb_noun_composition",
-                                 "context_goal_composition", "context_verb_noun_composition", "abstraction"]
+The data is generated in: *save_path*  
+Here, split_type can be one of the following [*"train", "sub_goal_composition", "verb_noun_composition",
+                                 "context_goal_composition", "context_verb_noun_composition", "abstraction"*]
 
 ### Generate Layouts
 If you want to generate new layouts (aside from the generated layouts in [alfred/gen/layouts](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/alfred/gen/layouts)),
@@ -165,8 +165,9 @@ $ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_
 
 # test (split_type = {"sub_goal_composition", "verb_noun_composition", "context_verb_noun_composition", "context_goal_composition", "abstraction"})
 $ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m torch.distributed.launch --nproc_per_node=$NGPUS test_baseline.py --num_workers $NWorkers --split_type <split_type> --batch_size 128 --sample_rate 3 --run_id $run_id --text_feature_extractor <"bert/glove/clip"> --visual_feature_extractor <"i3d/resnet/mvit/clip">
-# if data split not preprocessed, specify "--preprocess" in the previous step
-# for attention-based models, specify "--attention" in the previous step
+# if data split not preprocessed, specify "--preprocess" in the run instruction
+# for attention-based models, specify "--attention" in the run instruction
+# to resume training from a previously stored checkpoint, specify "--resume" in the run instruction
 ```
 
 Note: to run the I3D and S3D models, download the pretrained model (rgb_imagenet.pt, S3D_kinetics400.pt) from these repositories respectively: 
