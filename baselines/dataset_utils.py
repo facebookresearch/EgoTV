@@ -293,7 +293,7 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
     checks if the predicted (dynamic programming-based) alignment is correct
     for positively entailed hypotheses
     """
-    state_pred_dict = {'slice': [], 'heat': [], 'cool': [], 'clean': []}
+    state_pred_dict = {'heat': [], 'cool': [], 'clean': []}
     state_pred_labs, state_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
     relation_pred_labs, relation_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
     for ind, (pred, true) in enumerate(zip(pred_alignment, segment_labels)):
@@ -303,15 +303,12 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
                     pred_action, query, segment_ind, sub_goal = translate(step)
                     if query == 'StateQuery':
                         state_pred_labs.append(torch.tensor(1.))
-                        # try:
                         if true[segment_ind] == pred_action:
                             state_true_labs.append(torch.tensor(1))
                             state_pred_dict[sub_goal].append(1)
                         else:
                             state_true_labs.append(torch.tensor(0))
                             state_pred_dict[sub_goal].append(0)
-                            # except IndexError:
-                        #     state_pred_labs.pop()
                     else:  # query == 'RelationQuery'
                         relation_pred_labs.append(torch.tensor(1))
                         # try:
@@ -319,8 +316,6 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
                             relation_true_labs.append(torch.tensor(1))
                         else:
                             relation_true_labs.append(torch.tensor(0))
-                        # except IndexError:
-                        #     relation_pred_labs.pop()
         except KeyError:
             continue
     return torch.stack(state_pred_labs), torch.stack(state_true_labs), \

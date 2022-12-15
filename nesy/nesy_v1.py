@@ -116,7 +116,6 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
 
     for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
-        #TODO: roi_bb from graph args
         if validation:
             segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                                              all_arguments[sample_ind],

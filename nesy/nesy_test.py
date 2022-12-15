@@ -24,7 +24,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 def test_model(test_loader):
     task_metric_dict = {}
-    state_query_dict = {'slice': [], 'heat': [], 'cool': [], 'clean': []}
+    state_query_dict = {'heat': [], 'cool': [], 'clean': []}
     with torch.no_grad():
         for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(test_loader), desc='Test'):
             preds, labels, pred_alignment, tasks = model(video_feats, graphs, labels, task_types, train=False)
@@ -32,6 +32,7 @@ def test_model(test_loader):
             state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, state_dict = \
                 check_alignment(pred_alignment, segment_labs, labels)
 
+            # evaluating sub-goal accuracy of StateQuery
             for k, v in state_query_dict.items():
                 state_query_dict[k] = v + state_dict[k]
             test_metrics.update(preds=preds, target=labels)
@@ -43,10 +44,6 @@ def test_model(test_loader):
                 if not task in task_metric_dict.keys():
                     task_metric_dict[task] = []
                 task_metric_dict[task].append(1 if pred == label else 0)
-                # evaluation sub-goal accuracy of StateQuery
-                # for key in state_query_dict.keys():
-                #     if key in task:
-                #         state_query_dict[key].append(1 if pred == label else 0)
             for task, pred_list in task_metric_dict.items():
                 print('task: {} | accuracy: {}'.format(task, str(np.array(pred_list).sum() / len(pred_list))))
             for sub_goal, state_list in state_query_dict.items():
@@ -66,7 +63,11 @@ def test_model(test_loader):
 
 def iterate(dataloader):
     for data_batch, ent_label_batch in tqdm(dataloader):
+        # try:
         yield process_batch(data_batch, ent_label_batch, frames_per_segment=args.fp_seg)
+        # except TypeError:
+        #     print('Skipping batch')
+        #     continue
 
 def process_batch(data_batch, label_batch, frames_per_segment):
     hypotheses = []
@@ -98,6 +99,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
     all_arguments = retrieve_query_args(graphs_batch[0])  # retrieve query arguments from the graph batch
 
     for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
+        traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
         segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                                          all_arguments[sample_ind],
                                                          positive=True if label == '1' else False)
