@@ -26,7 +26,7 @@ def test_model(test_loader):
         for video_feats, graphs, labels, segment_labs in tqdm(iterate(test_loader), desc='Test'):
             preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
             labels = labels.type(torch.int)
-            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, _ = \
+            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, _, _ = \
                 check_alignment(pred_alignment, segment_labs, labels)
             test_metrics.update(preds=preds, target=labels)
             state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
