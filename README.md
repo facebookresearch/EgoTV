@@ -8,6 +8,7 @@ $ git clone https://github.com/rutadesai/VisionLangaugeGrounding.git
 $ export GENERATE_DATA=$(pwd)/VisionLangaugeGrounding/alfred
 $ cd $GENERATE_DATA
 ```
+We have build the dataset generation code on top of [ALFRED dataset [3] repository.](https://github.com/askforalfred/alfred)
 
 ### Install all requirements
 ```
@@ -154,7 +155,10 @@ nltk.download('punkt')
 ```
 
 ### Run baselines
-
+* [baselines/end2end](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/baselines/end2end): for training and testing baseline models
+* [baselines/feature_extraction.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/baselines/feature_extraction.py): intialization and feature extractions for text and visual encoders
+  * text encoders: GloVe, BERT [10], CLIP [5]
+  * visual_encoders: ResNet18, I3D [4], S3D [7], MViT [6], CLIP [5]
 ```
 $ cd $BASELINES/end2end
 
@@ -188,6 +192,7 @@ $ ./run_train.sh
 ![baselines.png](img.png)
 
 ### Run proScript
+* for more details, see [baselines/proScript](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/baselines/proScript)
 ```
 $ source activate alfred_env
 $ export DATA_ROOT=<path to dataset>
@@ -201,8 +206,6 @@ $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --npro
 ```
 <--output_type 'nl'> for natural language graph output; 
 <--output_type 'dsl'> for domain-specific language graph output (default: dsl)
-
-![img_1.png](img_1.png)
 
 ## NeSy Model
 
@@ -235,4 +238,5 @@ $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --npro
 [6] Haoqi Fan, Bo Xiong, Karttikeya Mangalam, Yanghao Li, Zhicheng Yan, Jitendra Malik, Christoph Feichtenhofer ["Multiscale Vision Transformers"](https://openaccess.thecvf.com/content/ICCV2021/papers/Fan_Multiscale_Vision_Transformers_ICCV_2021_paper.pdf) In ICCV 2021  
 [7] Saining Xie, Chen Sun, Jonathan Huang, Zhuowen Tu, Kevin Murphy ["Rethinking Spatiotemporal Feature Learning: Speed-Accuracy Trade-offs in Video Classification"](https://openaccess.thecvf.com/content_ECCV_2018/papers/Saining_Xie_Rethinking_Spatiotemporal_Feature_ECCV_2018_paper.pdf) In ECCV 2018  
 [8] Keisuke Sakaguchi, Chandra Bhagavatula, Ronan Le Bras, Niket Tandon, Peter Clark, Yejin Choi ["proScript: Partially Ordered Scripts Generation"](https://aclanthology.org/2021.findings-emnlp.184/) In Findings of EMNLP 2021  
-[9] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter J. Liu ["Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer"](https://jmlr.org/papers/volume21/20-074/20-074.pdf) In JMLR 2020
+[9] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter J. Liu ["Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer"](https://jmlr.org/papers/volume21/20-074/20-074.pdf) In JMLR 2020  
+[10] Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova ["BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"](https://aclanthology.org/N19-1423.pdf) In NAACL-HLT 2019
