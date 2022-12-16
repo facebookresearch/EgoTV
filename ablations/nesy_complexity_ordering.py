@@ -1,79 +1,53 @@
+# measure accuracy and F1 scores over different test splits, run_ids and along different axes of complexity and ordering
 import os
 import sys
+
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
-from nesy_arguments import Arguments
-from proScript.utils import GraphEditDistance
+sys.path.append(os.environ['CKPTS'])
 from dataset_utils import *
-from distributed_utils import *
 from feature_extraction import *
+from proScript.utils import GraphEditDistance
 from end2end.rnn import RNNEncoder
 from nesy_model import NeSyBase
+from nesy_arguments import Arguments
+from distributed_utils import *
 import json
 import math
-import torch
+import pickle as pkl
 import numpy as np
 from tqdm import tqdm
-import torch.nn as nn
-from torchmetrics import MetricCollection, Accuracy, F1Score
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+import torch
 import torch.distributed as dist
+import torch.nn as nn
+from transformers import T5Tokenizer, T5ForConditionalGeneration
+from torchmetrics import MetricCollection, Accuracy, F1Score
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
 
 def test_model(test_loader):
-    task_metric_dict = {}
-    state_query_dict = {'heat': [], 'cool': [], 'clean': []}
-    relation_query_dict = {'pick': [], 'place': [], 'slice': []}
     with torch.no_grad():
-        for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(test_loader), desc='Test'):
-            preds, labels, pred_alignment, tasks = model(video_feats, graphs, labels, task_types, train=False)
+        for video_feats, graphs, labels, segment_labs, task_types, axis_stats in tqdm(iterate(test_loader), desc='Test'):
+            preds, labels, axis_stats = model(video_feats, graphs, labels, task_types, axis_stats, train=False)
             labels = labels.type(torch.int)
-            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, state_dict, relation_dict = \
-                check_alignment(pred_alignment, segment_labs, labels)
-
-            # evaluating sub-goal accuracy of StateQuery
-            for k, v in state_query_dict.items():
-                state_query_dict[k] = v + state_dict[k]
-            # evaluating sub-goal accuracy of RelationQuery
-            for k, v in relation_query_dict.items():
-                relation_query_dict[k] = v + relation_dict[k]
-            test_metrics.update(preds=preds, target=labels)
-            state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
-            relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
-            for task, pred, label in zip(tasks, preds, labels):
-                pred = 1 if pred >= 0.5 else 0
-                # evaluating per task accuracy for each split
-                if not task in task_metric_dict.keys():
-                    task_metric_dict[task] = []
-                task_metric_dict[task].append(1 if pred == label else 0)
-            for task, pred_list in task_metric_dict.items():
-                print('task: {} | accuracy: {}'.format(task, str(np.array(pred_list).sum() / len(pred_list))))
-            for sub_goal, state_list in state_query_dict.items():
-                print('sub-goal: {} | accuracy {}'.format(sub_goal, str(np.array(state_list).sum() / len(state_list))))
-            for sub_goal, relation_list in relation_query_dict.items():
-                print('sub-goal: {} | accuracy {}'.format(sub_goal, str(np.array(relation_list).sum() / len(relation_list))))
-
+            # test_metrics.update(preds=output, target=labels)
+            assert len(axis_stats) == len(preds), "error in one or more t5 graph generations"
+            for ind, axis_stat in enumerate(axis_stats):
+                axis_metrics[axis_stat[0]][axis_stat[1]].update(preds=preds[ind].view(-1),
+                                                                target=labels[ind].view(-1))
+            test_metrics[split_type].update(preds=preds, target=labels)
         dist.barrier()
-        test_acc, test_f1 = test_metrics['Accuracy'].compute(), test_metrics['F1Score'].compute()
-        state_acc, state_f1 = state_query_metrics['Accuracy'].compute(), state_query_metrics['F1Score'].compute()
-        rel_acc, rel_f1 = relation_query_metrics['Accuracy'].compute(), relation_query_metrics['F1Score'].compute()
-        dist.barrier()
-        if is_main_process():
-            print('Test Acc: {} | Test F1: {} | State Acc: {} | State F1: {} | '
-                  'Relation Acc: {} | Relation F1: {}'.format(test_acc, test_f1, state_acc, state_f1, rel_acc, rel_f1))
-            log_file.write('Test Acc: ' + str(test_acc.item()) + ' | Test F1: ' + str(test_f1.item()) + "\n")
-            log_file.flush()
 
 
 def iterate(dataloader):
-    for data_batch, ent_label_batch in tqdm(dataloader):
+    for data_batch, label_batch in tqdm(dataloader):
         # try:
-        yield process_batch(data_batch, ent_label_batch, frames_per_segment=args.fp_seg)
+        yield process_batch(data_batch, label_batch, frames_per_segment=args.fp_seg)
         # except TypeError:
         #     print('Skipping batch')
         #     continue
+
 
 def process_batch(data_batch, label_batch, frames_per_segment):
     hypotheses = []
@@ -81,6 +55,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
     labels = []
     task_types = []
     segment_labs_batch = []
+    axis_stats_batch = []
 
     for filepath, label in zip(data_batch, label_batch):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
@@ -106,6 +81,8 @@ def process_batch(data_batch, label_batch, frames_per_segment):
 
     for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
+        complexity, ordering = task_axis_stats(task_type=traj['task_type'])
+        axis_stats_batch.append((complexity, ordering))
         segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                                          all_arguments[sample_ind],
                                                          positive=True if label == '1' else False)
@@ -123,6 +100,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
                                             finetune=args.finetune).reshape(1, -1, 3 * vid_feat_size)
         b, t, _ = video_frames.shape
         num_segments = math.ceil(t / frames_per_segment)
+
         to_pad = num_segments * frames_per_segment - t
         # zero-padding to match the number of frames per segment
         video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
@@ -135,7 +113,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
         video_frames = torch.cat((video_frames, roi_frames), dim=-1)
         video_features_batch.append(video_frames)
 
-    return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch, task_types
+    return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch, task_types, axis_stats_batch
 
 
 if __name__ == '__main__':
@@ -155,21 +133,6 @@ if __name__ == '__main__':
     dist.barrier()
     ged = GraphEditDistance()
     args = Arguments()
-    # ged = GraphEditDistance()
-    path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
-    ckpt_file = 'nesy_best_{}.pth'.format(str(args.run_id))
-    model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'nesy_log_test_{}.txt'.format(str(args.run_id))
-    logger_path = os.path.join(os.getcwd(), logger_filename)
-    log_file = open(logger_path, "w")
-    log_file.write(str(args) + '\n')
-
-    if args.preprocess:
-        preprocess_dataset(path, args.split_type)
-    test_set = CustomDataset(data_path=path)
-    test_sampler = DistributedSampler(dataset=test_set, shuffle=False)
-    test_loader = DataLoader(test_set, batch_size=args.batch_size, sampler=test_sampler,
-                             num_workers=args.num_workers, shuffle=False)
 
     # text module to generate graph
     max_source_length = 80
@@ -187,29 +150,85 @@ if __name__ == '__main__':
     visual_model.cuda()
     visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
     visual_model = DDP(visual_model, device_ids=[local_rank])
-    visual_model.eval()
+    if not args.finetune:
+        visual_model.eval()
+    else:
+        visual_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('clip'))
 
     _, _, text_feat_size = initiate_text_module(feature_extractor='clip')
     text_model = visual_model  # for clip model
-    text_model.eval()
 
-    hsize = 150  # of the aggregator
-    model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
-    model.load_state_dict(torch.load(model_ckpt_path))
-    model.cuda()
-    # will have unused params for certain samples (StateQuery / RelationQuery)
-    # , find_unused_parameters=True
-    model = DDP(model, device_ids=[local_rank])
-    model.eval()
     metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True),
                                 F1Score(threshold=0.5, dist_sync_on_step=True)]).cuda()
-    test_metrics = metrics.clone(prefix='test_')
-    state_query_metrics = metrics.clone(prefix='state_query_')
-    relation_query_metrics = metrics.clone(prefix='relation_query_')
-    test_model(test_loader)
-    test_metrics.reset()
-    state_query_metrics.reset()
-    relation_query_metrics.reset()
-    cleanup()
-    log_file.close()
+    all_test_splits = ['sub_goal_composition', 'verb_noun_composition',
+                       'context_verb_noun_composition', 'context_goal_composition', 'abstraction']
+
+    # axis metrics measure accuracy and F1 along the axes of complexity and ordering (averaged over different run_ids)
+    axis_metrics = {complexity: {ordering: metrics.clone(prefix='test_')
+                                 for ordering in np.arange(0, 3, 1)} for complexity in np.arange(1, 4, 1)}
+
+    axis_results = {complexity: {ordering: tuple()
+                                 for ordering in np.arange(0, 3, 1)} for complexity in np.arange(1, 4, 1)}
+    # test metrics measure accuracy, F1 for each test split (averaged over different run_ids)
+    test_metrics = {k: metrics.clone(prefix='test_') for k in all_test_splits}
+
+    test_logger = 'nesy_{}_log_test.txt'.format(args.fp_seg)
+    logger_path = os.path.join(os.getcwd(), test_logger)
+    test_log_file = open(logger_path, "w")
+    axes_log_file = 'nesy_{}_axes.pkl'.format(args.fp_seg)
+    axes_log_path = os.path.join(os.getcwd(), axes_log_file)
+    model_val_acc, model_val_f1 = [], []
+
+    for run_id in ['51']:
+        ckpt_file = 'nesy_best_{}.pth'.format(str(args.run_id))
+        model_ckpt_path = os.path.join(os.environ['CKPTS'], ckpt_file)
+        train_log_file = 'nesy_log_{}.txt'.format(str(args.run_id))
+        train_log_path = os.path.join(os.environ['CKPTS'], train_log_file)
+        best_val_acc, best_val_f1 = train_log_process(train_log_path)
+        model_val_acc.append(best_val_acc)
+        model_val_f1.append(best_val_f1)
+
+        hsize = 150
+        model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
+        model.load_state_dict(torch.load(model_ckpt_path))
+        model.cuda()
+        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        model = DDP(model, device_ids=[local_rank])
+        model.eval()
+
+        for split_type in all_test_splits:
+            if is_main_process():
+                print('======== run_id: {} | split type: {} =============='.format(int(run_id), split_type))
+            path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', split_type)
+            if args.preprocess:
+                preprocess_dataset(path, args.split_type)
+            test_set = CustomDataset(data_path=path)
+            test_sampler = DistributedSampler(dataset=test_set, shuffle=False)
+            test_loader = DataLoader(test_set, batch_size=args.batch_size, sampler=test_sampler,
+                                     num_workers=args.num_workers, shuffle=False)
+            test_model(test_loader)
+
+    # dist.barrier()
+    # if is_main_process():
+    for com_key, com_val in axis_metrics.items():
+        for ord_key, ord_val in com_val.items():
+            try:
+                acc, f1 = ord_val['Accuracy'].compute(), ord_val['F1Score'].compute()
+                axis_results[com_key][ord_key] = tuple((acc.item(), f1.item()))
+            except:
+                axis_results[com_key][ord_key] = tuple((0, 0))
+    print('Axis Results: {}'.format(axis_results))
+    pkl.dump(axis_results, open(axes_log_path, 'wb'))
+
+    mean_acc, mean_f1 = str(np.array(model_val_acc).mean()), str(np.array(model_val_f1).mean())
+    print('Split Type: validation | Acc: {} | F1: {}'.format(mean_acc, mean_f1))
+    test_log_file.write('Split: ' + 'validation' + ' | Test Acc: ' + mean_acc + ' | Test F1: ' + mean_f1 + "\n")
+    test_log_file.flush()
+    for split_type in all_test_splits:
+        test_acc, test_f1 = test_metrics[split_type]['Accuracy'].compute(), \
+                            test_metrics[split_type]['F1Score'].compute()
+        print('Split Type: {} | Acc: {} | F1: {}'.format(split_type, str(test_acc.item()), str(test_f1.item())))
+        test_log_file.write('Split: ' + split_type + ' | Test Acc: ' + str(test_acc.item()) + ' | Test F1: ' + str(test_f1.item()) + "\n")
+        test_log_file.flush()
+    test_log_file.close()
     print('Done!')

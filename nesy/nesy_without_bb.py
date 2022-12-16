@@ -71,7 +71,7 @@ def validate(model, val_loader):
         for video_feats, graphs, labels, segment_labs in tqdm(iterate(val_loader, validation=True), desc='Validation'):
             preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
             labels = labels.type(torch.int)
-            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs = \
+            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, _ = \
                 check_alignment(pred_alignment, segment_labs, labels)
             val_metrics.update(preds=preds, target=labels)
             state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
@@ -90,14 +90,15 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
     video_features_batch = []  # transforms + visual model features
     labels = []
     segment_labs_batch = []
+
     for filepath, label in zip(data_batch, label_batch):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
-        if validation:
-            segment_labs, _, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
-                                                             [traj['pddl_params']['object_target']],
-                                                             positive=True if label == '1' else False)
-            segment_labs_batch.append(segment_labs)
-        video_frames = sample_vid(filepath, args.sample_rate)
+        # if validation:  # we are not using roi_bb
+        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
+                                                         [traj['pddl_params']['object_target']],
+                                                         positive=True if label == '1' else False)
+
+        video_frames, _ = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
         video_frames = torch.stack(video_frames).cuda()  # [t, c, h, w]
         # here b=1 since we are processing one video at a time
         video_frames = extract_video_features(video_frames, model=visual_model,
@@ -107,6 +108,11 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
 
         b, t, _ = video_frames.shape
         num_segments = math.ceil(t / frames_per_segment)
+        try:
+            assert num_segments == len(segment_labs), "# video segments != # segment labels"
+        except AssertionError:
+            print('num segments: {} | len(segment_labs): {}'.format(num_segments, len(segment_labs)))
+            continue
         to_pad = num_segments * frames_per_segment - t
         video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
         # [num_segments, frames_per_segment, 512]
@@ -117,6 +123,7 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
         hypotheses.append(traj['template']['neg']) if label == '0' \
             else hypotheses.append(traj['template']['pos'])
         labels.append(float(label))
+        segment_labs_batch.append(segment_labs)
 
     # generate graphs for hypotheses
     with torch.no_grad():
@@ -182,7 +189,7 @@ if __name__ == '__main__':
     max_source_length = 80
     max_target_length = 300
     proscript_model_ckpt_path = os.path.join(os.environ['BASELINES'],
-                                             'proScript/proscript_best_dsl_2.json')
+                                             'proScript/proscript_best_dsl_3.json')
     t5_model = T5ForConditionalGeneration.from_pretrained(proscript_model_ckpt_path)
     t5_model.cuda()
     t5_model = DDP(t5_model, device_ids=[local_rank])

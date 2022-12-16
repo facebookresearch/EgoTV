@@ -26,7 +26,7 @@ def test_model(test_loader):
         for video_feats, graphs, labels, segment_labs in tqdm(iterate(test_loader), desc='Test'):
             preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
             labels = labels.type(torch.int)
-            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs = \
+            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, _ = \
                 check_alignment(pred_alignment, segment_labs, labels)
             test_metrics.update(preds=preds, target=labels)
             state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
@@ -56,12 +56,12 @@ def process_batch(data_batch, label_batch, frames_per_segment):
     for filepath, label in zip(data_batch, label_batch):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
         task_types.append(traj['task_type'])
-        segment_labs, _, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
+        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                                     [traj['pddl_params']['object_target']],
-                                                    positive=True if label == '1' else False)
+                                                    positive=True if label == '1' else False)  # we are not using roi_bb)
 
         segment_labs_batch.append(segment_labs)
-        video_frames = sample_vid(filepath, args.sample_rate)
+        video_frames, _ = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
         video_frames = torch.stack(video_frames).cuda()  # [t, c, h, w]
         # here b=1 since we are processing one video at a time
         video_frames = extract_video_features(video_frames, model=visual_model,
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     max_source_length = 80
     max_target_length = 300
     proscript_model_ckpt_path = os.path.join(os.environ['BASELINES'],
-                                             'proScript/proscript_best_dsl_2.json')
+                                             'proScript/proscript_best_dsl_3.json')
     t5_model = T5ForConditionalGeneration.from_pretrained(proscript_model_ckpt_path)
     t5_model.cuda()
     t5_model = DDP(t5_model, device_ids=[local_rank])

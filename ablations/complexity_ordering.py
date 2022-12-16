@@ -1,16 +1,17 @@
 # measure accuracy and F1 scores over different test splits, run_ids and along different axes of complexity and ordering
+# also calculates mean test results over different runs
 import os
 import sys
 
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
-sys.path.append(os.path.join(os.environ['BASELINES'], 'end2end/violin'))
+sys.path.append(os.path.join(os.environ['BASELINES'], 'end2end'))
 sys.path.append(os.environ['CKPTS'])
 from dataset_utils import *
 from feature_extraction import *
-from end2end.violin.violin_base import ViolinBase
+from end2end.base import ModelBase
 from distributed_utils import *
-from end2end.violin.arguments import Arguments
+from end2end.arguments import Arguments
 import json
 import pickle as pkl
 import numpy as np
@@ -156,16 +157,16 @@ if __name__ == '__main__':
                                                         '_attention' if args.attention else '',
                                                         run_id)
         model_ckpt_path = os.path.join(os.environ['CKPTS'], ckpt_root, ckpt_file)
-        trail_log_file = 'violin_{}_{}{}_log_{}.txt'.format(args.visual_feature_extractor,
+        train_log_file = 'violin_{}_{}{}_log_{}.txt'.format(args.visual_feature_extractor,
                                                             args.text_feature_extractor,
                                                             '_attention' if args.attention else '',
                                                             run_id)
-        train_log_path = os.path.join(os.environ['CKPTS'], ckpt_root, trail_log_file)
+        train_log_path = os.path.join(os.environ['CKPTS'], ckpt_root, train_log_file)
         best_val_acc, best_val_f1 = train_log_process(train_log_path)
         model_val_acc.append(best_val_acc)
         model_val_f1.append(best_val_f1)
 
-        model = ViolinBase(hsize1=hsize1, hsize2=hsize2, embed_size=embed_size, vid_feat_size=vid_feat_size,
+        model = ModelBase(hsize1=hsize1, hsize2=hsize2, embed_size=embed_size, vid_feat_size=vid_feat_size,
                            attention=args.attention)
         model.load_state_dict(torch.load(model_ckpt_path))
         model.cuda()

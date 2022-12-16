@@ -294,10 +294,15 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
     for positively entailed hypotheses
     """
     state_pred_dict = {'heat': [], 'cool': [], 'clean': []}
+    relation_pred_dict = {'pick': [], 'place': [], 'slice': []}
     state_pred_labs, state_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
     relation_pred_labs, relation_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
     for ind, (pred, true) in enumerate(zip(pred_alignment, segment_labels)):
         try:
+            # evaluate statequery and relationquery only for positively entailed hypothesis
+            # for contradictions, since the ground truth segment labels might be completely
+            # different from the predicted alignment with video-segments, it might lead
+            # to misleading results
             if ent_labels[ind].item() == 1:
                 for step in pred:
                     pred_action, query, segment_ind, sub_goal = translate(step)
@@ -311,15 +316,16 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
                             state_pred_dict[sub_goal].append(0)
                     else:  # query == 'RelationQuery'
                         relation_pred_labs.append(torch.tensor(1))
-                        # try:
                         if true[segment_ind] == pred_action:
                             relation_true_labs.append(torch.tensor(1))
+                            relation_pred_dict[sub_goal].append(1)
                         else:
                             relation_true_labs.append(torch.tensor(0))
+                            relation_pred_dict[sub_goal].append(0)
         except KeyError:
             continue
     return torch.stack(state_pred_labs), torch.stack(state_true_labs), \
-           torch.stack(relation_pred_labs), torch.stack(relation_true_labs), state_pred_dict
+           torch.stack(relation_pred_labs), torch.stack(relation_true_labs), state_pred_dict, relation_pred_dict
 
 
 def clean_str(string):

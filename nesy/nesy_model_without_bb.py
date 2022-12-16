@@ -34,17 +34,16 @@ class NeSyBase(nn.Module):
                                     rnn_type="lstm")
         self.text_model = text_model
         self.text_model.eval()
-        # positional encoding
-        # self.positional_encode = PositionalEncoding(num_hiddens=self.vid_embed_size, dropout=0.5)
+        # # positional encoding
+        # self.positional_encode = PositionalEncoding(num_hiddens=2*hsize, dropout=0.5)
         # # multi-headed attention
-        # self.multihead_attn = nn.MultiheadAttention(embed_dim=self.vid_embed_size,
+        # self.multihead_attn = nn.MultiheadAttention(embed_dim=2*hsize,
         #                                             num_heads=8,
         #                                             dropout=0.5,
         #                                             batch_first=True)
 
-        self.num_states = 4  # hot, cold, cleaned, sliced
-        self.num_relations = 2  # InReceptacle, Holds
-
+        # num_states = 4  # hot, cold, cleaned, sliced
+        # num_relations = 2  # InReceptacle, Holds
         self.state_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
                                          nn.ReLU(),
                                          nn.Dropout(0.5),
@@ -53,7 +52,6 @@ class NeSyBase(nn.Module):
                                             nn.ReLU(),
                                             nn.Dropout(0.5),
                                             nn.Linear(hsize, 1))
-
         self.all_sorts = []
 
     def query(self, query_type, seg_text_feats, vid_feature):
@@ -74,6 +72,7 @@ class NeSyBase(nn.Module):
         pred_args = []
         queries = []
         for node in nodes:
+            # 'Step 1 StateQuery(apple,heat)'
             node = re.sub('Step \d+ ', '', node)
             node = re.sub(r"[()]", " ", node).strip().split(" ")
             query_type, pred_arg = node[0], ','.join(node[1:])
@@ -157,8 +156,8 @@ class NeSyBase(nn.Module):
                     # setting the value of the last column
                     if segment_ind == num_segments - 1:
                         logit = self.query(queries[node_ind],
-                                            seg_text_feats[:, node_ind, :],
-                                            vid_feature[:, segment_ind, :])
+                                           seg_text_feats[:, node_ind, :],
+                                           vid_feature[:, segment_ind, :])
                         arr[node_ind][segment_ind] = F.logsigmoid(logit)
                         logits_arr[ind][node_ind][segment_ind] = logit
                         parent_dict[ind][node][segment_ind] = (segment_ind,)
@@ -174,7 +173,7 @@ class NeSyBase(nn.Module):
                         V_opt_next = arr[node_ind][segment_ind + 1]
                         if V_opt_curr >= V_opt_next:
                             arr[node_ind][segment_ind] = V_opt_curr
-                            parent_dict[ind][node][segment_ind] =  (segment_ind,)
+                            parent_dict[ind][node][segment_ind] = (segment_ind,)
                         else:
                             arr[node_ind][segment_ind] = V_opt_next
                             parent_dict[ind][node][segment_ind] = \
@@ -183,13 +182,13 @@ class NeSyBase(nn.Module):
                     # calculating the values of the remaining cells
                     # dp[i][j] = max(query(i,j) + dp[i+1][j], dp[i][j+1])
                     else:
-                        V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind]  # relaxation added
-                        # V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind + 1]  # no relaxation
+                        # V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind]  # relaxation added
+                        V_opt_curr = F.logsigmoid(logit) + arr[node_ind + 1][segment_ind + 1]  # no relaxation
                         V_opt_next = arr[node_ind][segment_ind + 1]
                         if V_opt_curr >= V_opt_next:
                             arr[node_ind][segment_ind] = V_opt_curr
                             parent_dict[ind][node][segment_ind] = \
-                                    (segment_ind,) + parent_dict[ind][sorted_nodes[node_ind + 1]][segment_ind + 1]
+                                (segment_ind,) + parent_dict[ind][sorted_nodes[node_ind + 1]][segment_ind + 1]
                         else:
                             arr[node_ind][segment_ind] = V_opt_next
                             parent_dict[ind][node][segment_ind] = \
@@ -201,10 +200,11 @@ class NeSyBase(nn.Module):
         # TODO: could be more than one optimum paths
         best_alignment = parent_dict[max_sort_ind][all_sorts[max_sort_ind][0]][0]
         aggregated_logits = torch.tensor(0.).cuda()
-
+        # aggregated_logits = []
         # length normalized aggregation of logits
         for i, j in zip(np.arange(num_nodes), best_alignment):
-            aggregated_logits +=  logits_arr[max_sort_ind][i][j] / len(all_sorts[0])
+            aggregated_logits += logits_arr[max_sort_ind][i][j] / len(all_sorts[0])
+            # aggregated_logits.append(logits_arr[max_sort_ind][i][j])
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
 
