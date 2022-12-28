@@ -1,0 +1,1 @@
+Namespace(sample_rate=3, lr=0.001, weight_decay=1e-05, epochs=40, num_workers=4, data_split=0.8, batch_size=64, preprocess=False, split_type='train', local_rank=2, visual_feature_extractor='clip', text_feature_extractor='clip', pretrained_mvit=True, finetune=False, attention=False, resume=False, run_id=1)

@@ -108,7 +108,7 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
                 video_feats = model.module.visual(video_frames).view(-1, feat_size)
         else:
             video_feats = model.module.visual(video_frames).view(-1, feat_size)
-    return video_feats
+    return video_feats.float()
 
 
 def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
@@ -125,14 +125,14 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
                           torch.tensor([len(x) for x in tokenizer_out]).cuda())
         elif feature_extractor == 'clip':
             tokenizer_out = clip.tokenize(hypotheses, truncate=True).cuda()
-            text_feats = model.module.token_embedding(tokenizer_out).type(
-                model.module.dtype)  # [batch_size, n_ctx, dim]
-            text_feats = text_feats + model.module.positional_embedding.type(model.module.dtype)
+            text_feats = model.token_embedding(tokenizer_out).type(
+                model.dtype)  # [batch_size, n_ctx, dim]
+            text_feats = text_feats + model.positional_embedding.type(model.dtype)
             text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
-            text_feats = model.module.transformer(text_feats)
+            text_feats = model.transformer(text_feats)
             text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
-            text_feats = model.module.ln_final(text_feats).type(model.module.dtype)
-            text_feats = text_feats @ model.module.text_projection
+            text_feats = model.ln_final(text_feats).type(model.dtype)
+            text_feats = text_feats @ model.text_projection
             batch_size, _, dim = text_feats.shape
             prev_n_tokens = 20  # data['text'].shape[1]
 
