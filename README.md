@@ -157,7 +157,7 @@ nltk.download('punkt')
 ### Run baselines
 * [baselines/end2end](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/baselines/end2end): for training and testing baseline models
 * [baselines/feature_extraction.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/baselines/feature_extraction.py): intialization and feature extractions for text and visual encoders
-  * text encoders: GloVe, BERT [10], CLIP [5]
+  * text encoders: GloVe, (Distil)-BERT [10], CLIP [5]
   * visual_encoders: ResNet18, I3D [4], S3D [7], MViT [6], CLIP [5]
 ```
 $ cd $BASELINES/end2end
@@ -239,4 +239,5 @@ $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --npro
 [7] Saining Xie, Chen Sun, Jonathan Huang, Zhuowen Tu, Kevin Murphy ["Rethinking Spatiotemporal Feature Learning: Speed-Accuracy Trade-offs in Video Classification"](https://openaccess.thecvf.com/content_ECCV_2018/papers/Saining_Xie_Rethinking_Spatiotemporal_Feature_ECCV_2018_paper.pdf) In ECCV 2018  
 [8] Keisuke Sakaguchi, Chandra Bhagavatula, Ronan Le Bras, Niket Tandon, Peter Clark, Yejin Choi ["proScript: Partially Ordered Scripts Generation"](https://aclanthology.org/2021.findings-emnlp.184/) In Findings of EMNLP 2021  
 [9] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter J. Liu ["Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer"](https://jmlr.org/papers/volume21/20-074/20-074.pdf) In JMLR 2020  
-[10] Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova ["BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"](https://aclanthology.org/N19-1423.pdf) In NAACL-HLT 2019
+[10] Victor Sanh, Lysandre Debut, Julien Chaumond, Thomas Wolf ["DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter"](https://arxiv.org/abs/1910.01108)
+[11] Jeffrey Pennington, Richard Socher, Christopher Manning ["GloVe: Global Vectors for Word Representation"](https://aclanthology.org/D14-1162/) In EMNLP 2014
