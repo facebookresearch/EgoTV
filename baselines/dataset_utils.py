@@ -143,7 +143,7 @@ def sample_vid_with_roi(filename, sample_rate, bboxes):
     return video_frames, roi
 
 
-def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_args, positive=False, supervised=True):
+def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_args, supervised=True):
     """
     used for supervised NeSy model
     returns:
@@ -157,15 +157,27 @@ def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_a
     segment_args = []
 
     # extract label, bbox per frame based on sample_rate
-    for ind, x in enumerate(trajectory['images']):
+    for ind, img_dict in enumerate(trajectory['images']):
         if ind % sample_rate == 0:
-            count_labs.append(x['high_idx'])
-        bb_dict = x['bbox']
+            count_labs.append(img_dict['high_idx'])
+            # get low_action and high_action index for each image frame
+        action_idx = img_dict['low_idx']
         bb = []
         for action_arg in action_args:
-            for obj_id, bbox in bb_dict.items():
-                if action_arg.lower() in obj_id.lower():
-                    bb.append(bbox)
+            for key, bbox in img_dict['bbox'].items():
+                obj_name_from_key = key.split('|')[0].strip().split('.')[0]
+                # if any of the action argument objects match the obj key
+                if action_arg.lower() in obj_name_from_key.lower():
+                    # get the visibility state of the object for the corresponding image frame
+                    # objects not visible in the current frame are discarded
+                    try:
+                        state = [y for y in trajectory['plan']['low_actions'][action_idx]['state_metadata']
+                                   if y['objectType'].lower() == obj_name_from_key.lower()][0]
+                        if state['visible']:
+                            bb.append(bbox)
+                    except IndexError:
+                         # print(action_arg, obj_name_from_key.lower())
+                         continue
         if len(bb) != 0:
             # TODO: selecting a fixed number of objects may lead to discarding useful info
             roi_bb.append(bb[:3])
@@ -181,13 +193,13 @@ def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_a
             max_lab = max(Counter(count_labs[split_ind:len(count_labs)]).items(), key=itemgetter(1))[0]
         else:
             max_lab = max(Counter(count_labs[split_ind:split_ind + frames_per_segment]).items(), key=itemgetter(1))[0]
-        if not positive:
-            action = random.sample(['HeatObject', 'SliceObject', 'CoolObject',
-                                    'CleanObject', 'PutObject', 'PickupObject', 'GotoLocation'], 1)[0]
-        else:
-            discrete_action = trajectory['plan']['high_pddl'][max_lab]['discrete_action']
-            # TODO: consider ['args'][1] for receptacle for putObject
-            action = discrete_action['action']
+        # if not positive:
+        #     action = random.sample(['HeatObject', 'SliceObject', 'CoolObject',
+        #                             'CleanObject', 'PutObject', 'PickupObject', 'GotoLocation'], 1)[0]
+        # else:
+        discrete_action = trajectory['plan']['high_pddl'][max_lab]['discrete_action']
+        # TODO: consider ['args'][1] for receptacle for putObject
+        action = discrete_action['action']
         segment_args.append(action + ' ' + ' '.join(action_args))
         action_labs.append(action)
 
@@ -288,44 +300,65 @@ def translate(step):
                      'place': 'PutObject', 'pick': 'PickupObject'}
     return arg_translate[split_text[-1]], query, segment_ind, split_text[-1]
 
+
+def action2index(action):
+    listOfActions = ['HeatObject', 'CoolObject','SliceObject', 'CleanObject', 'PutObject', 'Other']
+    if action in listOfActions:
+        return torch.tensor(listOfActions.index(action), dtype=torch.float)
+    else:
+        return torch.tensor(listOfActions.index('Other'), dtype=torch.float)
+
+
 def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List], ent_labels):
     """
     checks if the predicted (dynamic programming-based) alignment is correct
     for positively entailed hypotheses
     """
-    state_pred_dict = {'heat': [], 'cool': [], 'clean': []}
-    relation_pred_dict = {'pick': [], 'place': [], 'slice': []}
-    state_pred_labs, state_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
-    relation_pred_labs, relation_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
+    preds_cf = [torch.tensor(1.)]
+    true_cf = [torch.tensor(1.)]
     for ind, (pred, true) in enumerate(zip(pred_alignment, segment_labels)):
         try:
-            # evaluate statequery and relationquery only for positively entailed hypothesis
-            # for contradictions, since the ground truth segment labels might be completely
-            # different from the predicted alignment with video-segments, it might lead
-            # to misleading results
             if ent_labels[ind].item() == 1:
                 for step in pred:
-                    pred_action, query, segment_ind, sub_goal = translate(step)
-                    if query == 'StateQuery':
-                        state_pred_labs.append(torch.tensor(1.))
-                        if true[segment_ind] == pred_action:
-                            state_true_labs.append(torch.tensor(1))
-                            state_pred_dict[sub_goal].append(1)
-                        else:
-                            state_true_labs.append(torch.tensor(0))
-                            state_pred_dict[sub_goal].append(0)
-                    else:  # query == 'RelationQuery'
-                        relation_pred_labs.append(torch.tensor(1))
-                        if true[segment_ind] == pred_action:
-                            relation_true_labs.append(torch.tensor(1))
-                            relation_pred_dict[sub_goal].append(1)
-                        else:
-                            relation_true_labs.append(torch.tensor(0))
-                            relation_pred_dict[sub_goal].append(0)
+                    pred_action, query, segment_ind, pred_sub_goal = translate(step)
+                    preds_cf.append(action2index(pred_action))
+                    true_cf.append(action2index(true[segment_ind]))
         except KeyError:
             continue
-    return torch.stack(state_pred_labs), torch.stack(state_true_labs), \
-           torch.stack(relation_pred_labs), torch.stack(relation_true_labs), state_pred_dict, relation_pred_dict
+    return torch.stack(preds_cf), torch.stack(true_cf)
+
+    # state_pred_dict = {'heat': [], 'cool': [], 'clean': []}
+    # relation_pred_dict = {'pick': [], 'place': [], 'slice': []}
+    # state_pred_labs, state_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
+    # relation_pred_labs, relation_true_labs = [torch.tensor(1.)], [torch.tensor(1)]
+    # for ind, (pred, true) in enumerate(zip(pred_alignment, segment_labels)):
+    #     try:
+    #         # evaluate statequery and relationquery only for positively entailed hypothesis
+    #         # for contradictions, since the ground truth segment labels might be completely
+    #         # different from the predicted alignment with video-segments, it might lead
+    #         # to misleading results
+    #         if ent_labels[ind].item() == 1:
+    #
+    #                 if query == 'StateQuery':
+    #                     state_pred_labs.append(torch.tensor(1.))
+    #                     if true[segment_ind] == pred_action:
+    #                         state_true_labs.append(torch.tensor(1))
+    #                         state_pred_dict[sub_goal].append(1)
+    #                     else:
+    #                         state_true_labs.append(torch.tensor(0))
+    #                         state_pred_dict[sub_goal].append(0)
+    #                 else:  # query == 'RelationQuery'
+    #                     relation_pred_labs.append(torch.tensor(1))
+    #                     if true[segment_ind] == pred_action:
+    #                         relation_true_labs.append(torch.tensor(1))
+    #                         relation_pred_dict[sub_goal].append(1)
+    #                     else:
+    #                         relation_true_labs.append(torch.tensor(0))
+    #                         relation_pred_dict[sub_goal].append(0)
+    #     except KeyError:
+    #         continue
+    # return torch.stack(state_pred_labs), torch.stack(state_true_labs), \
+    #        torch.stack(relation_pred_labs), torch.stack(relation_true_labs), state_pred_dict, relation_pred_dict
 
 
 def clean_str(string):

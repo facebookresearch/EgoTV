@@ -1,7 +1,8 @@
 import os
 import sys
-os.environ['DATA_ROOT'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred/gen/dataset'
-os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/baselines'
+# os.environ['DATA_ROOT'] = '/home/rishihazra/Thor'
+os.environ['DATA_ROOT'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred/gen/dataset'
+os.environ['BASELINES'] = '/home/rishihazra/PycharmProjects/VisionLangaugeGrounding/baselines'
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from proScript.utils import GraphEditDistance
@@ -18,7 +19,7 @@ from tqdm import tqdm
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import random_split
-from torchmetrics import MetricCollection, Accuracy, F1Score
+from torchmetrics import MetricCollection, Accuracy, F1Score, ConfusionMatrix
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
 
@@ -29,10 +30,9 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
     train_loss = []
     for video_feats, graphs, labels, segment_labs in tqdm(iterate(train_loader), desc='Train'):
         preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
-        state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs = \
-            check_alignment(pred_alignment, segment_labs, labels)
-        state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
-        relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
+        action_pred_labs, action_true_labs = check_alignment(pred_alignment, segment_labs, labels)
+        action_query_metrics.update(preds=action_pred_labs, target=action_true_labs)
+        # relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
         loss = bce_loss(preds, labels)
         optimizer.zero_grad()
         loss.backward()
@@ -41,9 +41,14 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
         labels = labels.type(torch.int)
         train_metrics.update(preds=preds, target=labels)
 
-    acc, f1 = train_metrics['Accuracy'].compute(), train_metrics['F1Score'].compute()
-    state_acc, state_f1 = state_query_metrics['Accuracy'].compute(), state_query_metrics['F1Score'].compute()
-    rel_acc, rel_f1 = relation_query_metrics['Accuracy'].compute(), relation_query_metrics['F1Score'].compute()
+    acc, f1 = list(train_metrics.compute().values())
+    action_cf = torch.cat(list(action_query_metrics.compute().values()))
+    np.savetxt(cf_path, action_cf.numpy(), fmt='%d')
+    # print(action_cf.numpy())
+    # action_acc, state_f1 = list(action_query_metrics.compute().values())
+    # relation_acc, relation_f1 = list(relation_query_metrics.compute().values())
+    # state_acc, state_f1 = state_query_metrics['MulticlassAccuracy'].compute(), state_query_metrics['MulticlassF1Score'].compute()
+    # rel_acc, rel_f1 = relation_query_metrics['MulticlassAccuracy'].compute(), relation_query_metrics['MulticlassF1Score'].compute()
     print('Train Loss: {}'.format(np.array(train_loss).mean()))
     # dist.barrier()
     val_acc, val_f1 = validate(model, val_loader=val_loader)
@@ -68,11 +73,12 @@ def validate(model, val_loader):
     model.eval()
     visual_model.eval()
     with torch.no_grad():
-        for video_feats, graphs, labels in tqdm(iterate(val_loader), desc='Validation'):
+        for video_feats, graphs, labels, _ in tqdm(iterate(val_loader), desc='Validation'):
             preds, labels = model(video_feats, graphs, labels)
             labels = labels.type(torch.int)
             val_metrics.update(preds=preds, target=labels)
-    return val_metrics['Accuracy'].compute(), val_metrics['F1Score'].compute()
+    return list(val_metrics.compute().values())
+    # return val_metrics['BinaryAccuracy'].compute(), val_metrics['BinaryF1Score'].compute()
 
 
 def iterate(dataloader):
@@ -107,8 +113,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
     all_arguments = retrieve_query_args(graphs_batch[0])  # retrieve query arguments from the graph batch
     for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
         segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
-                                                         all_arguments[sample_ind],
-                                                         positive=True if label == '1' else False)
+                                                         all_arguments[sample_ind])
         segment_labs_batch.append(segment_labs)
         video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
         video_frames, roi_frames = torch.stack(video_frames), torch.stack(roi_frames)  # [t, c, h, w]
@@ -152,7 +157,9 @@ if __name__ == '__main__':
     ckpt_file = 'nesy_best_{}.pth'.format(str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
     logger_filename = 'nesy_log_{}.txt'.format(str(args.run_id))
+    cf_filename = 'confusionMat_{}.txt'.format(str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
+    cf_path = os.path.join(os.getcwd(), cf_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
 
@@ -161,7 +168,8 @@ if __name__ == '__main__':
     dataset = CustomDataset(data_path=path)
     train_size = int(args.data_split * len(dataset))
     val_size = len(dataset) - train_size
-    train_set, val_set = random_split(dataset, [train_size, val_size])
+    train_set, val_set1 = random_split(dataset, [train_size, val_size])
+    _, val_set = random_split(val_set1, [len(val_set1) - 128, 128])
     # train_sampler, val_sampler = DistributedSampler(dataset=train_set, shuffle=True), \
     #                              DistributedSampler(dataset=val_set, shuffle=True)
     train_loader, val_loader = DataLoader(train_set, batch_size=args.batch_size,
@@ -173,7 +181,7 @@ if __name__ == '__main__':
     max_source_length = 80
     max_target_length = 300
     proscript_model_ckpt_path = os.path.join(os.environ['BASELINES'],
-                                             'proScript/proscript_best_dsl_2.json')
+                                             'proScript/proscript_best_dsl_3.json')
     t5_model = T5ForConditionalGeneration.from_pretrained(proscript_model_ckpt_path)
     # t5_model.cuda()
     # t5_model = DDP(t5_model, device_ids=[local_rank])
@@ -190,19 +198,21 @@ if __name__ == '__main__':
     _, _, text_feat_size = initiate_text_module(feature_extractor='clip')
     text_model = visual_model  # for clip model
 
-    hsize = 150
+    hsize = 160
     model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
     all_params = list(model.parameters())
     if args.finetune:
         all_params += list(visual_model.parameters())
     optimizer = optim.Adam(all_params, lr=args.lr, weight_decay=args.weight_decay)
     bce_loss = nn.BCELoss()
-    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True),
-                                F1Score(threshold=0.5, dist_sync_on_step=True)])
+    metrics = MetricCollection([Accuracy(dist_sync_on_step=True, task='binary'),
+                                F1Score(dist_sync_on_step=True, task='binary')])
     train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
-    state_query_metrics = metrics.clone(prefix='state_query_')
-    relation_query_metrics = metrics.clone(prefix='relation_query_')
+
+    metrics_multiclass = MetricCollection([ConfusionMatrix(dist_sync_on_step=True, task='multiclass', num_classes=6)])
+    action_query_metrics = metrics_multiclass.clone(prefix='action_query_')
+    # relation_query_metrics = metrics_multiclass.clone(prefix='relation_query_')
 
     best_acc = 0.
     for epoch in range(1, args.epochs+1):
@@ -212,8 +222,8 @@ if __name__ == '__main__':
         best_acc = train_epoch(model, train_loader, val_loader, epoch=epoch, previous_best_acc=best_acc)
         train_metrics.reset()
         val_metrics.reset()
-        state_query_metrics.reset()
-        relation_query_metrics.reset()
+        action_query_metrics.reset()
+        # relation_query_metrics.reset()
     # cleanup()
     log_file.close()
     print('Done!')

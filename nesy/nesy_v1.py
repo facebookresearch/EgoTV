@@ -16,7 +16,7 @@ import numpy as np
 from tqdm import tqdm
 import torch.optim as optim
 import torch.nn as nn
-from torchmetrics import MetricCollection, Accuracy, F1Score
+from torchmetrics import MetricCollection, Accuracy, F1Score, ConfusionMatrix
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -39,24 +39,22 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
         labels = labels.type(torch.int)
         train_metrics.update(preds=preds, target=labels)
 
-    acc, f1 = train_metrics['Accuracy'].compute(), train_metrics['F1Score'].compute()
+    acc, f1 = list(train_metrics.compute().values())
     print('Train Loss: {}'.format(np.array(train_loss).mean()))
     dist.barrier()
-    val_acc, val_f1, state_acc, state_f1, rel_acc, rel_f1 = validate(model, val_loader=val_loader)
+    (val_acc, val_f1), action_cf = validate(model, val_loader=val_loader)
     dist.barrier()
     if is_main_process():
-        print('Epoch: {} | Train Acc: {} | Val Acc: {} | Train F1: {} | Val F1: {} | State Acc: {} | State F1: {} | '
-                  'Relation Acc: {} | Relation F1: {}'.format(epoch, acc, val_acc, f1, val_f1, state_acc,
-                                                              state_f1, rel_acc, rel_f1))
+        print('Epoch: {} | Train Acc: {} | Val Acc: {} | Train F1: {} | Val F1: {}'.format(
+            epoch, acc, val_acc, f1, val_f1))
         log_file.write('Epoch: ' + str(epoch) + ' | Train Acc: ' + str(acc.item()) +
                        ' | Val Acc: ' + str(val_acc.item()) + ' | Train F1: ' + str(f1.item()) +
-                       ' | Val F1: ' + str(val_f1.item()) +
-                       ' | State Acc: ' + str(state_acc.item()) + ' | State F1: ' + str(state_f1.item()) +
-                       ' | Relation Acc: ' + str(rel_acc.item()) + ' | Relation F1: ' + str(rel_f1.item()) + "\n")
+                       ' | Val F1: ' + str(val_f1.item()) + "\n")
         if val_acc > torch.tensor(previous_best_acc):
             previous_best_acc = val_acc.item()
             print('============== Saving best model(s) ================')
             torch.save(model.module.state_dict(), model_ckpt_path)
+            np.savetxt(cf_path, torch.cat(action_cf).cpu().numpy(), fmt='%d')
             if args.finetune:
                 torch.save(visual_model.module.state_dict(), visual_model_ckpt_path)
         log_file.flush()
@@ -71,14 +69,12 @@ def validate(model, val_loader):
         for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(val_loader, validation=True), desc='Validation'):
             preds, labels, pred_alignment, tasks = model(video_feats, graphs, labels, task_types, train=False)
             labels = labels.type(torch.int)
-            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, _, _ = \
-                check_alignment(pred_alignment, segment_labs, labels)
+            action_pred_labs, action_true_labs = check_alignment(pred_alignment, segment_labs, labels)
             val_metrics.update(preds=preds, target=labels)
-            state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
-            relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
-    return val_metrics['Accuracy'].compute(), val_metrics['F1Score'].compute(), \
-           state_query_metrics['Accuracy'].compute(), state_query_metrics['F1Score'].compute(), \
-           relation_query_metrics['Accuracy'].compute(), relation_query_metrics['F1Score'].compute()
+            action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
+    return list(val_metrics.compute().values()), list(action_query_metrics.compute().values())
+           # state_query_metrics['MulticlassAccuracy'].compute(), state_query_metrics['MulticlassF1Score'].compute(), \
+           # relation_query_metrics['MulticlassAccuracy'].compute(), relation_query_metrics['MulticlassF1Score'].compute()
 
 
 def iterate(dataloader, validation=False):
@@ -118,13 +114,11 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
         if validation:
             segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
-                                                             all_arguments[sample_ind],
-                                                             positive=True if label == '1' else False)
+                                                             all_arguments[sample_ind])
             segment_labs_batch.append(segment_labs)
         else:
             roi_bb = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                             all_arguments[sample_ind],
-                                            positive=True if label == '1' else False,
                                             supervised=False)
         video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
         video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
@@ -186,6 +180,8 @@ if __name__ == '__main__':
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
+    cf_filename = 'confusionMat_{}.txt'.format(str(args.run_id))
+    cf_path = os.path.join(os.getcwd(), cf_filename)
 
     if args.preprocess:
         preprocess_dataset(path, args.split_type)
@@ -237,12 +233,14 @@ if __name__ == '__main__':
         all_params += list(visual_model.parameters())
     optimizer = optim.Adam(all_params, lr=args.lr, weight_decay=args.weight_decay)
     bce_loss = nn.BCELoss()
-    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True),
-                                F1Score(threshold=0.5, dist_sync_on_step=True)]).cuda()
+    metrics = MetricCollection([Accuracy(dist_sync_on_step=True, task='binary'),
+                                F1Score(dist_sync_on_step=True, task='binary')]).cuda()
     train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
-    state_query_metrics = metrics.clone(prefix='state_query_')
-    relation_query_metrics = metrics.clone(prefix='relation_query_')
+
+    metrics_multiclass = MetricCollection([ConfusionMatrix(dist_sync_on_step=True,
+                                                           task='multiclass', num_classes=6)]).cuda()
+    action_query_metrics = metrics_multiclass.clone(prefix='action_query_')
 
     best_acc = 0.
     for epoch in range(1, args.epochs+1):
@@ -252,8 +250,7 @@ if __name__ == '__main__':
         best_acc = train_epoch(model, train_loader, val_loader, epoch=epoch, previous_best_acc=best_acc)
         train_metrics.reset()
         val_metrics.reset()
-        state_query_metrics.reset()
-        relation_query_metrics.reset()
+        action_query_metrics.reset()
     cleanup()
     log_file.close()
     print('Done!')

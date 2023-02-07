@@ -15,7 +15,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
-from torchmetrics import MetricCollection, Accuracy, F1Score
+from torchmetrics import MetricCollection, Accuracy, F1Score, ConfusionMatrix
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -23,47 +23,23 @@ from torch.utils.data.distributed import DistributedSampler
 
 
 def test_model(test_loader):
-    task_metric_dict = {}
-    state_query_dict = {'heat': [], 'cool': [], 'clean': []}
-    relation_query_dict = {'pick': [], 'place': [], 'slice': []}
     with torch.no_grad():
         for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(test_loader), desc='Test'):
             preds, labels, pred_alignment, tasks = model(video_feats, graphs, labels, task_types, train=False)
             labels = labels.type(torch.int)
-            state_pred_labs, state_true_labs, relation_pred_labs, relation_true_labs, state_dict, relation_dict = \
+            action_pred_labs, action_true_labs = \
                 check_alignment(pred_alignment, segment_labs, labels)
-
-            # evaluating sub-goal accuracy of StateQuery
-            for k, v in state_query_dict.items():
-                state_query_dict[k] = v + state_dict[k]
-            # evaluating sub-goal accuracy of RelationQuery
-            for k, v in relation_query_dict.items():
-                relation_query_dict[k] = v + relation_dict[k]
-            test_metrics.update(preds=preds, target=labels)
-            state_query_metrics.update(preds=state_pred_labs, target=state_true_labs)
-            relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
-            for task, pred, label in zip(tasks, preds, labels):
-                pred = 1 if pred >= 0.5 else 0
-                # evaluating per task accuracy for each split
-                if not task in task_metric_dict.keys():
-                    task_metric_dict[task] = []
-                task_metric_dict[task].append(1 if pred == label else 0)
-            for task, pred_list in task_metric_dict.items():
-                print('task: {} | accuracy: {}'.format(task, str(np.array(pred_list).sum() / len(pred_list))))
-            for sub_goal, state_list in state_query_dict.items():
-                print('sub-goal: {} | accuracy {}'.format(sub_goal, str(np.array(state_list).sum() / len(state_list))))
-            for sub_goal, relation_list in relation_query_dict.items():
-                print('sub-goal: {} | accuracy {}'.format(sub_goal, str(np.array(relation_list).sum() / len(relation_list))))
+            action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
 
         dist.barrier()
-        test_acc, test_f1 = test_metrics['Accuracy'].compute(), test_metrics['F1Score'].compute()
-        state_acc, state_f1 = state_query_metrics['Accuracy'].compute(), state_query_metrics['F1Score'].compute()
-        rel_acc, rel_f1 = relation_query_metrics['Accuracy'].compute(), relation_query_metrics['F1Score'].compute()
+        test_acc, test_f1 = list(test_metrics.compute().values())
+        action_cf = torch.cat(list(action_query_metrics.compute().values()))
         dist.barrier()
         if is_main_process():
-            print('Test Acc: {} | Test F1: {} | State Acc: {} | State F1: {} | '
-                  'Relation Acc: {} | Relation F1: {}'.format(test_acc, test_f1, state_acc, state_f1, rel_acc, rel_f1))
+            print('Test Acc: {} | Test F1: {}'.format(test_acc, test_f1))
             log_file.write('Test Acc: ' + str(test_acc.item()) + ' | Test F1: ' + str(test_f1.item()) + "\n")
+            print(action_cf)
+            np.savetxt(cf_path, action_cf.cpu().numpy(), fmt='%d')
             log_file.flush()
 
 
@@ -107,8 +83,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
     for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
         segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
-                                                         all_arguments[sample_ind],
-                                                         positive=True if label == '1' else False)
+                                                         all_arguments[sample_ind])
         segment_labs_batch.append(segment_labs)
         video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
         video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
@@ -163,6 +138,8 @@ if __name__ == '__main__':
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
+    cf_filename = 'confusionMat_test_{}.txt'.format(str(args.run_id))
+    cf_path = os.path.join(os.getcwd(), cf_filename)
 
     if args.preprocess:
         preprocess_dataset(path, args.split_type)
@@ -201,15 +178,16 @@ if __name__ == '__main__':
     # , find_unused_parameters=True
     model = DDP(model, device_ids=[local_rank])
     model.eval()
-    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True),
-                                F1Score(threshold=0.5, dist_sync_on_step=True)]).cuda()
+    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True, task='binary'),
+                                F1Score(threshold=0.5, dist_sync_on_step=True, task='binary')]).cuda()
     test_metrics = metrics.clone(prefix='test_')
-    state_query_metrics = metrics.clone(prefix='state_query_')
-    relation_query_metrics = metrics.clone(prefix='relation_query_')
+
+    metrics_multiclass = MetricCollection([ConfusionMatrix(dist_sync_on_step=True,
+                                                           task='multiclass', num_classes=6)]).cuda()
+    action_query_metrics = metrics_multiclass.clone(prefix='action_query_')
     test_model(test_loader)
     test_metrics.reset()
-    state_query_metrics.reset()
-    relation_query_metrics.reset()
+    action_query_metrics.reset()
     cleanup()
     log_file.close()
     print('Done!')

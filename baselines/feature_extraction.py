@@ -125,14 +125,14 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
                           torch.tensor([len(x) for x in tokenizer_out]).cuda())
         elif feature_extractor == 'clip':
             tokenizer_out = clip.tokenize(hypotheses, truncate=True).cuda()
-            text_feats = model.token_embedding(tokenizer_out).type(
-                model.dtype)  # [batch_size, n_ctx, dim]
-            text_feats = text_feats + model.positional_embedding.type(model.dtype)
+            text_feats = model.module.token_embedding(tokenizer_out).type(
+                model.module.dtype)  # [batch_size, n_ctx, dim]
+            text_feats = text_feats + model.module.positional_embedding.type(model.module.dtype)
             text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
-            text_feats = model.transformer(text_feats)
+            text_feats = model.module.transformer(text_feats)
             text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
-            text_feats = model.ln_final(text_feats).type(model.dtype)
-            text_feats = text_feats @ model.text_projection
+            text_feats = model.module.ln_final(text_feats).type(model.module.dtype)
+            text_feats = text_feats @ model.module.text_projection
             batch_size, _, dim = text_feats.shape
             prev_n_tokens = 20  # data['text'].shape[1]
 
@@ -149,6 +149,7 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
             text_feats = (new_text.float(),
                           new_text_length)
         # elif feature_extractor == 'clip':
+        #     tokenizer_out = clip.tokenize(hypotheses, truncate=True)
         #     tokenizer_out = clip.tokenize(hypotheses, truncate=True)
         #     text_feats = model.token_embedding(tokenizer_out).type(
         #         model.dtype)  # [batch_size, n_ctx, dim]

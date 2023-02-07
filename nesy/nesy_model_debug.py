@@ -9,6 +9,7 @@ from feature_extraction import extract_text_features
 
 class PositionalEncoding(nn.Module):
     """Positional encoding."""
+
     def __init__(self, num_hiddens, dropout, max_len=1000):
         super().__init__()
         self.dropout = nn.Dropout(dropout)
@@ -36,12 +37,12 @@ class NeSyBase(nn.Module):
         self.text_model = text_model
 
         # positional encoding
-        # self.positional_encode = PositionalEncoding(num_hiddens=self.vid_embed_size, dropout=0.5)
-        # # multi-headed attention
-        # self.multihead_attn = nn.MultiheadAttention(embed_dim=self.vid_embed_size,
-        #                                             num_heads=8,
-        #                                             dropout=0.5,
-        #                                             batch_first=True)
+        self.positional_encode = PositionalEncoding(num_hiddens=2 * hsize, dropout=0.5)
+        # multi-headed attention
+        self.multihead_attn = nn.MultiheadAttention(embed_dim=2 * hsize,
+                                                    num_heads=8,
+                                                    dropout=0.5,
+                                                    batch_first=True)
 
         self.num_states = 4  # hot, cold, cleaned, sliced
         self.num_relations = 2  # InReceptacle, Holds
@@ -155,9 +156,9 @@ class NeSyBase(nn.Module):
 
                     if segment_ind == num_segments - 1:
                         logit = self.query(queries[node_ind],
-                                            seg_text_feats[:, node_ind, :],
-                                            vid_feature[:, segment_ind, :])
-                        arr[node_ind][segment_ind] =  F.logsigmoid(logit)
+                                           seg_text_feats[:, node_ind, :],
+                                           vid_feature[:, segment_ind, :])
+                        arr[node_ind][segment_ind] = F.logsigmoid(logit)
                         logits_arr[ind][node_ind][segment_ind] = logit
                         parent_dict[ind][node][segment_ind] = (segment_ind,)
                         continue
@@ -170,7 +171,7 @@ class NeSyBase(nn.Module):
                         V_opt_next = arr[node_ind][segment_ind + 1]
                         if V_opt_curr >= V_opt_next:
                             arr[node_ind][segment_ind] = V_opt_curr
-                            parent_dict[ind][node][segment_ind] =  (segment_ind,)
+                            parent_dict[ind][node][segment_ind] = (segment_ind,)
                         else:
                             arr[node_ind][segment_ind] = V_opt_next
                             parent_dict[ind][node][segment_ind] = \
@@ -182,7 +183,7 @@ class NeSyBase(nn.Module):
                         if V_opt_curr >= V_opt_next:
                             arr[node_ind][segment_ind] = V_opt_curr
                             parent_dict[ind][node][segment_ind] = \
-                                    (segment_ind,) + parent_dict[ind][sorted_nodes[node_ind + 1]][segment_ind + 1]
+                                (segment_ind,) + parent_dict[ind][sorted_nodes[node_ind + 1]][segment_ind + 1]
                         else:
                             arr[node_ind][segment_ind] = V_opt_next
                             parent_dict[ind][node][segment_ind] = \
@@ -190,12 +191,12 @@ class NeSyBase(nn.Module):
                     logits_arr[ind][node_ind][segment_ind] = logit
 
             max_arr[ind] = arr[0][0]
-        max_sort_ind = np.array(max_arr).argmax()
+        max_sort_ind = torch.tensor(max_arr).argmax()
         # TODO: could be more than one optimum paths
         best_alignment = parent_dict[max_sort_ind][all_sorts[max_sort_ind][0]][0]
         aggregated_logits = torch.tensor(0.)
         for i, j in zip(np.arange(num_nodes), best_alignment):
-            aggregated_logits +=  logits_arr[max_sort_ind][i][j]
+            aggregated_logits += logits_arr[max_sort_ind][i][j]
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
 
@@ -210,17 +211,17 @@ class NeSyBase(nn.Module):
             vid_lens = torch.full((b,), vid_len)
             _, vid_feat = self.vid_ctx_rnn(vid_feat, vid_lens)  # aggregate
             vid_feat = vid_feat.unsqueeze(0)  # [1, num_segments, 512]
-            #  vid_feat = [num_segments, 2*hsize]
-            # vid_feat = self.positional_encode(vid_feat.unsqueeze(0))
+            # vid_feat: [num_segments, 2*hsize]
+            vid_feat = self.positional_encode(vid_feat)
             # integrating temporal component into each segment encoding
-            # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
+            vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
 
             # dynamic programming
             try:
                 all_sorts = NeSyBase.all_topo_sorts(graph)
                 sorted_seq_ind, best_score, best_alignment, aligned_aggregated = self.dp_align(all_sorts, vid_feat)
                 pred_alignments.append(best_alignment)
-            except:
+            except:  #TODO: too broad exception clause
                 print(hypothesis)
                 print(GraphEditDistance.nx_to_string(graph))
                 continue
