@@ -98,10 +98,10 @@ class CLIP4Clip(nn.Module):
             else:
                 vid_feat_agg = self._mean_pooling_for_similarity_visual(vid_feats)  # [b, 512]
 
-            vid_feat_agg /= vid_feat_agg.norm(dim=-1, keepdim=True)
+            vid_feat_normed = vid_feat_agg / vid_feat_agg.norm(dim=-1, keepdim=True)
             # text_feats = [b, 512]
-            text_feats /= text_feats.norm(dim=-1, keepdim=True)
-            return torch.sigmoid((vid_feat_agg * text_feats).sum(dim=-1)).unsqueeze(-1)
+            text_feats_normed = text_feats / text_feats.norm(dim=-1, keepdim=True)
+            return torch.sigmoid((vid_feat_normed * text_feats_normed).sum(dim=-1))
 
         elif self.sim_type == 'tightTransfer':  # tight similarity
             text_feats = text_feats.view(batch_size, 1, self.embed_size)
@@ -109,4 +109,4 @@ class CLIP4Clip(nn.Module):
             concat_feat = self.positional_encode(concat_feat)
             concat_feat = self.type_encode(concat_feat, text_feats, vid_feats)
             concat_feat = self.multihead_attn(concat_feat, concat_feat, concat_feat, need_weights=False)[0]
-            return self.similarity_dense(self.pooler(concat_feat))
+            return self.similarity_dense(self.pooler(concat_feat)).squeeze(-1)

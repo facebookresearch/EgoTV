@@ -173,7 +173,8 @@ if __name__ == '__main__':
     visual_model, vid_feat_size = initiate_visual_module(args.visual_feature_extractor,
                                                          args.pretrained_mvit)
     visual_model.cuda()
-    visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
+    if args.visual_feature_extractor not in ['clip', 'mvit']:
+        visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
     visual_model = DDP(visual_model, device_ids=[local_rank])
     if not args.finetune:
         visual_model.eval()

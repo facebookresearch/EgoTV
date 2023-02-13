@@ -87,9 +87,9 @@ def process_batch(data_batch, label_batch):
 
         # ============ sampling frames from the video ============ #
         video_frames = sample_vid(filepath, args.sample_rate)
-        video_frames = torch.stack(video_frames).cuda().half() # [t, c, h, w]
+        video_frames = torch.stack(video_frames).cuda() # [t, c, h, w]
         # ============ process image features using clip ============ #
-        video_feats = clip_model.module.encode_image(video_frames)  # [max_seq_len, batch_size, embed_dim]
+        video_feats = clip_model.module.encode_image(video_frames).float() # [max_seq_len, batch_size, embed_dim]
         video_feat_batch.append(video_feats)
         vid_lengths.append(len(video_feats))
 
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     # CLIP4Clip model (https://github.com/ArrowLuo/CLIP4Clip)
     clip_model, _ =  clip.load("ViT-B/32")
     clip_model.cuda()
-    clip_model = nn.SyncBatchNorm.convert_sync_batchnorm(clip_model)
+    # clip_model = nn.SyncBatchNorm.convert_sync_batchnorm(clip_model)
     clip_model = DDP(clip_model, device_ids=[local_rank])
     if not args.finetune:
         clip_model.eval()
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     if args.resume:  # to resume from a previously stored checkpoint
         clip4clip_model.load_state_dict(torch.load(model_ckpt_path))
     clip4clip_model.cuda()
-    clip4clip_model = DDP(clip4clip_model, device_ids=[local_rank])
+    clip4clip_model = DDP(clip4clip_model, device_ids=[local_rank], find_unused_parameters=True)
 
     all_params = list(clip4clip_model.parameters())
     if args.finetune:
