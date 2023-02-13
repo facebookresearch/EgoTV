@@ -45,11 +45,11 @@ class ModelBase(nn.Module):
             nn.Sigmoid()
         )
 
-    def max_along_time(self, outputs, lengths):
-        max_outputs = [outputs[i, :int(lengths[i]), :].max(dim=0)[0] for i in range(len(lengths))]
-        ret = torch.stack(max_outputs, dim=0)
-        assert ret.size() == torch.Size([outputs.size()[0], outputs.size()[2]])
-        return ret
+    # def max_along_time(self, outputs, lengths):
+    #     max_outputs = [outputs[i, :int(lengths[i]), :].max(dim=0)[0] for i in range(len(lengths))]
+    #     ret = torch.stack(max_outputs, dim=0)
+    #     assert ret.size() == torch.Size([outputs.size()[0], outputs.size()[2]])
+    #     return ret
 
     def forward(self, vid_feats, text_feats):
         state_hidden, state_lens = text_feats

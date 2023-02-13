@@ -104,10 +104,18 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
         video_frames = video_frames.half()  # half precision
         video_frames = torch.flatten(video_frames, start_dim=0, end_dim=1)
         if not finetune or test:
-            with torch.no_grad():  # [t, 1024]
+            with torch.no_grad():  # [t, 512]
                 video_feats = model.module.visual(video_frames).view(-1, feat_size)
         else:
             video_feats = model.module.visual(video_frames).view(-1, feat_size)
+    # elif feature_extractor == 'clip':
+    #     video_frames = video_frames.unsqueeze(0)  # [b, t, c, h, w]
+    #     video_frames = torch.flatten(video_frames, start_dim=0, end_dim=1)
+    #     if not finetune or test:
+    #         with torch.no_grad():  # [t, 1024]
+    #             video_feats = model.visual(video_frames).view(-1, feat_size)
+    #     else:
+    #         video_feats = model.visual(video_frames).view(-1, feat_size)
     return video_feats.float()
 
 
@@ -145,7 +153,7 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
                 # take features from the eot embedding (eot_token is the highest number in each sequence)
                 n_eot = tokenizer_out[i].argmax().item()
                 new_text_length[i] = min(n_eot, prev_n_tokens)
-            # tuple: ([b, max_tokens, dim], [b])
+            # tuple: ([b, max_tokens, 512], [b])
             text_feats = (new_text.float(),
                           new_text_length)
         # elif feature_extractor == 'clip':
@@ -171,7 +179,7 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
         #         # take features from the eot embedding (eot_token is the highest number in each sequence)
         #         n_eot = tokenizer_out[i].argmax().item()
         #         new_text_length[i] = min(n_eot, prev_n_tokens)
-        #     # tuple: ([b, max_tokens, dim], [b])
+        #     # tuple: ([b, max_tokens, 512], [b])
         #     text_feats = (new_text.float(),
         #                   new_text_length)
     return text_feats

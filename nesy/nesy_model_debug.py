@@ -36,13 +36,13 @@ class NeSyBase(nn.Module):
                                     rnn_type="lstm")
         self.text_model = text_model
 
-        # positional encoding
-        self.positional_encode = PositionalEncoding(num_hiddens=2 * hsize, dropout=0.5)
-        # multi-headed attention
-        self.multihead_attn = nn.MultiheadAttention(embed_dim=2 * hsize,
-                                                    num_heads=8,
-                                                    dropout=0.5,
-                                                    batch_first=True)
+        # # positional encoding
+        # self.positional_encode = PositionalEncoding(num_hiddens=2 * hsize, dropout=0.5)
+        # # multi-headed attention
+        # self.multihead_attn = nn.MultiheadAttention(embed_dim=2 * hsize,
+        #                                             num_heads=8,
+        #                                             dropout=0.5,
+        #                                             batch_first=True)
 
         self.num_states = 4  # hot, cold, cleaned, sliced
         self.num_relations = 2  # InReceptacle, Holds
@@ -212,9 +212,9 @@ class NeSyBase(nn.Module):
             _, vid_feat = self.vid_ctx_rnn(vid_feat, vid_lens)  # aggregate
             vid_feat = vid_feat.unsqueeze(0)  # [1, num_segments, 512]
             # vid_feat: [num_segments, 2*hsize]
-            vid_feat = self.positional_encode(vid_feat)
-            # integrating temporal component into each segment encoding
-            vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
+            # vid_feat = self.positional_encode(vid_feat)
+            # # integrating temporal component into each segment encoding
+            # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
 
             # dynamic programming
             try:
@@ -231,4 +231,4 @@ class NeSyBase(nn.Module):
 
         if not train:
             return torch.stack(ent_probs).view(-1), torch.stack(labels), pred_alignments
-        return torch.stack(ent_probs).view(-1), torch.stack(labels)
+        return torch.stack(ent_probs).view(-1), torch.stack(labels), pred_alignments

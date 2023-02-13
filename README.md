@@ -1,4 +1,6 @@
-# Task Tracking and Grounding
+# EgoTV![img_1.png](img_1.png): A  Benchmark for Egocentric Task Tracking and Verification from Natural Language Task Descriptions
+
+******************************************************
 
 ## To set-up the AI2-THOR environment
 
@@ -16,6 +18,8 @@ $ conda create -n <virtual_env> python==3.10.0
 $ source activate <virtual_env>
 $ bash install_requirements.sh
 ```
+
+**************************************************************
 
 
 ## Data Generation
@@ -136,6 +140,8 @@ For details: [ablations/data_analysis.ipynb](https://github.com/rutadesai/Vision
 
 For additional details of the collected dataset trajectory, see: [alfred/README.md](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/alfred)
 
+**************************************************************
+
 ## Baselines
 
 ### Setup Baselines:
@@ -144,20 +150,20 @@ For additional details of the collected dataset trajectory, see: [alfred/README.
 $ export DATA_ROOT=<path to dataset>
 $ export BASELINES=$(pwd)/VisionLangaugeGrounding/baselines
 $ cd $BASELINES
-$ sudo apt install graphviz
+$ bash install_requirements.sh
 $ pip install -r baseline_requirements.txt # install requirements
 ```
 
-Also, 
-``` python
-import nltk
-nltk.download('punkt')
+Alternatively, we provide a Docker image for easier setup. Please install the following
+It is a good idea to install the [docker-engine](https://docs.docker.com/engine/install/) on your local machine. It is also a good idea to additionally perform the [post-installation](https://docs.docker.com/engine/install/linux-postinstall/) when your local machine runs Linux.
+```
+$ docker image pull rishihazra/alfred-dgx:torch-1.11.0
 ```
 
 ### Run baselines
 * [baselines/end2end](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/baselines/end2end): for training and testing baseline models
 * [baselines/feature_extraction.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/baselines/feature_extraction.py): intialization and feature extractions for text and visual encoders
-  * text encoders: GloVe, (Distil)-BERT [10], CLIP [5]
+  * text encoders: GloVe, (Distil)-BERT uncased [10], CLIP [5]
   * visual_encoders: ResNet18, I3D [4], S3D [7], MViT [6], CLIP [5]
 ```
 $ cd $BASELINES/end2end
@@ -207,7 +213,9 @@ $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --npro
 <--output_type 'nl'> for natural language graph output; 
 <--output_type 'dsl'> for domain-specific language graph output (default: dsl)
 
-## NeSy Model
+**************************************************************
+
+## NSG Model
 
 ```
 $ source activate alfred_env
@@ -228,6 +236,7 @@ $ export CKPTS=/fb-agios-acai-efs/rishi/best_model_ckpts
 $ cd VisionLangaugeGrounding/ablations
 $ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 complexity_ordering.py --num_workers 0 --split_type --batch_size 16 --sample_rate 3 --visual_feature_extractor 'mvit' --text_feature_extractor 'bert' --run_id 1
 ```
+**************************************************************
 
 ## References
 [1] Jingzhou Liu, Wenhu Chen, Yu Cheng, Zhe Gan, Licheng Yu, Yiming Yang, Jingjing Liu ["VIOLIN: A Large-Scale Dataset for Video-and-Language Inference"](https://openaccess.thecvf.com/content_CVPR_2020/papers/Liu_Violin_A_Large-Scale_Dataset_for_Video-and-Language_Inference_CVPR_2020_paper.pdf). In CVPR 2020  

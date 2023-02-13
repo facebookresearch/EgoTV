@@ -30,14 +30,14 @@ def plot_scatter(ax, stats, title):
     ax.title.set_text(title)
 
 colors = ['red', 'blue', 'green', 'yellow', 'purple']
-shapes = ['o', 'v', ',']
+# shapes = ['o', 'v', ',']
 shapes = ['o', 'o', 'o']
-plt.style.use("classic")
-fig = plt.figure(figsize=(6,3))
-plt.rcParams['font.size'] = 13
-ax = fig.add_subplot(121)
-plot_scatter(ax, axes_stats_baseline, title='Baselines')
-ax = fig.add_subplot(122)
-plot_scatter(ax, axes_stats_nesy, title='NeSy')
-plt.tight_layout()
-plt.show()
+# plt.style.use("classic")
+# fig = plt.figure(figsize=(6,3))
+# plt.rcParams['font.size'] = 13
+# ax = fig.add_subplot(121)
+# plot_scatter(ax, axes_stats_baseline, title='Baselines')
+# ax = fig.add_subplot(122)
+# plot_scatter(ax, axes_stats_nesy, title='NeSy')
+# plt.tight_layout()
+# plt.show()

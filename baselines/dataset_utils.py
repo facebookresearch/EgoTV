@@ -96,6 +96,7 @@ def sample_vid(filename, sample_rate=1):
         if fno % sample_rate == 0:
             _, img = video.retrieve()
             video_frames.append(transform_image(img))
+            # video_frames.append(img)
         success = video.grab()
         fno += 1
     return video_frames
@@ -314,8 +315,8 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
     checks if the predicted (dynamic programming-based) alignment is correct
     for positively entailed hypotheses
     """
-    preds_cf = [torch.tensor(1.)]
-    true_cf = [torch.tensor(1.)]
+    preds_cf = []
+    true_cf = []
     for ind, (pred, true) in enumerate(zip(pred_alignment, segment_labels)):
         try:
             if ent_labels[ind].item() == 1:
@@ -325,7 +326,10 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
                     true_cf.append(action2index(true[segment_ind]))
         except KeyError:
             continue
-    return torch.stack(preds_cf), torch.stack(true_cf)
+    try:
+        return torch.stack(preds_cf), torch.stack(true_cf)
+    except RuntimeError: # : stack expects a non-empty TensorList
+        return [], []
 
     # state_pred_dict = {'heat': [], 'cool': [], 'clean': []}
     # relation_pred_dict = {'pick': [], 'place': [], 'slice': []}

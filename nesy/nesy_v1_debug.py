@@ -31,7 +31,8 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
     for video_feats, graphs, labels, segment_labs in tqdm(iterate(train_loader), desc='Train'):
         preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
         action_pred_labs, action_true_labs = check_alignment(pred_alignment, segment_labs, labels)
-        action_query_metrics.update(preds=action_pred_labs, target=action_true_labs)
+        if len(action_pred_labs) != 0 and len(action_true_labs) != 0:
+            action_query_metrics.update(preds=action_pred_labs, target=action_true_labs)
         # relation_query_metrics.update(preds=relation_pred_labs, target=relation_true_labs)
         loss = bce_loss(preds, labels)
         optimizer.zero_grad()
@@ -74,7 +75,7 @@ def validate(model, val_loader):
     visual_model.eval()
     with torch.no_grad():
         for video_feats, graphs, labels, _ in tqdm(iterate(val_loader), desc='Validation'):
-            preds, labels = model(video_feats, graphs, labels)
+            preds, labels, _ = model(video_feats, graphs, labels)
             labels = labels.type(torch.int)
             val_metrics.update(preds=preds, target=labels)
     return list(val_metrics.compute().values())
@@ -168,8 +169,8 @@ if __name__ == '__main__':
     dataset = CustomDataset(data_path=path)
     train_size = int(args.data_split * len(dataset))
     val_size = len(dataset) - train_size
-    train_set, val_set1 = random_split(dataset, [train_size, val_size])
-    _, val_set = random_split(val_set1, [len(val_set1) - 128, 128])
+    train_set, val_set = random_split(dataset, [train_size, val_size])
+    # _, val_set = random_split(val_set1, [len(val_set1) - 128, 128])
     # train_sampler, val_sampler = DistributedSampler(dataset=train_set, shuffle=True), \
     #                              DistributedSampler(dataset=val_set, shuffle=True)
     train_loader, val_loader = DataLoader(train_set, batch_size=args.batch_size,

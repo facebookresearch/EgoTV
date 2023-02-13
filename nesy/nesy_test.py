@@ -1,5 +1,6 @@
 import os
 import sys
+
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from nesy_arguments import Arguments
@@ -25,11 +26,12 @@ from torch.utils.data.distributed import DistributedSampler
 def test_model(test_loader):
     with torch.no_grad():
         for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(test_loader), desc='Test'):
-            preds, labels, pred_alignment, tasks = model(video_feats, graphs, labels, task_types, train=False)
+            preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
             labels = labels.type(torch.int)
             action_pred_labs, action_true_labs = \
                 check_alignment(pred_alignment, segment_labs, labels)
-            action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
+            if len(action_pred_labs) != 0 and len(action_true_labs) != 0:
+                action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
 
         dist.barrier()
         test_acc, test_f1 = list(test_metrics.compute().values())
@@ -50,6 +52,7 @@ def iterate(dataloader):
         # except TypeError:
         #     print('Skipping batch')
         #     continue
+
 
 def process_batch(data_batch, label_batch, frames_per_segment):
     hypotheses = []

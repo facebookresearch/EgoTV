@@ -4,7 +4,7 @@ sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
 from feature_extraction import *
-from base import ModelBase
+from base_model import ModelBase
 from distributed_utils import *
 from arguments import Arguments
 import json
@@ -88,7 +88,7 @@ def process_batch(data_batch, label_batch):
         # video_frames = [cv2.imread(frame) for frame in glob.glob(os.path.join(filepath, 'raw_images') + "/*.png")]
         video_frames = sample_vid(filepath, args.sample_rate)
         video_frames = torch.stack(video_frames).cuda()  # [t, c, h, w]
-        '''process video features using resnet/i3d/mvit'''
+        '''process video features using resnet/i3d/mvit/clip'''
         video_feats = extract_video_features(video_frames,
                                                 model=visual_model,
                                                 feature_extractor=args.visual_feature_extractor,
@@ -97,7 +97,7 @@ def process_batch(data_batch, label_batch):
         video_feat_batch.append(video_feats)
         vid_lengths.append(len(video_feats))
 
-        '''process natural language hypothesis using bert/glove'''
+        '''process natural language hypothesis using bert/glove/clip'''
         if label == '0':
             clean_string = ' '.join([clean_str(word).lower() for word in traj['template']['neg'].split(' ')])
         else:
@@ -195,8 +195,8 @@ if __name__ == '__main__':
         all_params += list(visual_model.parameters())
     optimizer = optim.Adam(all_params, lr=args.lr, weight_decay=args.weight_decay)
     bce_loss = nn.BCELoss()
-    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True),
-                                F1Score(threshold=0.5, dist_sync_on_step=True)]).cuda()
+    metrics = MetricCollection([Accuracy(dist_sync_on_step=True, task='binary'),
+                                F1Score(dist_sync_on_step=True, task='binary')]).cuda()
     train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
 

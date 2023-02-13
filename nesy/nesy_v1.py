@@ -71,7 +71,8 @@ def validate(model, val_loader):
             labels = labels.type(torch.int)
             action_pred_labs, action_true_labs = check_alignment(pred_alignment, segment_labs, labels)
             val_metrics.update(preds=preds, target=labels)
-            action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
+            if len(action_pred_labs) != 0 and len(action_true_labs) != 0:
+                action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
     return list(val_metrics.compute().values()), list(action_query_metrics.compute().values())
            # state_query_metrics['MulticlassAccuracy'].compute(), state_query_metrics['MulticlassF1Score'].compute(), \
            # relation_query_metrics['MulticlassAccuracy'].compute(), relation_query_metrics['MulticlassF1Score'].compute()

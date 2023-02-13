@@ -31,4 +31,8 @@ def Arguments():
     parser.add_argument('--attention', action='store_true', help='to use bidaf attention ?')
     parser.add_argument('--resume', action='store_true', help='to resume training from a previously save checkpoint')
     parser.add_argument('--run_id', type=int, default=5, required=False, help='run_id of the model run')
+
+    # baselines
+    parser.add_argument('--sim_type', type=str, choices=['meanPool', 'seqLSTM', 'tightTransfer'],
+                        help='similarity type for CLIP4Clip baseline')
     return parser.parse_args()
