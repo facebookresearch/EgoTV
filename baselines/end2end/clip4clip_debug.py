@@ -38,7 +38,7 @@ def train_epoch(clip4clip_model, train_loader, val_loader, epoch, previous_best_
         labels = labels.type(torch.int)
         train_metrics.update(preds=output, target=labels)
 
-    acc, f1 = train_metrics['Accuracy'].compute(), train_metrics['F1Score'].compute()
+    acc, f1 = list(train_metrics.compute().values())
     print('Train Loss: {}'.format(np.array(train_loss).mean()))
     # dist.barrier()
     val_acc, val_f1 = validate(clip4clip_model, val_loader=val_loader)
@@ -67,7 +67,7 @@ def validate(clip4clip_model, val_loader):
             output = clip4clip_model(video_feats, text_feats)
             labels = labels.type(torch.int)
             val_metrics.update(preds=output, target=labels)
-    return val_metrics['Accuracy'].compute(), val_metrics['F1Score'].compute()
+    return list(val_metrics.compute().values())
 
 
 def iterate(dataloader):

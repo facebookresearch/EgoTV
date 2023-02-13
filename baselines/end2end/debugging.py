@@ -5,7 +5,7 @@ os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaug
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
-from base import ViolinBase
+from base_model import ViolinBase
 from i3d.pytorch_i3d import InceptionI3d
 from mvit_tx.mvit import mvit_v2_s
 # from maskRCNN.mrcnn import load_pretrained_model
@@ -46,7 +46,7 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
         labels = labels.type(torch.int)
         train_metrics.update(preds=output, target=labels)
 
-    acc, f1 = train_metrics['Accuracy'].compute(), train_metrics['F1Score'].compute()
+    acc, f1 = list(train_metrics.compute().values())
     print('Train Loss: {}'.format(np.array(train_loss).mean()))
     # dist.barrier()
     val_acc, val_f1 = validate(model, val_loader=val_loader)
@@ -73,7 +73,7 @@ def validate(model, val_loader):
             output = model(video_features, hypotheses)
             labels = labels.type(torch.int)
             val_metrics.update(preds=output, target=labels)
-    return val_metrics['Accuracy'].compute(), val_metrics['F1Score'].compute()
+    return list(val_metrics.compute().values())
 
 
 def iterate(dataloader):
@@ -273,8 +273,8 @@ if __name__ == '__main__':
         all_params += list(visual_model.parameters())
     optimizer = optim.Adam(all_params, lr=args.lr, weight_decay=args.weight_decay)
     bce_loss = nn.BCELoss()
-    metrics = MetricCollection([Accuracy(threshold=0.5),
-                                F1Score(threshold=0.5)])
+    metrics = MetricCollection([Accuracy(threshold=0.5, task='binary'),
+                                F1Score(threshold=0.5, task='binary')])
     train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
 

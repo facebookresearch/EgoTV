@@ -25,7 +25,7 @@ def test_model(test_loader):
             labels = labels.type(torch.int).cuda()
             test_metrics.update(preds=output, target=labels)
         dist.barrier()
-        test_acc, test_f1 = test_metrics['Accuracy'].compute(), test_metrics['F1Score'].compute()
+        test_acc, test_f1 = list(test_metrics.compute().values())
         dist.barrier()
         if is_main_process():
             print('Test Acc: {} | Test F1: {}'.format(test_acc, test_f1))
