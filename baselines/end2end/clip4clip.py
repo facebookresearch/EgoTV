@@ -164,7 +164,7 @@ if __name__ == '__main__':
     if args.resume:  # to resume from a previously stored checkpoint
         clip4clip_model.load_state_dict(torch.load(model_ckpt_path))
     clip4clip_model.cuda()
-    clip4clip_model = DDP(clip4clip_model, device_ids=[local_rank], find_unused_parameters=True)
+    clip4clip_model = DDP(clip4clip_model, device_ids=[local_rank])
 
     all_params = list(clip4clip_model.parameters())
     if args.finetune:
