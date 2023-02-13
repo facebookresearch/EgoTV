@@ -5,11 +5,11 @@ sys.path.append(os.environ['BASELINES'])
 
 from dataset_utils import *
 from distributed_utils import *
+from CLIP4Clip.clip4clip_model import CLIP4Clip
 import json
 import numpy as np
 from tqdm import tqdm
 import clip
-from clip4clip_model import CLIP4Clip
 from arguments import Arguments
 import torch
 import torch.nn as nn
@@ -155,6 +155,8 @@ if __name__ == '__main__':
     clip_model = DDP(clip_model, device_ids=[local_rank])
     if not args.finetune:
         clip_model.eval()
+        assert args.sim_type in ['seqLSTM', 'tightTransfer'], 'meanPool and hitchHiker versions ' \
+                                                              'have no trainable params'
     else:
         clip_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('clip'))
         clip_model.load_state_dict(torch.load(clip_model_ckpt_path))

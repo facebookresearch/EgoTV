@@ -1,6 +1,11 @@
 # this code is developed based on
 # CLIP4Clip: An Empirical Study of CLIP for End to End Video Clip Retrieval (https://arxiv.org/abs/2104.08860)
-from rnn import RNNEncoder
+import os
+import sys
+
+sys.path.append(os.environ['BASELINES'])
+
+from end2end.rnn import RNNEncoder
 import torch
 from torch import nn
 from torch.nn import LayerNorm
@@ -49,6 +54,7 @@ class PositionalEncoding(nn.Module):
 
 class TypeEncoding(nn.Module):
     """ Type Encoding: similar to Segmentation encoding in BERT """
+
     def forward(self, concat_feats, text_feats, vid_feats):
         type_encoding = torch.cat((torch.zeros_like(text_feats).cuda(),
                                    torch.ones_like(vid_feats).cuda()), dim=1)
@@ -57,14 +63,15 @@ class TypeEncoding(nn.Module):
 
 
 class CLIP4Clip(nn.Module):
-    def __init__(self, embed_size, sim_type):
+    def __init__(self, embed_size, sim_type, temp=0.1):
         super(CLIP4Clip, self).__init__()
         self.embed_size = embed_size
         self.sim_type = sim_type  # [meanPool, seqLSTM, tightTransfer]
+        self.temp = temp
 
         if self.sim_type == 'seqLSTM':
             self.vid_ctx_rnn = RNNEncoder(embed_size,
-                                          int(embed_size/2),
+                                          int(embed_size / 2),
                                           bidirectional=True,
                                           dropout_p=0,
                                           n_layers=1,
@@ -88,15 +95,23 @@ class CLIP4Clip(nn.Module):
     def _mean_pooling_for_similarity_text(self, text_feats):
         return torch.sum(text_feats, dim=1) / text_feats.shape[1]
 
+    def _weighted_pooling_for_visual(self, vid_feats, text_feats):
+        text_feats = text_feats.view(-1, 1, self.embed_size)
+        weights = torch.softmax((vid_feats * text_feats).sum(dim=-1) / self.temp, dim=-1)
+        return (weights.unsqueeze(-1) * vid_feats).sum(dim=1)
+
     def forward(self, vid_feats, text_feats):
         vid_feats, vid_lens = vid_feats
         batch_size = vid_feats.shape[0]
         # vid_feats = [b, max_seq_len, 512], vid_lens = [b]
-        if self.sim_type in ['meanPool', 'seqLSTM']:  # loose similarity
+        if self.sim_type in ['meanPool', 'seqLSTM', 'hitchHiker']:  # loose similarity
             if self.sim_type == 'seqLSTM':
                 _, vid_feat_agg = self.vid_ctx_rnn(vid_feats, vid_lens)
-            else:
+            elif self.sim_type == 'meanPool':
                 vid_feat_agg = self._mean_pooling_for_similarity_visual(vid_feats)  # [b, 512]
+            elif self.sim_type == 'hitchHiker':
+                # A CLIP-Hitchhiker’s Guide to Long Video Retrieval
+                vid_feat_agg = self._weighted_pooling_for_visual(vid_feats, text_feats)
 
             vid_feat_normed = vid_feat_agg / vid_feat_agg.norm(dim=-1, keepdim=True)
             # text_feats = [b, 512]

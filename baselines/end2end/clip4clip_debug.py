@@ -9,7 +9,7 @@ import json
 import numpy as np
 from tqdm import tqdm
 import clip
-from clip4clip_model import CLIP4Clip
+from CLIP4Clip.clip4clip_model_debug import CLIP4Clip
 from arguments import Arguments
 import torch
 import torch.nn as nn
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
 
     # clip4clip baseline
-    args.sim_type = 'tightTransfer'
+    args.sim_type = 'seqLSTM'
 
     clip4clip_model = CLIP4Clip(embed_size=512, sim_type=args.sim_type)
     if args.resume:  # to resume from a previously stored checkpoint
