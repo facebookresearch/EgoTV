@@ -33,6 +33,6 @@ def Arguments():
     parser.add_argument('--run_id', type=int, default=5, required=False, help='run_id of the model run')
 
     # baselines
-    parser.add_argument('--sim_type', type=str, choices=['meanPool', 'seqLSTM', 'tightTransfer'],
-                        help='similarity type for CLIP4Clip baseline')
+    parser.add_argument('--sim_type', type=str, choices=['meanPool', 'seqLSTM', 'tightTransfer', 'hitchHiker'],
+                        help='similarity type for CLIP4Clip / Clip HitchHiker baseline')
     return parser.parse_args()
