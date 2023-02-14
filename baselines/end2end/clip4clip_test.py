@@ -114,11 +114,9 @@ if __name__ == '__main__':
 
     # clip4clip baseline
     clip4clip_model = CLIP4Clip(embed_size=512, sim_type=args.sim_type)
-    if args.sim_type in ['seqLSTM', 'tightTransfer']:
-        clip4clip_model.load_state_dict(torch.load(model_ckpt_path))
+    clip4clip_model.load_state_dict(torch.load(model_ckpt_path))
     clip4clip_model.cuda()
-    if args.sim_type in ['seqLSTM', 'tightTransfer']:
-        clip4clip_model = DDP(clip4clip_model, device_ids=[local_rank])
+    clip4clip_model = DDP(clip4clip_model, device_ids=[local_rank])
 
     metrics = MetricCollection([Accuracy(dist_sync_on_step=True, task='binary'),
                                 F1Score(dist_sync_on_step=True, task='binary')]).cuda()
