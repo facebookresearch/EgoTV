@@ -128,9 +128,9 @@ if __name__ == '__main__':
         path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
     else:
         path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
-    ckpt_file = 'clip4clip_{}_best_{}.pth'.format(args.split_type, str(args.run_id))
+    ckpt_file = 'clip4clip_{}_best_{}.pth'.format(args.sim_type, str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'clip4clip_{}_log_{}.txt'.format(args.split_type, str(args.run_id))
+    logger_filename = 'clip4clip_{}_log_{}.txt'.format(args.sim_type, str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
@@ -155,8 +155,8 @@ if __name__ == '__main__':
     clip_model = DDP(clip_model, device_ids=[local_rank])
     if not args.finetune:
         clip_model.eval()
-        assert args.sim_type in ['seqLSTM', 'tightTransfer'], 'meanPool and hitchHiker versions ' \
-                                                              'have no trainable params'
+        # assert args.sim_type in ['seqLSTM', 'tightTransfer'], 'meanPool and hitchHiker versions ' \
+        #                                                       'have no trainable params'
     else:
         clip_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('clip'))
         clip_model.load_state_dict(torch.load(clip_model_ckpt_path))

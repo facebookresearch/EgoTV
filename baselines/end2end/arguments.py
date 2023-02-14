@@ -34,5 +34,5 @@ def Arguments():
 
     # baselines
     parser.add_argument('--sim_type', type=str, choices=['meanPool', 'seqLSTM', 'tightTransfer', 'hitchHiker'],
-                        help='similarity type for CLIP4Clip / Clip HitchHiker baseline')
+                        help='similarity type for CLIP4Clip/Clip HitchHiker baseline')
     return parser.parse_args()

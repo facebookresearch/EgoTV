@@ -87,9 +87,9 @@ if __name__ == '__main__':
 
     args = Arguments()
     path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
-    ckpt_file = 'clip4clip_{}_best_{}.pth'.format(args.split_type, str(args.run_id))
+    ckpt_file = 'clip4clip_{}_best_{}.pth'.format(args.sim_type, str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'clip4clip_{}_log_test_{}.txt'.format(args.split_type, str(args.run_id))
+    logger_filename = 'clip4clip_{}_log_test_{}.txt'.format(args.sim_type, str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
