@@ -42,7 +42,6 @@ def train_epoch(clip4clip_model, train_loader, val_loader, epoch, previous_best_
     print('Train Loss: {}'.format(np.array(train_loss).mean()))
     # dist.barrier()
     val_acc, val_f1 = validate(clip4clip_model, val_loader=val_loader)
-    dist.barrier()
     # if is_main_process():
     print('Epoch: {} | Train Acc: {} | Val Acc: {} | Train F1: {} | Val F1: {}'.format(
         epoch, acc, val_acc, f1, val_f1))
@@ -87,7 +86,8 @@ def process_batch(data_batch, label_batch):
         video_frames = sample_vid(filepath, args.sample_rate)
         video_frames = torch.stack(video_frames)  # [t, c, h, w]
         # ============ process image features using clip ============ #
-        video_feats = clip_model.encode_image(video_frames)  # [max_seq_len, embed_dim]
+        with torch.no_grad():
+            video_feats = clip_model.encode_image(video_frames)  # [max_seq_len, embed_dim]
         video_feat_batch.append(video_feats)
         vid_lengths.append(len(video_feats))
 
@@ -102,16 +102,19 @@ def process_batch(data_batch, label_batch):
     video_feat_batch = (pad_sequence(video_feat_batch).permute(1, 0, 2).contiguous(),
                             torch.tensor(vid_lengths))
     # tuple: features |  size: [batch_size, embed_dim]
-    text_feat_batch = clip_model.encode_text(clip.tokenize(hypotheses, truncate=True))
+    with torch.no_grad():
+        text_feat_batch = clip_model.encode_text(clip.tokenize(hypotheses, truncate=True))
     return video_feat_batch, text_feat_batch, torch.tensor(labels)
 
 
 if __name__ == '__main__':
     args = Arguments()
+    # clip4clip baseline
+    args.sim_type = 'tightTransfer'
     path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
-    ckpt_file = 'clip4clip_best_{}.pth'.format(str(args.run_id))
+    ckpt_file = 'clip4clip_{}_best_{}.pth'.format(args.sim_type, str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'clip4clip_log_{}.txt'.format(str(args.run_id))
+    logger_filename = 'clip4clip_{}_log_{}.txt'.format(args.sim_type, str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
@@ -135,18 +138,11 @@ if __name__ == '__main__':
         clip_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('clip'))
         clip_model.load_state_dict(torch.load(clip_model_ckpt_path))
 
-
-    # clip4clip baseline
-    args.sim_type = 'seqLSTM'
-
     clip4clip_model = CLIP4Clip(embed_size=512, sim_type=args.sim_type)
     if args.resume:  # to resume from a previously stored checkpoint
         clip4clip_model.load_state_dict(torch.load(model_ckpt_path))
 
-    if args.sim_type == 'meanPool':
-        all_params = list()
-    else:
-        all_params = list(clip4clip_model.parameters())
+    all_params = list(clip4clip_model.parameters())
     if args.finetune:
         all_params += list(clip_model.parameters())
     optimizer = optim.Adam(all_params, lr=args.lr, weight_decay=args.weight_decay)

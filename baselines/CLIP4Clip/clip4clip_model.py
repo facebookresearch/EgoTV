@@ -70,12 +70,13 @@ class CLIP4Clip(nn.Module):
         self.temp = temp
 
         if self.sim_type in ['meanPool', 'seqLSTM', 'hitchHiker']:
-            self.vid_ctx_rnn = RNNEncoder(embed_size,
-                                          int(embed_size / 2),
-                                          bidirectional=True,
-                                          dropout_p=0,
-                                          n_layers=1,
-                                          rnn_type="lstm")
+            if self.sim_type == 'seqLSTM':
+                self.vid_ctx_rnn = RNNEncoder(embed_size,
+                                              int(embed_size / 2),
+                                              bidirectional=True,
+                                              dropout_p=0,
+                                              n_layers=1,
+                                              rnn_type="lstm")
             self.final_fc = nn.Sequential(
                 nn.Linear(2 * embed_size, embed_size),
                 nn.ReLU(),
