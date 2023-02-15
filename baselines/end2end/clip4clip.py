@@ -89,7 +89,8 @@ def process_batch(data_batch, label_batch):
         video_frames = sample_vid(filepath, args.sample_rate)
         video_frames = torch.stack(video_frames).cuda() # [t, c, h, w]
         # ============ process image features using clip ============ #
-        video_feats = clip_model.module.encode_image(video_frames).float() # [max_seq_len, batch_size, embed_dim]
+        with torch.no_grad():
+            video_feats = clip_model.module.encode_image(video_frames).float() # [max_seq_len, batch_size, embed_dim]
         video_feat_batch.append(video_feats)
         vid_lengths.append(len(video_feats))
 
@@ -104,7 +105,8 @@ def process_batch(data_batch, label_batch):
     video_feat_batch = (pad_sequence(video_feat_batch).permute(1, 0, 2).contiguous(),
                             torch.tensor(vid_lengths))
     # tuple: features |  size: [batch_size, embed_dim]
-    text_feat_batch = clip_model.module.encode_text(clip.tokenize(hypotheses, truncate=True).cuda())
+    with torch.no_grad():
+        text_feat_batch = clip_model.module.encode_text(clip.tokenize(hypotheses, truncate=True).cuda())
     return video_feat_batch, text_feat_batch, torch.tensor(labels).cuda()
 
 
