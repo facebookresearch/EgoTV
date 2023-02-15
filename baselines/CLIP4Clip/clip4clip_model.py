@@ -77,6 +77,7 @@ class CLIP4Clip(nn.Module):
                                               dropout_p=0,
                                               n_layers=1,
                                               rnn_type="lstm")
+            # for concatenated text and video (pooled) feats
             self.final_fc = nn.Sequential(
                 nn.Linear(2 * embed_size, embed_size),
                 nn.ReLU(),
@@ -97,6 +98,7 @@ class CLIP4Clip(nn.Module):
             self.pooler = CrossPooler(hid_size=embed_size)
             # self.similarity_dense = nn.Sequential(nn.Linear(embed_size, 1),
             #                                       nn.Sigmoid())
+            # for concatenated text and video (pooled) feats
             self.final_fc = nn.Sequential(
                 nn.Linear(embed_size, int(embed_size/2)),
                 nn.ReLU(),
