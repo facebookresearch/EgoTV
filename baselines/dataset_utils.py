@@ -83,10 +83,14 @@ def transform_image(video_frame, type='rgb'):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225]),
         ])
+    elif type == 'coca':
+        transform = transforms.Compose([
+            transforms.ToPILImage()
+        ])
     return transform(video_frame)
 
 
-def sample_vid(filename, sample_rate=1):
+def sample_vid(filename, sample_rate=1, type='rgb'):
     video_frames = []
     video = cv2.VideoCapture(os.path.join(filename, 'video.mp4'))
     # print(video.get(cv2.CAP_PROP_FPS))
@@ -95,7 +99,7 @@ def sample_vid(filename, sample_rate=1):
     while success:
         if fno % sample_rate == 0:
             _, img = video.retrieve()
-            video_frames.append(transform_image(img))
+            video_frames.append(transform_image(img, type=type))
             # video_frames.append(img)
         success = video.grab()
         fno += 1
