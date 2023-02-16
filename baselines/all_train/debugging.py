@@ -5,7 +5,7 @@ os.environ['BASELINES'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaug
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
-from base_model import ViolinBase
+from baselines.VIOLIN.violin_model import ViolinBase
 from i3d.pytorch_i3d import InceptionI3d
 from mvit_tx.mvit import mvit_v2_s
 # from maskRCNN.mrcnn import load_pretrained_model

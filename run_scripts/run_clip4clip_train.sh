@@ -2,8 +2,8 @@
 # clip4clip baseline
 source activate alfred_env
 export DATA_ROOT=/fb-agios-acai-efs/dataset
-export BASELINES=$(pwd)/VisionLangaugeGrounding/baselines
-cd $BASELINES/end2end
+export BASELINES=../VisionLangaugeGrounding/baselines
+cd $BASELINES/all_train
 
 echo "=================== clip4clip baseline ==================="
 for run_id in 1 2 3

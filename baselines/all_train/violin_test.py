@@ -4,7 +4,7 @@ sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
 from feature_extraction import *
-from base_model import ModelBase
+from VIOLIN.violin_model import ModelBase
 from distributed_utils import *
 from arguments import Arguments
 import json
