@@ -6,7 +6,7 @@ from nesy_arguments import Arguments
 from dataset_utils import *
 from distributed_utils import *
 from feature_extraction import *
-from end2end.rnn import RNNEncoder
+from VIOLIN.rnn import RNNEncoder
 from cross_task_model import NeSyBase
 import math
 import torch

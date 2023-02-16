@@ -9,7 +9,7 @@ from proScript.utils import GraphEditDistance
 from nesy_arguments import Arguments
 from dataset_utils import *
 from feature_extraction import *
-from end2end.rnn import RNNEncoder
+from VIOLIN.rnn import RNNEncoder
 from nesy_model_debug import NeSyBase
 import json
 import math

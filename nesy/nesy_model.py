@@ -136,6 +136,7 @@ class NeSyBase(nn.Module):
             with torch.no_grad():
                 segment_text_feats = extract_text_features(pred_args, self.text_model, 'clip', tokenizer=None)
             seg_text_feats, seg_text_lens = segment_text_feats
+            # TODO: try mean pooled features
             _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
             seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_nodes, 512]
 

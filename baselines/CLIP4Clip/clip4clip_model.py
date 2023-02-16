@@ -5,7 +5,7 @@ import sys
 
 sys.path.append(os.environ['BASELINES'])
 
-from end2end.rnn import RNNEncoder
+from VIOLIN.rnn import RNNEncoder
 import torch
 from torch import nn
 from torch.nn import LayerNorm

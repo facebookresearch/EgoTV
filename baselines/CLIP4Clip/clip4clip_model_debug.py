@@ -5,7 +5,7 @@ import sys
 
 sys.path.append(os.environ['BASELINES'])
 
-from end2end.rnn import RNNEncoder
+from VIOLIN.rnn import RNNEncoder
 import torch
 from torch import nn
 from torch.nn import LayerNorm
@@ -69,13 +69,20 @@ class CLIP4Clip(nn.Module):
         self.sim_type = sim_type  # [meanPool, seqLSTM, tightTransfer]
         self.temp = temp
 
-        if self.sim_type == 'seqLSTM':
+        if self.sim_type in ['meanPool', 'seqLSTM', 'hitchHiker']:
             self.vid_ctx_rnn = RNNEncoder(embed_size,
                                           int(embed_size / 2),
                                           bidirectional=True,
                                           dropout_p=0,
                                           n_layers=1,
                                           rnn_type="lstm")
+            self.final_fc = nn.Sequential(
+                nn.Linear(2 * embed_size, embed_size),
+                nn.ReLU(),
+                nn.Dropout(0.5),
+                nn.Linear(embed_size, 1),
+                nn.Sigmoid()
+            )
         elif self.sim_type == 'tightTransfer':
             # positional encoding
             self.positional_encode = PositionalEncoding(num_hiddens=embed_size, dropout=0.5)
@@ -85,9 +92,16 @@ class CLIP4Clip(nn.Module):
                                                         dropout=0.5,
                                                         batch_first=True)
             self.pooler = CrossPooler(hid_size=embed_size)
-            self.similarity_dense = nn.Sequential(nn.Linear(embed_size, 1),
-                                                  nn.Sigmoid())
+            # self.similarity_dense = nn.Sequential(nn.Linear(embed_size, 1),
+            #                                       nn.Sigmoid())
             self.type_encode = TypeEncoding()
+            self.final_fc = nn.Sequential(
+                nn.Linear(embed_size, int(embed_size / 2)),
+                nn.ReLU(),
+                nn.Dropout(0.5),
+                nn.Linear(int(embed_size / 2), 1),
+                nn.Sigmoid()
+            )
 
     def _mean_pooling_for_similarity_visual(self, vid_feats):
         return torch.sum(vid_feats, dim=1) / vid_feats.shape[1]
@@ -116,7 +130,8 @@ class CLIP4Clip(nn.Module):
             vid_feat_normed = vid_feat_agg / vid_feat_agg.norm(dim=-1, keepdim=True)
             # text_feats = [b, 512]
             text_feats_normed = text_feats / text_feats.norm(dim=-1, keepdim=True)
-            return torch.sigmoid((vid_feat_normed * text_feats_normed).sum(dim=-1))
+            # return torch.sigmoid((vid_feat_normed * text_feats_normed).sum(dim=-1))
+            return self.final_fc(torch.cat([text_feats_normed, vid_feat_normed], dim=-1)).view(-1)
 
         elif self.sim_type == 'tightTransfer':  # tight similarity
             text_feats = text_feats.view(batch_size, 1, self.embed_size)
@@ -124,4 +139,6 @@ class CLIP4Clip(nn.Module):
             concat_feat = self.positional_encode(concat_feat)
             concat_feat = self.type_encode(concat_feat, text_feats, vid_feats)
             concat_feat = self.multihead_attn(concat_feat, concat_feat, concat_feat, need_weights=False)[0]
-            return self.similarity_dense(self.pooler(concat_feat)).squeeze(-1)
+            # return self.similarity_dense(self.pooler(concat_feat)).squeeze(-1)
+            pooled_feat = self.pooler(concat_feat)
+            return self.final_fc(pooled_feat).view(-1)
