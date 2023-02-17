@@ -30,6 +30,7 @@ def test_model(test_loader):
             labels = labels.type(torch.int)
             action_pred_labs, action_true_labs = \
                 check_alignment(pred_alignment, segment_labs, labels)
+            test_metrics.update(preds=preds, target=labels)
             if len(action_pred_labs) != 0 and len(action_true_labs) != 0:
                 action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
 
