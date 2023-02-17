@@ -6,7 +6,7 @@ export BASELINES=../VisionLangaugeGrounding/baselines
 cd $BASELINES/all_train
 
 run_id=3
-vis_feat='i3d'
+vis_feat='I3D'
 echo "=================== i3d, bert/glove, no attention ==================="
 for var in 'bert' 'glove'
 do

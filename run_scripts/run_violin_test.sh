@@ -6,7 +6,7 @@ export BASELINES=../VisionLangaugeGrounding/baselines
 cd $BASELINES/all_train
 
 run_id=1
-vis_feat='i3d'
+vis_feat='I3D'
 echo "=================== i3d, bert, no attention ==================="
 text_feat='bert'
 for var in 'sub_goal_composition' 'verb_noun_composition' 'context_verb_noun_composition' 'context_goal_composition' 'abstraction'
