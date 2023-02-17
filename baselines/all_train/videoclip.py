@@ -86,7 +86,7 @@ def process_batch(data_batch, label_batch):
         video_frames = sample_vid(filepath, args.sample_rate)
         video_frames = torch.stack(video_frames).cuda() # [t, c, h, w]
         b, c, t, h, w = video_frames.shape
-        num_segments = math.ceil(t / 30)  # (VideoCLIP is trained on 30 fps of s3d)
+        num_segments = math.ceil(t / 30)  # (VideoCLIP is trained on 30 fps of S3D)
         to_pad = num_segments * 30 - t
         video_frames = torch.cat((video_frames, torch.zeros(b, c, to_pad, h, w).cuda()), dim=2)
         video_frames = video_frames.permute(b, t, h, w, c)
@@ -109,7 +109,7 @@ def process_batch(data_batch, label_batch):
 
     # video_feat_batch: [batch_size, 768]
     # text_feat_batch: [batch_size, 768]
-    return video_feat_batch, text_feat_batch, torch.tensor(labels).cuda()
+    return torch.stack(video_feat_batch), torch.stack(text_feat_batch), torch.tensor(labels).cuda()
 
 
 if __name__ == '__main__':

@@ -51,7 +51,7 @@ def process_batch(data_batch, label_batch):
         video_frames = sample_vid(filepath, args.sample_rate)
         video_frames = torch.stack(video_frames).cuda()  # [t, c, h, w]
 
-        '''process video features using resnet/i3d/mvit'''
+        '''process video features using resnet/I3D/mvit'''
         video_feats = extract_video_features(video_frames,
                                              model=visual_model,
                                              feature_extractor=args.visual_feature_extractor,

@@ -95,7 +95,7 @@ def process_batch(data_batch, label_batch):
         # video_frames = [cv2.imread(frame) for frame in glob.glob(os.path.join(filepath, 'raw_images') + "/*.png")]
         video_frames = sample_vid(filepath, args.sample_rate)
         video_frames = torch.stack(video_frames) # [t, c, h, w]
-        # process video features using resnet/i3d
+        # process video features using resnet/I3D
         if args.visual_feature_extractor == 'resnet':
             # vid_lengths.append(len(video_frames))
             if not args.finetune:
@@ -105,7 +105,7 @@ def process_batch(data_batch, label_batch):
                 video_segments = visual_model(video_frames).view(-1, vid_feat_size)
             video_features_batch.append(video_segments)  # [t, 512]
             vid_lengths.append(len(video_segments))
-        elif args.visual_feature_extractor == 'i3d':
+        elif args.visual_feature_extractor == 'I3D':
             # obtaining action-segment information
             #assert len(traj['images']) == len(video_frames) - 10
             # vid_seg_changepoints = []
@@ -243,10 +243,10 @@ if __name__ == '__main__':
         vid_feat_size = 512  # 512 for resnet 18, 34; 2048 for resnet50, 101
         visual_model = resnet(pretrained=True)
         visual_model = nn.Sequential(*list(visual_model.children())[:-1])
-    elif args.visual_feature_extractor == 'i3d':
-        # i3d model
+    elif args.visual_feature_extractor == 'I3D':
+        # I3D model
         vid_feat_size = 1024
-        kinetics_pretrained = 'i3d/rgb_imagenet.pt'
+        kinetics_pretrained = 'I3D/rgb_imagenet.pt'
         visual_model = InceptionI3d(400, in_channels=3)
         visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
         visual_model.replace_logits(157)
