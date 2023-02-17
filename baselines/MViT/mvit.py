@@ -1,9 +1,9 @@
 '''
 code source: https://github.com/pytorch/vision/blob/main/torchvision/models/video/mvit.py
 '''
-from mvit_tx.utils import *
-from mvit_tx.utils import _log_api_usage_once, _ovewrite_named_param
-from mvit_tx.kinetics import _KINETICS400_CATEGORIES
+from MViT.utils import *
+from MViT.utils import _log_api_usage_once, _ovewrite_named_param
+from MViT.kinetics import _KINETICS400_CATEGORIES
 import math
 import torch
 import torch.fx
