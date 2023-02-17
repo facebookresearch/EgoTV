@@ -26,7 +26,7 @@ from torch.utils.data.distributed import DistributedSampler
 def test_model(test_loader):
     with torch.no_grad():
         for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(test_loader), desc='Test'):
-            preds, labels, pred_alignment = model(video_feats, graphs, labels, task_types, train=False)
+            preds, labels, pred_alignment, _ = model(video_feats, graphs, labels, task_types, train=False)
             labels = labels.type(torch.int)
             action_pred_labs, action_true_labs = \
                 check_alignment(pred_alignment, segment_labs, labels)

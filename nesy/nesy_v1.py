@@ -67,7 +67,7 @@ def validate(model, val_loader):
     text_model.eval()
     with torch.no_grad():
         for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(val_loader, validation=True), desc='Validation'):
-            preds, labels, pred_alignment, tasks = model(video_feats, graphs, labels, task_types, train=False)
+            preds, labels, pred_alignment, _ = model(video_feats, graphs, labels, task_types, train=False)
             labels = labels.type(torch.int)
             action_pred_labs, action_true_labs = check_alignment(pred_alignment, segment_labs, labels)
             val_metrics.update(preds=preds, target=labels)

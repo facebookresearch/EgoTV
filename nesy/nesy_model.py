@@ -210,13 +210,13 @@ class NeSyBase(nn.Module):
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
 
-    def forward(self, vid_feats, graphs, true_labels, task_types, axis_stats=None, train=True):
+    def forward(self, vid_feats, graphs, true_labels, task_types, train=True):
         ent_probs = []
         labels = []
         pred_alignments = []
         tasks = []
-        if axis_stats is not None:
-            axis_stats_batch = []
+        # if axis_stats is not None:
+        #     axis_stats_batch = []
         for index, (vid_feat, graph, hypothesis, label, task_type) in enumerate(zip(vid_feats, *graphs, true_labels, task_types)):
             # processing the video features
             # each vid_feat is [num_segments, frames_per_segment, 512]
@@ -241,11 +241,11 @@ class NeSyBase(nn.Module):
             ent_probs.append(torch.sigmoid(aligned_aggregated))
             labels.append(label)
             tasks.append(task_type)
-            if axis_stats is not None:
-                axis_stats_batch.append(axis_stats[index])
+            # if axis_stats is not None:
+            #     axis_stats_batch.append(axis_stats[index])
 
-        if axis_stats is not None:
-            return torch.stack(ent_probs).view(-1), torch.stack(labels), axis_stats_batch
+        # if axis_stats is not None:
+        #     return torch.stack(ent_probs).view(-1), torch.stack(labels), axis_stats_batch
         if not train:
             return torch.stack(ent_probs).view(-1), torch.stack(labels), pred_alignments, tasks
         return torch.stack(ent_probs).view(-1), torch.stack(labels)
