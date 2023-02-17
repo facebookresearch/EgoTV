@@ -1,3 +1,22 @@
+'''
+VideoCLIP setup
+
+# create a new conda env since the packages used are different from EgoTV packages
+conda create -n videoclip python=3.8.8
+source activate videoclip
+
+# clone the repo and run the following installations
+git clone https://github.com/pytorch/fairseq
+cd fairseq
+pip install -e .  # also optionally follow fairseq README for apex installation for fp16 training.
+export MKL_THREADING_LAYER=GNU  # fairseq may need this for numpy
+cd examples/MMPT  # MMPT can be in any folder, not necessarily under fairseq/examples.
+pip install -e .
+pip install transformers==3.4
+
+# download the checkpoint using
+wget -P runs/retri/videoclip/ "https://dl.fbaipublicfiles.com/MMPT/retri/videoclip/checkpoint_best.pt"
+'''
 import os
 import sys
 sys.path.append(os.environ['DATA_ROOT'])
