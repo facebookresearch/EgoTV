@@ -4,10 +4,10 @@ import math
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
-from i3d.pytorch_i3d import InceptionI3d
+from I3D.pytorch_i3d import InceptionI3d
 import clip
-from s3d.s3d import S3D
-from mvit_tx.mvit import mvit_v2_s
+from S3D.s3d import S3D
+from MViT.mvit import mvit_v2_s
 from torchvision.models import resnet18 as resnet
 from transformers import DistilBertModel, DistilBertTokenizer
 from torchtext.data import get_tokenizer
@@ -21,17 +21,17 @@ def initiate_visual_module(feature_extractor, pretrained_mvit=True):
         vid_feat_size = 512  # 512 for resnet 18, 34; 2048 for resnet50, 101
         visual_model = resnet(pretrained=True)
         visual_model = nn.Sequential(*list(visual_model.children())[:-1])
-    elif feature_extractor == 'i3d':
-        # i3d model
+    elif feature_extractor == 'I3D':
+        # I3D model
         vid_feat_size = 1024
-        kinetics_pretrained = 'i3d/models/rgb_imagenet.pt'
+        kinetics_pretrained = 'I3D/models/rgb_imagenet.pt'
         visual_model = InceptionI3d(400, in_channels=3)
         visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
         visual_model.replace_logits(157)
-    elif feature_extractor == 's3d':
-        # s3d model
+    elif feature_extractor == 'S3D':
+        # S3D model
         vid_feat_size = 1024
-        kinetics_pretrained = 's3d/S3D_kinetics400.pt'
+        kinetics_pretrained = 'S3D/S3D_kinetics400.pt'
         visual_model = S3D(400)
         visual_model.load_state_dict(torch.load(os.path.join(os.environ['BASELINES'], kinetics_pretrained)))
     elif feature_extractor == 'mvit':
@@ -77,7 +77,7 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
                 video_feats = model(video_frames).view(-1, feat_size)  # [t, 512]
         else:
             video_feats = model(video_frames).view(-1, feat_size)
-    elif feature_extractor in ['i3d', 's3d']:
+    elif feature_extractor in ['I3D', 'S3D']:
         video_frames = video_frames.unsqueeze(0).permute(0, 2, 1, 3, 4).contiguous()  # [b, c, t, h, w]
         if not finetune or test:
             with torch.no_grad():  # [t, 1024]
