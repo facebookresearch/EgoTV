@@ -141,7 +141,7 @@ if __name__ == '__main__':
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
-    cf_filename = 'confusionMat_test_{}.txt'.format(str(args.run_id))
+    cf_filename = 'confusionMat_{}_{}.txt'.format(args.test_split, str(args.run_id))
     cf_path = os.path.join(os.getcwd(), cf_filename)
 
     if args.preprocess:
