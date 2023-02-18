@@ -3,6 +3,7 @@
 source activate alfred_env
 export DATA_ROOT=/fb-agios-acai-efs/dataset
 export BASELINES=../VisionLangaugeGrounding/baselines
+export S3D=$BASELINES/S3D
 cd $BASELINES/all_train
 
 echo "=================== VideoCLIP baseline ==================="

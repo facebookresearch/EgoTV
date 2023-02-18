@@ -21,6 +21,7 @@ import os
 import sys
 sys.path.append(os.environ['DATA_ROOT'])
 sys.path.append(os.environ['BASELINES'])
+sys.path.append(os.environ['S3D'])
 
 from dataset_utils import *
 from distributed_utils import *
