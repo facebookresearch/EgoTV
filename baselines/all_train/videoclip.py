@@ -175,6 +175,7 @@ if __name__ == '__main__':
     # VideoCLIP backbone
     videoclip_backbone, tokenizer, aligner = \
         MMPTModel.from_pretrained("projects/retri/videoclip/how2.yaml")
+    videoclip_backbone.cuda()
     videoclip_backbone = DDP(videoclip_backbone, device_ids=[local_rank])
     videoclip_backbone.eval()
 
