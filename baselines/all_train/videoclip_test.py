@@ -6,7 +6,7 @@ sys.path.append(os.environ['BASELINES'])
 from dataset_utils import *
 from distributed_utils import *
 from VideoCLIP.videoclip_model import VideoClipModel
-from fairseq.MMPT.examples.mmpt.models import MMPTModel
+from fairseq.examples.MMPT.mmpt.models import MMPTModel
 import json
 import math
 from tqdm import tqdm
