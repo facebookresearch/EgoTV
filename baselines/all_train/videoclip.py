@@ -105,12 +105,13 @@ def process_batch(data_batch, label_batch):
         # ============ sampling frames from the video ============ #
         video_frames = sample_vid(filepath, args.sample_rate)
         video_frames = torch.stack(video_frames).cuda() # [t, c, h, w]
-        b, c, t, h, w = video_frames.shape
+        t, c, h, w = video_frames.shape
+        # b, c, t, h, w = video_frames.shape
         num_segments = math.ceil(t / 30)  # (VideoCLIP is trained on 30 fps of S3D)
         to_pad = num_segments * 30 - t
-        video_frames = torch.cat((video_frames, torch.zeros(b, c, to_pad, h, w).cuda()), dim=2)
-        video_frames = video_frames.permute(b, t, h, w, c)
-        video_frames = video_frames.reshape(b, num_segments, 30, h, w, c)
+        video_frames = torch.cat((video_frames, torch.zeros(to_pad, c, h, w).cuda()), dim=0)
+        video_frames = video_frames.permute(0, 2, 3, 1)
+        video_frames = video_frames.reshape(num_segments, 30, h, w, c)
 
         # ============ process natural language hypothesis ============ #
         if label == '0':
