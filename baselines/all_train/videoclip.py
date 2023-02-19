@@ -125,11 +125,11 @@ def process_batch(data_batch, label_batch):
         # ========= getting (video_pooled, text_pooled) output ========= #
         with torch.no_grad():
             output = videoclip_backbone(video_frames.unsqueeze(0), caps.cuda(), cmasks.cuda(), return_score=False)
-        video_feat_batch.append(output[0])
-        text_feat_batch.append(output[1])
+        video_feat_batch.append(output["pooled_video"])
+        text_feat_batch.append(output["pooled_text"])
 
-    # video_feat_batch: [batch_size, 768]
-    # text_feat_batch: [batch_size, 768]
+    # video_feat_batch: [batch_size, 1, 768]
+    # text_feat_batch: [batch_size, 1, 768]
     return torch.stack(video_feat_batch), torch.stack(text_feat_batch), torch.tensor(labels).cuda()
 
 
