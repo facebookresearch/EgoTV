@@ -113,6 +113,7 @@ if __name__ == '__main__':
     videoclip_backbone, tokenizer, aligner = \
         MMPTModel.from_pretrained("projects/retri/videoclip/how2.yaml")
     videoclip_backbone.cuda()
+    aligner.cuda()
     # clip_model = nn.SyncBatchNorm.convert_sync_batchnorm(clip_model)
     videoclip_backbone = DDP(videoclip_backbone, device_ids=[local_rank])
     videoclip_backbone.eval()
