@@ -68,7 +68,7 @@ def process_batch(data_batch, label_batch):
 
         # ========= getting (video_pooled, text_pooled) output ========= #
         with torch.no_grad():
-            output = videoclip_backbone(video_frames.unsqueeze(0), caps.cuda(), cmasks.cuda(), return_score=False)
+            output = videoclip_backbone(video_frames.unsqueeze(0), caps, cmasks, return_score=False)
         video_feat_batch.append(output[0])
         text_feat_batch.append(output[1])
 
@@ -114,6 +114,7 @@ if __name__ == '__main__':
         MMPTModel.from_pretrained("projects/retri/videoclip/how2.yaml")
     videoclip_backbone.cuda()
     aligner.cuda()
+    tokenizer.cuda()
     # clip_model = nn.SyncBatchNorm.convert_sync_batchnorm(clip_model)
     videoclip_backbone = DDP(videoclip_backbone, device_ids=[local_rank])
     videoclip_backbone.eval()
