@@ -177,12 +177,12 @@ def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_a
                     # objects not visible in the current frame are discarded
                     try:
                         state = [y for y in trajectory['plan']['low_actions'][action_idx]['state_metadata']
-                                   if y['objectType'].lower() == obj_name_from_key.lower()][0]
+                                 if y['objectType'].lower() == obj_name_from_key.lower()][0]
                         if state['visible']:
                             bb.append(bbox)
                     except IndexError:
-                         # print(action_arg, obj_name_from_key.lower())
-                         continue
+                        # print(action_arg, obj_name_from_key.lower())
+                        continue
         if len(bb) != 0:
             # TODO: selecting a fixed number of objects may lead to discarding useful info
             roi_bb.append(bb[:3])
@@ -250,7 +250,8 @@ def dictfilt(x, y):
 
 def train_log_process(filepath):
     lines = open(filepath, 'r').readlines()[1:]
-    # Epoch: 1 | Train Acc: 0.5652528405189514 | Val Acc: 0.6091205477714539 | Train F1: 0.5888705253601074 | Val F1: 0.4636015295982361
+    # Epoch: 1 | Train Acc: 0.5652528405189514 | Val Acc: 0.6091205477714539 | Train F1: 0.5888705253601074 | Val F1:
+    # 0.4636015295982361
     val_acc, val_f1 = 0, 0
     for line in lines:
         split_line = line.split(' | ')
@@ -258,17 +259,21 @@ def train_log_process(filepath):
         val_f1 = max(val_f1, float(split_line[4].split('Val F1:')[1]))
     return val_acc, val_f1
 
+
 def task_axis_stats(task_type):
     """
     return ordering and complexity of each task
     heat_simple: complexity = 1, ordering = 0
     heat_and_place: complexity = 2, ordering = 0
+    heat_then_place: complexity = 2, ordering = 1
     heat_and_slice_and_place: complexity = 3, ordering = 0
-    heat_then_clean_and_place : complexity = 3, ordering = 1
+    heat_then_clean_and_place : complexity = 3, ordering = 2
     heat_then_clean_then_place: complexity = 3, ordering = 2
     """
     complexity = len(task_type.replace('then', 'and').split('_and_'))
     ordering = task_type.count('then')
+    if ordering == 1 and complexity == 3:
+        ordering = 2
     return complexity, ordering
 
 
@@ -307,14 +312,14 @@ def translate(step):
 
 
 def action2index(action):
-    listOfActions = ['HeatObject', 'CoolObject','SliceObject', 'CleanObject', 'PutObject', 'Other']
+    listOfActions = ['HeatObject', 'CoolObject', 'SliceObject', 'CleanObject', 'PutObject', 'Other']
     if action in listOfActions:
         return torch.tensor(listOfActions.index(action), dtype=torch.float)
     else:
         return torch.tensor(listOfActions.index('Other'), dtype=torch.float)
 
 
-def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List], ent_labels):
+def check_alignment(pred_alignment: List[List[Tuple]], segment_labels: List[List], ent_labels):
     """
     checks if the predicted (dynamic programming-based) alignment is correct
     for positively entailed hypotheses
@@ -332,7 +337,7 @@ def check_alignment(pred_alignment:List[List[Tuple]], segment_labels:List[List],
             continue
     try:
         return torch.stack(preds_cf), torch.stack(true_cf)
-    except RuntimeError: # : stack expects a non-empty TensorList
+    except RuntimeError:  # : stack expects a non-empty TensorList
         return [], []
 
     # state_pred_dict = {'heat': [], 'cool': [], 'clean': []}
