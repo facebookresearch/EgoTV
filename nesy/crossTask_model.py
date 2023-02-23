@@ -102,6 +102,7 @@ class NeSyBase(nn.Module):
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
 
+
     def forward(self, vid_feats, all_sorts_batch, true_labels, train=True):
         ent_probs = []
         labels = []
