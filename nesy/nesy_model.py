@@ -43,8 +43,8 @@ class NeSyBase(nn.Module):
         #                                             dropout=0.5,
         #                                             batch_first=True)
 
-        # num_states = 4  # hot, cold, cleaned, sliced
-        # num_relations = 2  # InReceptacle, Holds
+        # num_states = 4  # hot, cold, cleaned
+        # num_relations = 2  # InReceptacle, Holds, slice
         self.state_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
                                          nn.ReLU(),
                                          nn.Dropout(0.5),
@@ -55,6 +55,7 @@ class NeSyBase(nn.Module):
                                             nn.Linear(hsize, 1))
         self.all_sorts = []
 
+
     def query(self, query_type, seg_text_feats, vid_feature):
         """
         given segment video features and query features
@@ -64,6 +65,7 @@ class NeSyBase(nn.Module):
             return self.state_query(torch.cat((seg_text_feats, vid_feature), dim=-1))[0]
         elif query_type == 'RelationQuery':
             return self.relation_query(torch.cat((seg_text_feats, vid_feature), dim=-1))[0]
+
 
     def process_nodes(self, nodes):
         """
@@ -82,6 +84,7 @@ class NeSyBase(nn.Module):
             queries.append(query_type)
         return pred_args, queries
 
+
     @classmethod
     def all_topo_sorts(cls, graph):
         # get all possible topological sortings of the graphs
@@ -99,6 +102,7 @@ class NeSyBase(nn.Module):
         cls.all_sorts = []
         cls.all_topo_sorts_util(nodes, edges, adj_mat, in_degree, visited, curr_path)
         return cls.all_sorts
+
 
     @classmethod
     def all_topo_sorts_util(cls, nodes, edges, adj_mat, in_degree, visited, curr_path):
@@ -119,6 +123,7 @@ class NeSyBase(nn.Module):
                 visited[node] = False
         if len(curr_path) == len(nodes):
             cls.all_sorts.append(curr_path.copy())
+
 
     def dp_align(self, all_sorts, vid_feature):
         """
@@ -209,6 +214,7 @@ class NeSyBase(nn.Module):
             # aggregated_logits.append(logits_arr[max_sort_ind][i][j])
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
+
 
     def forward(self, vid_feats, graphs, true_labels, task_types, train=True):
         ent_probs = []

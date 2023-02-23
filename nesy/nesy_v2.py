@@ -9,7 +9,7 @@ from dataset_utils import *
 from distributed_utils import *
 from feature_extraction import *
 from VIOLIN.rnn import RNNEncoder
-from nesy_model import NeSyBase
+from nesy_model_v2 import NeSyBase
 import json
 import math
 import torch
