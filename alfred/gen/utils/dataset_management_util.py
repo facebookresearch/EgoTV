@@ -6,6 +6,7 @@ import pandas as pd
 import seaborn as sns
 from collections import Counter
 import matplotlib.pyplot as plt
+from nltk.tokenize import word_tokenize
 
 
 def postprocess(succ_dir, goal_T, prune_trials, max_count=None, to_delete=None):
@@ -90,8 +91,12 @@ def analyze_trajectories(succ_dir):
                                     traj_filename_ind = _files.index('traj_data.json')
                                     traj = json.load(open(trial_path + '/' + _files[traj_filename_ind], 'r'))
                                     task_type = traj['task_type']
-                                    complexity.append(len(task_type.replace('then', 'and').split('_and_')))
-                                    ordering.append(task_type.count('then'))
+                                    c = len(task_type.replace('then', 'and').split('_and_'))
+                                    o = task_type.count('then')
+                                    if o == 1 and c == 3:
+                                        o = 2
+                                    complexity.append(c)
+                                    ordering.append(o)
                                     high_actions.extend([x['discrete_action']['action']
                                                          for x in traj['plan']['high_pddl']])
                                     low_actions.extend([x['api_action']['action'] for x in traj['plan']['low_actions']])
@@ -130,9 +135,10 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
     tuple_counts = {}
     queue_for_delete = []
     high_actions, low_actions = [], []
-    sample_high_actions, sample_low_actions = [], []
+    num_high_actions, num_low_actions = [], []
     vid_lens = []
     complexity, ordering = [], []
+    num_tokens = []
     for root, goals, _ in os.walk(succ_dir):
         for goal in goals:
             if goal == 'fails':
@@ -157,13 +163,15 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                                     traj = json.load(open(trial_path + '/' + _files[traj_filename_ind], 'r'))
                                     high_actions.extend([x['discrete_action']['action']
                                                          for x in traj['plan']['high_pddl']])
-                                    sample_high_actions.append(len(traj['plan']['high_pddl']))
-                                    sample_low_actions.append(len(traj['plan']['low_actions']))
+                                    num_high_actions.append(len(traj['plan']['high_pddl']))
+                                    num_low_actions.append(len(traj['plan']['low_actions']))
                                     low_actions.extend([x['api_action']['action'] for x in traj['plan']['low_actions']])
                                     vid_lens.append(round(len(traj['images']) / (60*5), 2))  # fps = 5
                                     task_type = traj['task_type']
                                     complexity.append(len(task_type.replace('then', 'and').split('_and_')))
                                     ordering.append(task_type.count('then'))
+                                    num_tokens.append(len(word_tokenize(traj['template']['pos'])))
+                                    num_tokens.append(len(word_tokenize(traj['template']['neg'])))
                                     if 'video.mp4' in _files:
                                         k = (goal, pickup, movable, receptacle, scene_num)
                                         if k not in tuple_counts:
@@ -187,7 +195,7 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
             to_add = tuple_counts[k] if cap_count is None else cap_count
             for _ in range(to_add):
                 succ_traj = succ_traj.append({
-                    "goal": k[0],
+                    "task": k[0],
                     "pickup": k[1],
                     "movable": k[2],
                     "receptacle": k[3],
@@ -195,7 +203,7 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
     tuples_at_target_count = set([t for t in tuple_counts if tuple_counts[t] >= target_count])
 
     return succ_traj, tuples_at_target_count, Counter(high_actions), \
-           Counter(low_actions), vid_lens, complexity, ordering, sample_high_actions, sample_low_actions
+           Counter(low_actions), vid_lens, complexity, ordering, num_high_actions, num_low_actions, num_tokens, high_actions
 
 
 def load_fails_from_disk(succ_dir, to_write=None):
@@ -234,7 +242,7 @@ def analyze_videos(vid_lens):
 
 
 def plot_dataset_stats(succ_traj, action_counts, vid_lens):
-    # TODO: measure diversity of (["goal", "pickup", "movable", "receptacle", "scene"]) tuples
+    # TODO: measure diversity of (["task", "pickup", "movable", "receptacle", "scene"]) tuples
     fig = plt.figure(figsize=(30, 30))
     plt.rcParams['font.size'] = 12
     plt.rc('legend', fontsize=12)
@@ -244,49 +252,49 @@ def plot_dataset_stats(succ_traj, action_counts, vid_lens):
     succ_traj['pickup'].replace(to_replace='AppleSliced', value='Apple', inplace=True)
     succ_traj['pickup'].replace(to_replace='BreadSliced', value='Bread', inplace=True)
 
-    succ_traj[['goal', 'pickup']].groupby('goal').pickup.value_counts().unstack().plot.barh(stacked=True,
+    succ_traj[['task', 'pickup']].groupby('task').pickup.value_counts().unstack().plot.barh(stacked=True,
                                                                                             figsize=(10, 15),
                                                                                             fontsize=12,
                                                                                             rot=45,
                                                                                             colormap='tab20')
-    plt.title("goals vs. objects", fontsize=15)
+    plt.title("tasks vs. objects", fontsize=15)
     plt.tight_layout()
     plt.show()
 
     try:
         movable_traj = succ_traj[succ_traj.movable != 'None']
-        movable_traj[['goal', 'movable']].groupby('goal').movable.value_counts().unstack().plot.barh(stacked=True,
+        movable_traj[['task', 'movable']].groupby('task').movable.value_counts().unstack().plot.barh(stacked=True,
                                                                                                      figsize=(10, 8),
                                                                                                      fontsize=12,
                                                                                                      rot=45,
                                                                                                      colormap='tab20')
-        plt.title("goals vs. movable receptacles", fontsize=15)
+        plt.title("tasks vs. movable receptacles", fontsize=15)
         plt.tight_layout()
         plt.show()
     except:
         print("no movable objects used")
 
     recep_traj = succ_traj[succ_traj.receptacle != 'None']
-    recep_traj[['goal', 'receptacle']].groupby('goal').receptacle.value_counts().unstack().plot.barh(stacked=True,
+    recep_traj[['task', 'receptacle']].groupby('task').receptacle.value_counts().unstack().plot.barh(stacked=True,
                                                                                                      figsize=(10, 10),
                                                                                                      fontsize=12,
                                                                                                      rot=45,
                                                                                                      colormap='tab20')
-    plt.title("goals vs. all receptacles")
+    plt.title("tasks vs. all receptacles")
     plt.tight_layout()
     plt.show()
 
-    succ_traj[['goal', 'scene']].groupby('goal').scene.value_counts().unstack().plot.barh(stacked=True,
+    succ_traj[['task', 'scene']].groupby('task').scene.value_counts().unstack().plot.barh(stacked=True,
                                                                                           figsize=(10, 15),
                                                                                           fontsize=12,
                                                                                           rot=45,
                                                                                           colormap='tab20')
-    plt.title("goals vs. scenes", fontsize=15)
+    plt.title("tasks vs. scenes", fontsize=15)
     plt.tight_layout()
     plt.show()
 
-    succ_traj['goal'].value_counts().plot(kind='barh', figsize=(10, 15), fontsize=12, rot=40)
-    plt.title("goal counts", fontsize=12)
+    succ_traj['task'].value_counts().plot(kind='barh', figsize=(10, 15), fontsize=12, rot=40)
+    plt.title("task counts", fontsize=12)
     plt.tight_layout()
     plt.show()
 
@@ -310,7 +318,7 @@ def plot_dataset_stats(succ_traj, action_counts, vid_lens):
     plt.xticks(rotation=30, ha='right', fontsize=12)
     # max_val = np.array(high_action_count.values()).max()
     # plt.yticks(np.arange(0, max_val + 1, int(max_val / 10)))
-    plt.title("high-level action counts", fontsize=15)
+    plt.title("sub-task counts", fontsize=15)
     plt.tight_layout()
     plt.show()
 
