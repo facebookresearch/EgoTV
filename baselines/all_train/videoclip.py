@@ -16,6 +16,10 @@ pip install transformers==3.4
 
 # download the checkpoint using
 wget -P runs/retri/videoclip/ "https://dl.fbaipublicfiles.com/MMPT/retri/videoclip/checkpoint_best.pt"
+
+# download and save S3D checkpoints and save it under baselines/S3D/pretrained/
+
+# modify the mmfusion.py in MMPT/mmpt/models/
 '''
 import os
 import sys

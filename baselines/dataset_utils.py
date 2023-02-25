@@ -148,7 +148,7 @@ def sample_vid_with_roi(filename, sample_rate, bboxes):
     return video_frames, roi
 
 
-def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_args, supervised=True):
+def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_args, supervised=True, socratic=False):
     """
     used for supervised NeSy model
     returns:
@@ -160,6 +160,8 @@ def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_a
     roi_bb = []
     count_labs = []
     segment_args = []
+    if socratic:
+        top_objects = []
 
     # extract label, bbox per frame based on sample_rate
     for ind, img_dict in enumerate(trajectory['images']):
@@ -198,16 +200,17 @@ def extract_segment_labels(trajectory, sample_rate, frames_per_segment, action_a
             max_lab = max(Counter(count_labs[split_ind:len(count_labs)]).items(), key=itemgetter(1))[0]
         else:
             max_lab = max(Counter(count_labs[split_ind:split_ind + frames_per_segment]).items(), key=itemgetter(1))[0]
-        # if not positive:
-        #     action = random.sample(['HeatObject', 'SliceObject', 'CoolObject',
-        #                             'CleanObject', 'PutObject', 'PickupObject', 'GotoLocation'], 1)[0]
-        # else:
+
         discrete_action = trajectory['plan']['high_pddl'][max_lab]['discrete_action']
         # TODO: consider ['args'][1] for receptacle for putObject
         action = discrete_action['action']
         segment_args.append(action + ' ' + ' '.join(action_args))
         action_labs.append(action)
+        if socratic:
+            top_objects.append(discrete_action['args'])
 
+    if socratic:
+        return action_labs, top_objects
     return action_labs, roi_bb, segment_args
 
 

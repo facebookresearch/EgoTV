@@ -144,8 +144,8 @@ if __name__ == '__main__':
     model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model = DDP(model, device_ids=[local_rank])
     model.eval()
-    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True),
-                                F1Score(threshold=0.5, dist_sync_on_step=True)]).cuda()
+    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True, task='binary'),
+                                F1Score(threshold=0.5, dist_sync_on_step=True, task='binary')]).cuda()
     test_metrics = metrics.clone(prefix='test_')
 
     test_loader.sampler.set_epoch(0)

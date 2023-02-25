@@ -16,7 +16,6 @@ from tqdm import tqdm
 from arguments import Arguments
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import pad_sequence
 import torch.distributed as dist
 import torch.optim as optim
 from torchmetrics import MetricCollection, Accuracy, F1Score

@@ -202,7 +202,7 @@ class NeSyBase(nn.Module):
                                 parent_dict[ind][sorted_nodes[node_ind]][segment_ind + 1]
                     logits_arr[ind][node_ind][segment_ind] = logit
 
-            max_arr[ind] = arr[0][0]
+            max_arr[ind] = arr[0][0] / len(sorted_nodes)  # normalizing to account for varying length sequences
         max_sort_ind = torch.tensor(max_arr).argmax()
         # TODO: could be more than one optimum paths
         best_alignment = parent_dict[max_sort_ind][all_sorts[max_sort_ind][0]][0]
@@ -210,7 +210,7 @@ class NeSyBase(nn.Module):
         # aggregated_logits = []
         # length normalized aggregation of logits
         for i, j in zip(np.arange(num_nodes), best_alignment):
-            aggregated_logits +=  logits_arr[max_sort_ind][i][j] / len(all_sorts[0])
+            aggregated_logits +=  logits_arr[max_sort_ind][i][j] / len(all_sorts[max_sort_ind])
             # aggregated_logits.append(logits_arr[max_sort_ind][i][j])
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
