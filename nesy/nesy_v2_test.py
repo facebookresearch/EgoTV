@@ -89,29 +89,29 @@ def process_batch(data_batch, label_batch, frames_per_segment):
         segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                                          all_arguments[sample_ind])
         segment_labs_batch.append(segment_labs)
-        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
-        video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
+        video_frames, _ = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
+        video_frames = torch.stack(video_frames).cuda() # [t, c, h, w]
         # here b=1 since we are processing one video at a time
         video_frames = extract_video_features(video_frames, model=visual_model,
                                               feature_extractor='clip',
                                               feat_size=vid_feat_size,
                                               finetune=args.finetune).reshape(1, -1, vid_feat_size)
-        roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
-                                            feature_extractor='clip',
-                                            feat_size=vid_feat_size,
-                                            finetune=args.finetune).reshape(1, -1, 3 * vid_feat_size)
+        # roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
+        #                                     feature_extractor='clip',
+        #                                     feat_size=vid_feat_size,
+        #                                     finetune=args.finetune).reshape(1, -1, 3 * vid_feat_size)
         b, t, _ = video_frames.shape
         num_segments = math.ceil(t / frames_per_segment)
         to_pad = num_segments * frames_per_segment - t
         # zero-padding to match the number of frames per segment
         video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
-        roi_frames = torch.cat((roi_frames, torch.zeros(b, to_pad, 3 * vid_feat_size).cuda()), dim=1)
+        # roi_frames = torch.cat((roi_frames, torch.zeros(b, to_pad, 3 * vid_feat_size).cuda()), dim=1)
         # [num_segments, frames_per_segment, 512]
         video_frames = video_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
-        roi_frames = roi_frames.reshape(b * num_segments, frames_per_segment, 3 * vid_feat_size)
+        # roi_frames = roi_frames.reshape(b * num_segments, frames_per_segment, 3 * vid_feat_size)
 
         # [num_segments, frames_per_segment, k*512]
-        video_frames = torch.cat((video_frames, roi_frames), dim=-1)
+        # video_frames = torch.cat((video_frames, roi_frames), dim=-1)
         video_features_batch.append(video_frames)
 
     return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch, task_types

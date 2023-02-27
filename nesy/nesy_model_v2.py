@@ -29,8 +29,7 @@ class PositionalEncoding(nn.Module):
 class NeSyBase(nn.Module):
     def __init__(self, vid_embed_size, hsize, rnn_enc, text_model):
         super(NeSyBase, self).__init__()
-        # k = 4 (frame + 3 bounding boxes per frame)
-        self.vid_ctx_rnn = rnn_enc(4 * vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
+        self.vid_ctx_rnn = rnn_enc(vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
                                    rnn_type="lstm")
         self.text_ctx_rnn = rnn_enc(vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
                                     rnn_type="lstm")
