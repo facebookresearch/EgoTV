@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 from collections import Counter
 import matplotlib.pyplot as plt
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import RegexpTokenizer
 
 
 def postprocess(succ_dir, goal_T, prune_trials, max_count=None, to_delete=None):
@@ -139,6 +139,8 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
     vid_lens = []
     complexity, ordering = [], []
     num_tokens = []
+    tokenizer = RegexpTokenizer(r'\w+')
+    vocab = set()
     for root, goals, _ in os.walk(succ_dir):
         for goal in goals:
             if goal == 'fails':
@@ -170,8 +172,12 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                                     task_type = traj['task_type']
                                     complexity.append(len(task_type.replace('then', 'and').split('_and_')))
                                     ordering.append(task_type.count('then'))
-                                    num_tokens.append(len(word_tokenize(traj['template']['pos'])))
-                                    num_tokens.append(len(word_tokenize(traj['template']['neg'])))
+                                    pos_tokenized = tokenizer.tokenize(traj['template']['pos'])
+                                    neg_tokenized = tokenizer.tokenize(traj['template']['neg'])
+                                    vocab = vocab.union(set(pos_tokenized))
+                                    vocab.union(set(neg_tokenized))
+                                    num_tokens.append(len(pos_tokenized))
+                                    num_tokens.append(len(neg_tokenized))
                                     if 'video.mp4' in _files:
                                         k = (goal, pickup, movable, receptacle, scene_num)
                                         if k not in tuple_counts:
@@ -203,7 +209,7 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
     tuples_at_target_count = set([t for t in tuple_counts if tuple_counts[t] >= target_count])
 
     return succ_traj, tuples_at_target_count, Counter(high_actions), \
-           Counter(low_actions), vid_lens, complexity, ordering, num_high_actions, num_low_actions, num_tokens, high_actions
+           Counter(low_actions), vid_lens, complexity, ordering, num_high_actions, num_low_actions, num_tokens, high_actions, vocab
 
 
 def load_fails_from_disk(succ_dir, to_write=None):

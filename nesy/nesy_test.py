@@ -80,11 +80,24 @@ def process_batch(data_batch, label_batch, frames_per_segment):
                                                 max_length=max_target_length,
                                                 do_sample=False)  # greedy generation
         graphs_batch = tokenizer.batch_decode(graphs_batch, skip_special_tokens=True)
-        graphs_batch = ([ged.pydot_to_nx(graph_str) for graph_str in graphs_batch], hypotheses)
+        hypotheses_bar = []
+        graphs_batch_bar = []
+        labels_bar = []
+        data_batch_bar = []
+        for graph_str, hyp, lab, filepath in zip(graphs_batch, hypotheses, labels, data_batch):
+            try:
+                graphs_batch_bar.append(ged.pydot_to_nx(graph_str))
+                hypotheses_bar.append(hyp)
+                labels_bar.append(lab)
+                data_batch_bar.append(filepath)
+            except TypeError:
+                print(graph_str)
+                continue
+        graphs_batch = (graphs_batch_bar, hypotheses_bar)
 
     all_arguments = retrieve_query_args(graphs_batch[0])  # retrieve query arguments from the graph batch
 
-    for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
+    for sample_ind, (filepath, label) in enumerate(zip(data_batch_bar, labels_bar)):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
         segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                                          all_arguments[sample_ind])
@@ -114,7 +127,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
         video_frames = torch.cat((video_frames, roi_frames), dim=-1)
         video_features_batch.append(video_frames)
 
-    return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch, task_types
+    return video_features_batch, graphs_batch, torch.tensor(labels_bar).cuda(), segment_labs_batch, task_types
 
 
 if __name__ == '__main__':
