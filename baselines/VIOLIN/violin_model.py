@@ -12,7 +12,7 @@ class ModelBase(nn.Module):
         # hsize1 = 150
         # hsize2 = 300
         # embed_size = 768 (distilbert) or 300 (glove)
-        # vid_feat_size = 512  (resnet) or 1024 (i3d)
+        # vid_feat_size = 512  (resnet) or 1024 (I3D)
         self.attention = attention
 
         if self.attention:

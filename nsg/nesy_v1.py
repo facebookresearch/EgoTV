@@ -179,18 +179,21 @@ if __name__ == '__main__':
     else:
         path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
         # path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
-    ckpt_file = 'nesy_{}_{}_best_{}.pth'.format(args.visual_feature_extractor,
-                                                args.text_feature_extractor,
-                                                str(args.run_id))
+    ckpt_file = 'nesy_{}_{}_{}_best_{}.pth'.format(args.visual_feature_extractor,
+                                                   args.text_feature_extractor,
+                                                   args.context_encoder if args.context_encoder is not None else 'None',
+                                                   str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'nesy_{}_{}_log_{}.txt'.format(args.visual_feature_extractor,
-                                                args.text_feature_extractor,
-                                                     str(args.run_id))
+    logger_filename = 'nesy_{}_{}_{}_log_{}.txt'.format(args.visual_feature_extractor,
+                                                        args.text_feature_extractor,
+                                                        args.context_encoder if args.context_encoder is not None else 'None',
+                                                        str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
-    cf_filename = 'confusionMat_{}_{}_{}.txt'.format(args.visual_feature_extractor,
+    cf_filename = 'confusionMat_{}_{}_{}_{}.txt'.format(args.visual_feature_extractor,
                                                      args.text_feature_extractor,
+                                                     args.context_encoder if args.context_encoder is not None else 'None',
                                                      str(args.run_id))
     cf_path = os.path.join(os.getcwd(), cf_filename)
 
