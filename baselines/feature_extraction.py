@@ -155,26 +155,39 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
         elif feature_extractor == 'coca':
             with torch.no_grad():
                 tokenizer_out = tokenizer(hypotheses).cuda()
-                text_feats = model.module.encode_text(tokenizer_out)  # [batch_size, embed_dim=512]
-            # b = text_feats.shape[0]  # batch_size
-            text_feats = (text_feats.float(), None)
+                _, token_feats = model.module._encode_text(tokenizer_out)  # [batch_size, embed_dim=512]
+                token_feats = token_feats @ model.module.text.text_projection
+                batch_size = len(hypotheses)
+                prev_n_tokens = 20
+                tokenizer_out = tokenizer_out[:, 1:]  # first token is a token of beginning of the sentence
+                token_feats = token_feats[:, 1:]  # first token is a token of beginning of the sentence
+                new_text = token_feats[:, :prev_n_tokens]  # 20 is max?
+                new_text_length = torch.zeros(batch_size).cuda()
+                for i in range(len(tokenizer_out)):
+                    # take features from the eot embedding (eot_token is the highest number in each sequence)
+                    n_eot = tokenizer_out[i].argmax().item()
+                    new_text_length[i] = min(n_eot, prev_n_tokens)
+                # tuple: ([b, max_tokens=20, 512], [b])
+                text_feats = (new_text.float(),
+                              new_text_length)
+            # text_feats = (text_feats.float(), None)
         elif feature_extractor == 'clip':
             tokenizer_out = clip.tokenize(hypotheses, truncate=True).cuda()
-            text_feats = model.module.token_embedding(tokenizer_out).type(
+            token_feats = model.module.token_embedding(tokenizer_out).type(
                 model.module.dtype)  # [batch_size, n_ctx, dim]
-            text_feats = text_feats + model.module.positional_embedding.type(model.module.dtype)
-            text_feats = text_feats.permute(1, 0, 2)  # NLD -> LND
-            text_feats = model.module.transformer(text_feats)
-            text_feats = text_feats.permute(1, 0, 2)  # LND -> NLD
-            text_feats = model.module.ln_final(text_feats).type(model.module.dtype)
-            text_feats = text_feats @ model.module.text_projection
-            batch_size, _, dim = text_feats.shape
+            token_feats = token_feats + model.module.positional_embedding.type(model.module.dtype)
+            token_feats = token_feats.permute(1, 0, 2)  # NLD -> LND
+            token_feats = model.module.transformer(token_feats)
+            token_feats = token_feats.permute(1, 0, 2)  # LND -> NLD
+            token_feats = model.module.ln_final(token_feats).type(model.module.dtype)
+            token_feats = token_feats @ model.module.text_projection
+            batch_size, _, dim = token_feats.shape
             prev_n_tokens = 20  # data['text'].shape[1]
 
             tokenizer_out = tokenizer_out[:, 1:]  # first token is a token of beginning of the sentence
-            text_feats = text_feats[:, 1:]  # first token is a token of beginning of the sentence
+            token_feats = token_feats[:, 1:]  # first token is a token of beginning of the sentence
 
-            new_text = text_feats[:, :prev_n_tokens]  # 20 is max?
+            new_text = token_feats[:, :prev_n_tokens]  # 20 is max?
             new_text_length = torch.zeros(batch_size).cuda()
             for i in range(len(tokenizer_out)):
                 # take features from the eot embedding (eot_token is the highest number in each sequence)

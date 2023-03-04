@@ -37,8 +37,6 @@ class NeSyBase(nn.Module):
         self.text_model = text_model
         self.text_model.eval()
         self.text_feature_extractor = text_feature_extractor
-        if self.text_feature_extractor == 'coca':
-            self.coca_project = nn.Linear(vid_embed_size, 2 * hsize)
         self.tokenizer = tokenizer
 
         # context encoding,
@@ -152,19 +150,16 @@ class NeSyBase(nn.Module):
         for ind, sorted_nodes in enumerate(all_sorts):
             nodes = all_sorts[ind]
             pred_args, queries = self.process_nodes(nodes)
+
             with torch.no_grad():
                 segment_text_feats = extract_text_features(hypotheses=pred_args,
                                                            model=self.text_model,
                                                            feature_extractor=self.text_feature_extractor,
                                                            tokenizer=self.tokenizer)
-                seg_text_feats, seg_text_lens = segment_text_feats
-            if self.text_feature_extractor == 'clip':
-                # TODO: try mean pooled features
-                _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
-            seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_nodes, 2*hsize]
+                seg_text_feats, seg_text_lens = segment_text_feats  # [num_nodes, max_tokens=20, 512], [b]
 
-            if self.text_feature_extractor == 'coca':
-                seg_text_feats = self.coca_project(seg_text_feats)
+            _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)  # [num_nodes, 2*hsize]
+            seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_nodes, 2*hsize]
 
             num_nodes = len(sorted_nodes)
             parent_dict[ind] = {k1: {k2: tuple() for k2 in range(num_segments)} for k1 in sorted_nodes}
