@@ -126,10 +126,10 @@ if __name__ == '__main__':
         text_model.eval()
 
     # visual feature extractor for the video
-    visual_model, vid_feat_size = initiate_visual_module(args.visual_feature_extractor,
+    visual_model, vid_feat_size, _ = initiate_visual_module(args.visual_feature_extractor,
                                                          args.pretrained_mvit)
     visual_model.cuda()
-    if args.visual_feature_extractor not in ['clip', 'mvit']:
+    if args.visual_feature_extractor not in ['clip', 'mvit', 'coca']:
         visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
     visual_model = DDP(visual_model, device_ids=[local_rank])
     visual_model.eval()

@@ -2,7 +2,7 @@ import argparse
 
 
 def Arguments():
-    parser = argparse.ArgumentParser(description="nesy-baseline")
+    parser = argparse.ArgumentParser(description="nsg-baseline")
     parser.add_argument('--sample_rate', type=int, default=2,
                         help='video sub-sample rate (higher sample rate -> fewer frames)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
@@ -20,8 +20,12 @@ def Arguments():
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--pretrained_mvit', type=str, default=True,
                         help='if True, load pretrained weights for MViT from Kinetics400 mvit model')
-    parser.add_argument('--text_feature_extractor', type=str, default='clip', choices=['clip'],
-                        help='bert or glove features graph arguments')
+    parser.add_argument('--visual_feature_extractor', type=str, default='clip', choices=['clip', 'coca'],
+                        help='clip/coca features for video segments')
+    parser.add_argument('--text_feature_extractor', type=str, default='clip', choices=['clip', 'coca'],
+                        help='clip/coca features for query arguments')
+    parser.add_argument('--context_encoder', type=str, default=None,
+                        help='encoding context into each segment choices=[mha, bilstm]')
     parser.add_argument('--fp_seg', type=int, default=20, help='frames per segment')
     # '''<command> --finetune''' to set finetune
     parser.add_argument('--finetune', action='store_true', help='whether to finetune clip model '

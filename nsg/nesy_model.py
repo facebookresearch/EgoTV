@@ -26,7 +26,8 @@ class PositionalEncoding(nn.Module):
 
 
 class NeSyBase(nn.Module):
-    def __init__(self, vid_embed_size, hsize, rnn_enc, text_model):
+    def __init__(self, vid_embed_size, hsize, rnn_enc, text_model,
+                 text_feature_extractor='clip', tokenizer=None, context_encoder=None):
         super(NeSyBase, self).__init__()
         # k = 4 (frame + 3 bounding boxes per frame)
         self.vid_ctx_rnn = rnn_enc(4 * vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
@@ -35,14 +36,27 @@ class NeSyBase(nn.Module):
                                     rnn_type="lstm")
         self.text_model = text_model
         self.text_model.eval()
-        # # positional encoding
-        # self.positional_encode = PositionalEncoding(num_hiddens=2*hsize, dropout=0.5)
-        # # multi-headed attention
-        # self.multihead_attn = nn.MultiheadAttention(embed_dim=2*hsize,
-        #                                             num_heads=8,
-        #                                             dropout=0.5,
-        #                                             batch_first=True)
+        self.text_feature_extractor = text_feature_extractor
+        if self.text_feature_extractor == 'coca':
+            self.coca_project = nn.Linear(vid_embed_size, 2 * hsize)
+        self.tokenizer = tokenizer
 
+        # context encoding,
+        # default=None
+        self.context_encoder = context_encoder
+        if self.context_encoder == 'mha':  # multi-head attention
+            # positional encoding
+            self.positional_encode = PositionalEncoding(num_hiddens=2*hsize, dropout=0.5)
+            # multi-headed attention
+            self.multihead_attn = nn.MultiheadAttention(embed_dim=2*hsize,
+                                                        num_heads=10,
+                                                        dropout=0.5,
+                                                        batch_first=True)
+        elif self.context_encoder == 'bilstm':
+            self.bilstm = nn.LSTM(input_size=2*hsize,
+                                  hidden_size=hsize,
+                                  batch_first=True,
+                                  bidirectional=True)
         # num_states = 4  # hot, cold, cleaned
         # num_relations = 2  # InReceptacle, Holds, slice
         self.state_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
@@ -139,11 +153,18 @@ class NeSyBase(nn.Module):
             nodes = all_sorts[ind]
             pred_args, queries = self.process_nodes(nodes)
             with torch.no_grad():
-                segment_text_feats = extract_text_features(pred_args, self.text_model, 'clip', tokenizer=None)
-            seg_text_feats, seg_text_lens = segment_text_feats
-            # TODO: try mean pooled features
-            _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
-            seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_nodes, 512]
+                segment_text_feats = extract_text_features(hypotheses=pred_args,
+                                                           model=self.text_model,
+                                                           feature_extractor=self.text_feature_extractor,
+                                                           tokenizer=self.tokenizer)
+                seg_text_feats, seg_text_lens = segment_text_feats
+            if self.text_feature_extractor == 'clip':
+                # TODO: try mean pooled features
+                _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
+            seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_nodes, 2*hsize]
+
+            if self.text_feature_extractor == 'coca':
+                seg_text_feats = self.coca_project(seg_text_feats)
 
             num_nodes = len(sorted_nodes)
             parent_dict[ind] = {k1: {k2: tuple() for k2 in range(num_segments)} for k1 in sorted_nodes}
@@ -230,9 +251,16 @@ class NeSyBase(nn.Module):
             vid_lens = torch.full((b,), vid_len).cuda()
             _, vid_feat = self.vid_ctx_rnn(vid_feat, vid_lens)  # aggregate
             vid_feat = vid_feat.unsqueeze(0)  # [1, num_segments, 512]
-            # vid_feat = self.positional_encode(vid_feat)
-            # integrating temporal component into each segment encoding
-            # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
+
+            # context encoding into segments
+            if self.context_encoder == 'mha':  # multi-head attention
+                vid_feat = self.positional_encode(vid_feat)
+                # integrating temporal component into each segment encoding
+                vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
+            elif self.context_encoder == 'bilstm':
+                vid_feat, (_, _) = self.bilstm(vid_feat)
+            else:
+                continue
 
             # dynamic programming
             try:

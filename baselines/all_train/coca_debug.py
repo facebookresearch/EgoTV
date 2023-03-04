@@ -87,8 +87,8 @@ def process_batch(data_batch, label_batch):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
 
         # ===========, type='rgb'= sampling frames from the video ============ #
-        video_frames = sample_vid(filepath, args.sample_rate)
-        video_frames = torch.stack(video_frames) # [t, c, h, w]
+        video_frames = [transform(img) for img in sample_vid(filepath, args.sample_rate, type='coca')]
+        video_frames = torch.stack(video_frames)  # [t, c, h, w]
         # ============ process image features using clip ============ #
         with torch.no_grad():
             video_feats = coca_backbone.encode_image(video_frames).float() # [max_seq_len, embed_dim]

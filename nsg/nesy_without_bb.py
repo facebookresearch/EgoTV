@@ -8,7 +8,7 @@ from dataset_utils import *
 from distributed_utils import *
 from feature_extraction import *
 from VIOLIN.rnn import RNNEncoder
-from nesy_model import NeSyBase
+from nesy_model_without_bb import NeSyBase
 import json
 import math
 import torch
@@ -29,8 +29,8 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
     if args.finetune:
         visual_model.train()
     train_loss = []
-    for video_feats, graphs, labels, task_types in tqdm(iterate(train_loader), desc='Train'):
-        preds, labels = model(video_feats, graphs, labels, task_types)
+    for video_feats, graphs, labels in tqdm(iterate(train_loader), desc='Train'):
+        preds, labels = model(video_feats, graphs, labels)
         loss = bce_loss(preds, labels)
         optimizer.zero_grad()
         loss.backward()
@@ -54,7 +54,6 @@ def train_epoch(model, train_loader, val_loader, epoch, previous_best_acc):
             previous_best_acc = val_acc.item()
             print('============== Saving best model(s) ================')
             torch.save(model.module.state_dict(), model_ckpt_path)
-            np.savetxt(cf_path, torch.cat(action_cf).cpu().numpy(), fmt='%d')
             if args.finetune:
                 torch.save(visual_model.module.state_dict(), visual_model_ckpt_path)
         log_file.flush()
@@ -66,16 +65,14 @@ def validate(model, val_loader):
     visual_model.eval()
     text_model.eval()
     with torch.no_grad():
-        for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(val_loader, validation=True), desc='Validation'):
-            preds, labels, pred_alignment, _ = model(video_feats, graphs, labels, task_types, train=False)
+        for video_feats, graphs, labels, segment_labs in tqdm(iterate(val_loader, validation=True), desc='Validation'):
+            preds, labels, pred_alignment = model(video_feats, graphs, labels, train=False)
             labels = labels.type(torch.int)
             action_pred_labs, action_true_labs = check_alignment(pred_alignment, segment_labs, labels)
             val_metrics.update(preds=preds, target=labels)
             if len(action_pred_labs) != 0 and len(action_true_labs) != 0:
                 action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
     return list(val_metrics.compute().values()), list(action_query_metrics.compute().values())
-           # state_query_metrics['MulticlassAccuracy'].compute(), state_query_metrics['MulticlassF1Score'].compute(), \
-           # relation_query_metrics['MulticlassAccuracy'].compute(), relation_query_metrics['MulticlassF1Score'].compute()
 
 
 def iterate(dataloader, validation=False):
@@ -86,15 +83,41 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
     hypotheses = []
     video_features_batch = []  # transforms + visual model features
     labels = []
-    task_types = []
     segment_labs_batch = []
 
     for filepath, label in zip(data_batch, label_batch):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
+        # if validation:  # we are not using roi_bb
+        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
+                                                         [traj['pddl_params']['object_target']],
+                                                         positive=True if label == '1' else False)
+
+        video_frames, _ = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
+        video_frames = torch.stack(video_frames).cuda()  # [t, c, h, w]
+        # here b=1 since we are processing one video at a time
+        video_frames = extract_video_features(video_frames, model=visual_model,
+                                              feature_extractor='clip',
+                                              feat_size=vid_feat_size,
+                                              finetune=args.finetune).reshape(1, -1, vid_feat_size)
+
+        b, t, _ = video_frames.shape
+        num_segments = math.ceil(t / frames_per_segment)
+        try:
+            assert num_segments == len(segment_labs), "# video segments != # segment labels"
+        except AssertionError:
+            print('num segments: {} | len(segment_labs): {}'.format(num_segments, len(segment_labs)))
+            continue
+        to_pad = num_segments * frames_per_segment - t
+        video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
+        # [num_segments, frames_per_segment, 512]
+        video_frames = video_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
+        video_features_batch.append(video_frames)
+
+        # process natural language hypothesis using bert
         hypotheses.append(traj['template']['neg']) if label == '0' \
             else hypotheses.append(traj['template']['pos'])
         labels.append(float(label))
-        task_types.append(traj['task_type'])
+        segment_labs_batch.append(segment_labs)
 
     # generate graphs for hypotheses
     with torch.no_grad():
@@ -103,54 +126,15 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
                                      max_length=max_source_length,
                                      truncation=True)
         graphs_batch = t5_model.module.generate(inputs_tokenized["input_ids"].cuda(),
-                                                attention_mask=inputs_tokenized["attention_mask"].cuda(),
-                                                max_length=max_target_length,
-                                                do_sample=False)  # greedy generation
+                                          attention_mask=inputs_tokenized["attention_mask"].cuda(),
+                                          max_length=max_target_length,
+                                          do_sample=False)  # greedy generation
         graphs_batch = tokenizer.batch_decode(graphs_batch, skip_special_tokens=True)
         graphs_batch = ([ged.pydot_to_nx(graph_str) for graph_str in graphs_batch], hypotheses)
 
-    all_arguments = retrieve_query_args(graphs_batch[0])  # retrieve query arguments from the graph batch
-
-    for sample_ind, (filepath, label) in enumerate(zip(data_batch, label_batch)):
-        traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
-        if validation:
-            segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
-                                                             all_arguments[sample_ind])
-            segment_labs_batch.append(segment_labs)
-        else:
-            roi_bb = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
-                                            all_arguments[sample_ind],
-                                            supervised=False)
-        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
-        video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
-        # here b=1 since we are processing one video at a time
-        video_frames = extract_video_features(video_frames, model=visual_model,
-                                              feature_extractor='clip',
-                                              feat_size=vid_feat_size,
-                                              finetune=args.finetune).reshape(1, -1, vid_feat_size)
-        # here the factor of '3' comes from
-        # there being max 3 bounding box in each frame
-        roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
-                                            feature_extractor='clip',
-                                            feat_size=vid_feat_size,
-                                            finetune=args.finetune).reshape(1, -1, 3*vid_feat_size)
-        b, t, _ = video_frames.shape
-        num_segments = math.ceil(t / frames_per_segment)
-        to_pad = num_segments * frames_per_segment - t
-        # zero-padding to match the number of frames per segment
-        video_frames = torch.cat((video_frames, torch.zeros(b, to_pad, vid_feat_size).cuda()), dim=1)
-        roi_frames = torch.cat((roi_frames, torch.zeros(b, to_pad, 3*vid_feat_size).cuda()), dim=1)
-        # [num_segments, frames_per_segment, 512]
-        video_frames = video_frames.reshape(b * num_segments, frames_per_segment, vid_feat_size)
-        roi_frames = roi_frames.reshape(b * num_segments, frames_per_segment, 3 * vid_feat_size)
-
-        # [num_segments, frames_per_segment, k*512]
-        video_frames = torch.cat((video_frames, roi_frames), dim=-1)
-        video_features_batch.append(video_frames)
-
     if validation:
-        return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch, task_types
-    return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), task_types
+        return video_features_batch, graphs_batch, torch.tensor(labels).cuda(), segment_labs_batch
+    return video_features_batch, graphs_batch, torch.tensor(labels).cuda()
 
 
 if __name__ == '__main__':
@@ -175,14 +159,12 @@ if __name__ == '__main__':
     else:
         path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
         # path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
-    ckpt_file = 'nesy_best_{}.pth'.format(str(args.run_id))
+    ckpt_file = 'nesy_no_bb_best_{}.pth'.format(str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'nesy_log_{}.txt'.format(str(args.run_id))
+    logger_filename = 'nesy_no_bb_log_{}.txt'.format(str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
-    cf_filename = 'confusionMat_{}.txt'.format(str(args.run_id))
-    cf_path = os.path.join(os.getcwd(), cf_filename)
 
     if args.preprocess:
         preprocess_dataset(path, args.split_type)
@@ -209,9 +191,9 @@ if __name__ == '__main__':
     # transformers use layer norm (and not batch norm) which is local -- no need to sync across all instances
     tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
-    visual_model, vid_feat_size = initiate_visual_module(feature_extractor='clip')
+    visual_model, vid_feat_size, _ = initiate_visual_module(feature_extractor='clip')
     visual_model.cuda()
-    visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
+    # visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
     visual_model = DDP(visual_model, device_ids=[local_rank])
     if not args.finetune:
         visual_model.eval()
@@ -223,19 +205,19 @@ if __name__ == '__main__':
 
     hsize = 150
     model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
-    if args.resume:  # to resume from a previously stored checkpoint
-        model.load_state_dict(torch.load(model_ckpt_path))
+    # model.load_state_dict(torch.load(model_ckpt_path))
     model.cuda()
     # will have unused params for certain samples (StateQuery / RelationQuery)
+    # , find_unused_parameters=True
     model = DDP(model, device_ids=[local_rank], find_unused_parameters=True)
 
     all_params = list(model.parameters())
     if args.finetune:
         all_params += list(visual_model.parameters())
-    optimizer = optim.Adam(all_params, lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = optim.AdamW(all_params, lr=args.lr, weight_decay=args.weight_decay)
     bce_loss = nn.BCELoss()
-    metrics = MetricCollection([Accuracy(dist_sync_on_step=True, task='binary'),
-                                F1Score(dist_sync_on_step=True, task='binary')]).cuda()
+    metrics = MetricCollection([Accuracy(threshold=0.5, dist_sync_on_step=True, task='binary'),
+                                F1Score(threshold=0.5, dist_sync_on_step=True, task='binary')]).cuda()
     train_metrics = metrics.clone(prefix='train_')
     val_metrics = metrics.clone(prefix='val_')
 

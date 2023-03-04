@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 from I3D.pytorch_i3d import InceptionI3d
 import clip
+import open_clip
 from S3D.s3d import S3D
 from MViT.mvit import mvit_v2_s
 from torchvision.models import resnet18 as resnet
@@ -15,6 +16,7 @@ from torchtext.vocab import GloVe
 
 
 def initiate_visual_module(feature_extractor, pretrained_mvit=True):
+    transform = None
     # visual feature extractor for the video
     if feature_extractor == 'resnet':
         # resnet model
@@ -42,9 +44,15 @@ def initiate_visual_module(feature_extractor, pretrained_mvit=True):
     elif feature_extractor == 'clip':
         vid_feat_size = 512
         visual_model, _ = clip.load("ViT-B/32")
+    elif feature_extractor == 'coca':
+        vid_feat_size = 512
+        visual_model, _, transform = open_clip.create_model_and_transforms(
+            model_name="coca_ViT-B-32",
+            pretrained="mscoco_finetuned_laion2B-s13B-b90k"
+        )
     else:
         raise NotImplementedError
-    return visual_model, vid_feat_size
+    return visual_model, vid_feat_size, transform
 
 
 def initiate_text_module(feature_extractor):
@@ -64,6 +72,13 @@ def initiate_text_module(feature_extractor):
         embed_size = 512
         text_model, _ = clip.load("ViT-B/32")
         tokenizer = get_tokenizer("basic_english")
+    elif feature_extractor == 'coca':
+        embed_size = 512
+        text_model, _, _ = open_clip.create_model_and_transforms(
+            model_name="coca_ViT-B-32",
+            pretrained="mscoco_finetuned_laion2B-s13B-b90k"
+        )
+        tokenizer = open_clip.get_tokenizer('ViT-B-32-quickgelu')
     else:
         raise NotImplementedError
     return text_model, tokenizer, embed_size
@@ -108,6 +123,12 @@ def extract_video_features(video_frames, model, feature_extractor, feat_size, fi
                 video_feats = model.module.visual(video_frames).view(-1, feat_size)
         else:
             video_feats = model.module.visual(video_frames).view(-1, feat_size)
+    elif feature_extractor == 'coca':
+        if not finetune or test:
+            with torch.no_grad():
+                video_feats = model.module.encode_image(video_frames)
+        else:
+            video_feats = model.module.encode_image(video_frames)  # [max_seq_len, batch_size, embed_dim=512]
     # elif feature_extractor == 'clip':
     #     video_frames = video_frames.unsqueeze(0)  # [b, t, c, h, w]
     #     video_frames = torch.flatten(video_frames, start_dim=0, end_dim=1)
@@ -131,6 +152,12 @@ def extract_text_features(hypotheses, model, feature_extractor, tokenizer):
             text_feats = (pad_sequence([model.get_vecs_by_tokens(x).cuda()
                                         for x in tokenizer_out]).permute(1, 0, 2),
                           torch.tensor([len(x) for x in tokenizer_out]).cuda())
+        elif feature_extractor == 'coca':
+            with torch.no_grad():
+                tokenizer_out = tokenizer(hypotheses).cuda()
+                text_feats = model.module.encode_text(tokenizer_out)  # [batch_size, embed_dim=512]
+            # b = text_feats.shape[0]  # batch_size
+            text_feats = (text_feats.float(), None)
         elif feature_extractor == 'clip':
             tokenizer_out = clip.tokenize(hypotheses, truncate=True).cuda()
             text_feats = model.module.token_embedding(tokenizer_out).type(

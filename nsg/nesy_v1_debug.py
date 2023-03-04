@@ -116,17 +116,20 @@ def process_batch(data_batch, label_batch, frames_per_segment):
         segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
                                                          all_arguments[sample_ind])
         segment_labs_batch.append(segment_labs)
-        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
+        type = 'coca' if args.visual_feature_extractor == 'coca' else 'rgb'  # coca uses it's own transform
+        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb, type=type)
+        if type == 'coca':
+            video_frames = [transform(img) for img in video_frames]
         video_frames, roi_frames = torch.stack(video_frames), torch.stack(roi_frames)  # [t, c, h, w]
         # here b=1 since we are processing one video at a time
         video_frames = extract_video_features(video_frames, model=visual_model,
-                                              feature_extractor='clip',
+                                              feature_extractor='coca',
                                               feat_size=vid_feat_size,
                                               finetune=args.finetune).reshape(1, -1, vid_feat_size)
         # here the factor of '3' comes from
         # there being max 3 bounding box in each frame
         roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
-                                            feature_extractor='clip',
+                                            feature_extractor='coca',
                                             feat_size=vid_feat_size,
                                             finetune=args.finetune).reshape(1, -1, 3*vid_feat_size)
         b, t, _ = video_frames.shape
@@ -190,17 +193,18 @@ if __name__ == '__main__':
     # transformers use layer norm (and not batch norm) which is local -- no need to sync across all instances
     tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
-    visual_model, vid_feat_size = initiate_visual_module(feature_extractor='clip')
+    visual_model, vid_feat_size, transform = initiate_visual_module(feature_extractor='coca')
     if not args.finetune:
         visual_model.eval()
     else:
-        visual_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('clip'))
+        visual_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format('coca'))
 
-    _, _, text_feat_size = initiate_text_module(feature_extractor='clip')
+    _, tokenizer_text, text_feat_size = initiate_text_module(feature_extractor='coca')
     text_model = visual_model  # for clip model
 
     hsize = 160
-    model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
+    model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder,
+                     text_model=text_model, tokenizer=tokenizer_text)
     all_params = list(model.parameters())
     if args.finetune:
         all_params += list(visual_model.parameters())

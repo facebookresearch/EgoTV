@@ -1,4 +1,4 @@
-# nesy with ActionQuery
+# nsg with ActionQuery
 import os
 import sys
 sys.path.append(os.environ['DATA_ROOT'])
@@ -210,9 +210,9 @@ if __name__ == '__main__':
     # transformers use layer norm (and not batch norm) which is local -- no need to sync across all instances
     tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
-    visual_model, vid_feat_size = initiate_visual_module(feature_extractor='clip')
+    visual_model, vid_feat_size, _ = initiate_visual_module(feature_extractor='clip')
     visual_model.cuda()
-    visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
+    # visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
     visual_model = DDP(visual_model, device_ids=[local_rank])
     if not args.finetune:
         visual_model.eval()

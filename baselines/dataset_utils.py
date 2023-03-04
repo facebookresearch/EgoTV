@@ -4,6 +4,7 @@ import json
 import cv2
 import random
 import torch
+import numpy as np
 from sklearn import metrics
 from collections import Counter
 from operator import itemgetter
@@ -114,7 +115,7 @@ def plot_bb(img, x1, y1, x2, y2):
     plt.show()
 
 
-def sample_vid_with_roi(filename, sample_rate, bboxes):
+def sample_vid_with_roi(filename, sample_rate, bboxes, type='rgb'):
     # TODO: generalize to bbox of multiple objects
     video_frames, roi = [], []
     video = cv2.VideoCapture(os.path.join(filename, 'video.mp4'))
@@ -124,7 +125,7 @@ def sample_vid_with_roi(filename, sample_rate, bboxes):
     while success:
         if fno % sample_rate == 0:
             _, img = video.retrieve()
-            video_frames.append(transform_image(img))
+            video_frames.append(transform_image(img, type=type))
             # TODO: see if the alignment is accurate
             bbox = bboxes[fno]
             # if bbox is not None:
@@ -134,7 +135,7 @@ def sample_vid_with_roi(filename, sample_rate, bboxes):
                     # TODO: generalize to multiple bboxes and not just [0]
                     x1, y1, x2, y2 = list(map(lambda x: int(x), box))[:]
                     roi_box[box_ind] = transform_image(img[y1:y2, x1:x2, :])
-                    # Want to test if the slicing is correct? go ahead and uncomment the next line
+                    # Want to test if the slicing of img is correct? go ahead and uncomment the next line
                     # plot_bb(img, x1, y1, x2, y2)
             except:
                 pass

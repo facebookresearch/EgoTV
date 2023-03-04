@@ -27,7 +27,7 @@ class PositionalEncoding(nn.Module):
 
 
 class NeSyBase(nn.Module):
-    def __init__(self, vid_embed_size, hsize, rnn_enc, text_model):
+    def __init__(self, vid_embed_size, hsize, rnn_enc, text_model, tokenizer=None):
         super(NeSyBase, self).__init__()
         # TODO: generalize to 'k' bounding boxes instead of 2
         self.vid_ctx_rnn = rnn_enc(4 * vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
@@ -35,6 +35,7 @@ class NeSyBase(nn.Module):
         self.text_ctx_rnn = rnn_enc(vid_embed_size, hsize, bidirectional=True, dropout_p=0, n_layers=1,
                                     rnn_type="lstm")
         self.text_model = text_model
+        self.tokenizer = tokenizer
 
         # # positional encoding
         # self.positional_encode = PositionalEncoding(num_hiddens=2 * hsize, dropout=0.5)
@@ -46,6 +47,8 @@ class NeSyBase(nn.Module):
 
         self.num_states = 4  # hot, cold, cleaned, sliced
         self.num_relations = 2  # InReceptacle, Holds
+
+        self.coca_project = nn.Linear(vid_embed_size, 2*hsize)
 
         self.state_query = nn.Sequential(nn.Linear(4 * hsize, hsize),
                                          nn.ReLU(),
@@ -138,10 +141,11 @@ class NeSyBase(nn.Module):
             nodes = all_sorts[ind]
             pred_args, queries = self.process_nodes(nodes)
             with torch.no_grad():
-                segment_text_feats = extract_text_features(pred_args, self.text_model, 'clip', tokenizer=None)
-            seg_text_feats, seg_text_lens = segment_text_feats
-            _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
-            seg_text_feats = seg_text_feats.unsqueeze(0)  # [1, num_nodes, 512]
+                segment_text_feats, _ = extract_text_features(pred_args, self.text_model, 'coca', tokenizer=self.tokenizer)
+
+            # seg_text_feats, seg_text_lens = segment_text_feats
+            # _, seg_text_feats = self.text_ctx_rnn(seg_text_feats, seg_text_lens)
+            seg_text_feats = self.coca_project(segment_text_feats.unsqueeze(0))  # [1, num_nodes, 512]
 
             num_nodes = len(sorted_nodes)
             parent_dict[ind] = {k1: {k2: tuple() for k2 in range(num_segments)} for k1 in sorted_nodes}
@@ -190,13 +194,13 @@ class NeSyBase(nn.Module):
                                 parent_dict[ind][sorted_nodes[node_ind]][segment_ind + 1]
                     logits_arr[ind][node_ind][segment_ind] = logit
 
-            max_arr[ind] = arr[0][0]
+            max_arr[ind] = arr[0][0] / len(sorted_nodes)
         max_sort_ind = torch.tensor(max_arr).argmax()
         # TODO: could be more than one optimum paths
         best_alignment = parent_dict[max_sort_ind][all_sorts[max_sort_ind][0]][0]
         aggregated_logits = torch.tensor(0.)
         for i, j in zip(np.arange(num_nodes), best_alignment):
-            aggregated_logits += logits_arr[max_sort_ind][i][j]
+            aggregated_logits += logits_arr[max_sort_ind][i][j] / len(all_sorts[max_sort_ind])
         return max_sort_ind, max_arr[max_sort_ind], \
                list(zip(all_sorts[max_sort_ind], best_alignment)), aggregated_logits
 
@@ -217,14 +221,14 @@ class NeSyBase(nn.Module):
             # vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
 
             # dynamic programming
-            try:
-                all_sorts = NeSyBase.all_topo_sorts(graph)
-                sorted_seq_ind, best_score, best_alignment, aligned_aggregated = self.dp_align(all_sorts, vid_feat)
-                pred_alignments.append(best_alignment)
-            except:  #TODO: too broad exception clause
-                print(hypothesis)
-                print(GraphEditDistance.nx_to_string(graph))
-                continue
+            # try:
+            all_sorts = NeSyBase.all_topo_sorts(graph)
+            sorted_seq_ind, best_score, best_alignment, aligned_aggregated = self.dp_align(all_sorts, vid_feat)
+            pred_alignments.append(best_alignment)
+            # except:  #TODO: too broad exception clause
+            #     print(hypothesis)
+            #     print(GraphEditDistance.nx_to_string(graph))
+            #     continue
 
             ent_probs.append(torch.sigmoid(aligned_aggregated))
             labels.append(label)

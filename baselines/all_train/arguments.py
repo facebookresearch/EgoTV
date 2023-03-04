@@ -9,12 +9,12 @@ def Arguments():
     parser.add_argument('--epochs', type=int, default=40, help='number of epochs of training')
     parser.add_argument('--num_workers', type=int, default=0, help='workers for dataloaders')
     parser.add_argument('--data_split', type=float, default=0.8, help='train-val split')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size for training, validation, test; '
+    parser.add_argument('--batch_size', type=int, default=2, help='batch size for training, validation, test; '
                                                                   'batch size is divided across the number of workers')
     # '''<command> --preprocess''' to set preprocess
     parser.add_argument('--preprocess', action='store_true',
                         help='process dataset before training, validation, testing')
-    parser.add_argument('--split_type', type=str, default='train',
+    parser.add_argument('--split_type', type=str, default='context_goal_composition',
                         help='dataset split on which model will run')
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--visual_feature_extractor', type=str, default='resnet',

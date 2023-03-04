@@ -71,7 +71,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
 
     # generate graphs for hypotheses
     with torch.no_grad():
-        inputs_tokenized = tokenizer(hypotheses, return_tensors="pt",
+        inputs_tokenized = tokenizer_graph(hypotheses, return_tensors="pt",
                                      padding="longest",
                                      max_length=max_source_length,
                                      truncation=True)
@@ -79,7 +79,7 @@ def process_batch(data_batch, label_batch, frames_per_segment):
                                                 attention_mask=inputs_tokenized["attention_mask"].cuda(),
                                                 max_length=max_target_length,
                                                 do_sample=False)  # greedy generation
-        graphs_batch = tokenizer.batch_decode(graphs_batch, skip_special_tokens=True)
+        graphs_batch = tokenizer_graph.batch_decode(graphs_batch, skip_special_tokens=True)
         hypotheses_bar = []
         graphs_batch_bar = []
         labels_bar = []
@@ -99,10 +99,14 @@ def process_batch(data_batch, label_batch, frames_per_segment):
 
     for sample_ind, (filepath, label) in enumerate(zip(data_batch_bar, labels_bar)):
         traj = json.load(open(os.path.join(filepath, 'traj_data.json'), 'r'))
-        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate, frames_per_segment,
+        segment_labs, roi_bb, _ = extract_segment_labels(traj, args.sample_rate,
+                                                         frames_per_segment,
                                                          all_arguments[sample_ind])
         segment_labs_batch.append(segment_labs)
-        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb)
+        type = 'coca' if args.visual_feature_extractor == 'coca' else 'rgb'  # coca uses it's own transform
+        video_frames, roi_frames = sample_vid_with_roi(filepath, args.sample_rate, roi_bb, type=type)
+        if type == 'coca':
+            video_frames = [transform(img) for img in video_frames]
         video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
         # here b=1 since we are processing one video at a time
         video_frames = extract_video_features(video_frames, model=visual_model,
@@ -149,13 +153,20 @@ if __name__ == '__main__':
     args = Arguments()
     # ged = GraphEditDistance()
     path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
-    ckpt_file = 'nesy_best_{}.pth'.format(str(args.run_id))
+    ckpt_file = 'nesy_{}_{}_best_{}.pth'.format(args.visual_feature_extractor,
+                                                args.text_feature_extractor,
+                                                str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
-    logger_filename = 'nesy_log_test_{}.txt'.format(str(args.run_id))
+    logger_filename = 'nesy_{}_{}_log_test_{}.txt'.format(args.visual_feature_extractor,
+                                                          args.text_feature_extractor,
+                                                          str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
-    cf_filename = 'confusionMat_{}_{}.txt'.format(args.split_type, str(args.run_id))
+    cf_filename = 'confusionMat_{}_{}_{}_{}.txt'.format(args.visual_feature_extractor,
+                                                        args.text_feature_extractor,
+                                                        args.split_type,
+                                                        str(args.run_id))
     cf_path = os.path.join(os.getcwd(), cf_filename)
 
     if args.preprocess:
@@ -175,20 +186,26 @@ if __name__ == '__main__':
     t5_model = DDP(t5_model, device_ids=[local_rank])
     t5_model.eval()
     # transformers use layer norm (and not batch norm) which is local -- no need to sync across all instances
-    tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    tokenizer_graph = T5Tokenizer.from_pretrained("t5-small")
 
-    visual_model, vid_feat_size = initiate_visual_module(feature_extractor='clip')
+    visual_model, vid_feat_size, transform = initiate_visual_module(args.visual_feature_extractor)
     visual_model.cuda()
-    visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
+    # visual_model = nn.SyncBatchNorm.convert_sync_batchnorm(visual_model)
     visual_model = DDP(visual_model, device_ids=[local_rank])
     visual_model.eval()
 
-    _, _, text_feat_size = initiate_text_module(feature_extractor='clip')
-    text_model = visual_model  # for clip model
+    _, tokenizer_text, text_feat_size = initiate_text_module(args.visual_feature_extractor)
+    text_model = visual_model  # for clip/coca model
     text_model.eval()
 
     hsize = 150  # of the aggregator
-    model = NeSyBase(vid_embed_size=vid_feat_size, hsize=hsize, rnn_enc=RNNEncoder, text_model=text_model)
+    model = NeSyBase(vid_embed_size=vid_feat_size,
+                     hsize=hsize,
+                     rnn_enc=RNNEncoder,
+                     text_model=text_model,
+                     text_feature_extractor=args.text_feature_extractor,
+                     tokenizer=tokenizer_text,
+                     context_encoder=args.context_encoder)
     model.load_state_dict(torch.load(model_ckpt_path))
     model.cuda()
     # will have unused params for certain samples (StateQuery / RelationQuery)

@@ -1,4 +1,4 @@
-# nesy model with ActionQuery (no StateQuery or RelationQuery)
+# nsg model with ActionQuery (no StateQuery or RelationQuery)
 import re
 import numpy as np
 import torch
