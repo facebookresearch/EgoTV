@@ -19,6 +19,7 @@ import torch.nn as nn
 from torchmetrics import MetricCollection, Accuracy, F1Score, ConfusionMatrix
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch.distributed as dist
+from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
@@ -29,7 +30,7 @@ def test_model(test_loader):
             preds, labels, pred_alignment, _ = model(video_feats, graphs, labels, task_types, train=False)
             labels = labels.type(torch.int)
             action_pred_labs, action_true_labs = \
-                check_alignment(pred_alignment, segment_labs, labels)
+                check_alignment_v2(pred_alignment, segment_labs, labels)
             test_metrics.update(preds=preds, target=labels)
             if len(action_pred_labs) != 0 and len(action_true_labs) != 0:
                 action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())
@@ -135,7 +136,11 @@ if __name__ == '__main__':
     ged = GraphEditDistance()
     args = Arguments()
     # ged = GraphEditDistance()
-    path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
+    if args.split_type == 'train':
+        path = os.path.join(os.environ['DATA_ROOT'], args.split_type)
+    else:
+        path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
+
     ckpt_file = 'nesy_v2_best_{}.pth'.format(str(args.run_id))
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
     logger_filename = 'nesy_v2_log_test_{}.txt'.format(str(args.run_id))
@@ -147,7 +152,14 @@ if __name__ == '__main__':
 
     if args.preprocess:
         preprocess_dataset(path, args.split_type)
-    test_set = CustomDataset(data_path=path)
+
+    if args.split_type == 'train':
+        dataset = CustomDataset(data_path=path)
+        train_size = int(args.data_split * len(dataset))
+        val_size = len(dataset) - train_size
+        _, test_set = random_split(dataset, [train_size, val_size])
+    else:
+        test_set = CustomDataset(data_path=path)
     test_sampler = DistributedSampler(dataset=test_set, shuffle=False)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, sampler=test_sampler,
                              num_workers=args.num_workers, shuffle=False)

@@ -315,6 +315,16 @@ def translate(step):
     return arg_translate[split_text[-1]], query, segment_ind, split_text[-1]
 
 
+def translate_v2(step):
+    node, segment_ind = step
+    node = re.sub('Step \d+ ', '', node)
+    arg_translate = {'heat': 'HeatObject', 'cool': 'CoolObject', 'slice': 'SliceObject', 'clean': 'CleanObject',
+                     'place': 'PutObject', 'pick': 'PickupObject'}
+    for sub_task, translate in arg_translate.items():
+        if sub_task in node:
+            return translate, 'ActionQuery', segment_ind, sub_task
+
+
 def action2index(action):
     listOfActions = ['HeatObject', 'CoolObject', 'SliceObject', 'CleanObject', 'PutObject', 'Other']
     if action in listOfActions:
@@ -376,6 +386,27 @@ def check_alignment(pred_alignment: List[List[Tuple]], segment_labels: List[List
     #         continue
     # return torch.stack(state_pred_labs), torch.stack(state_true_labs), \
     #        torch.stack(relation_pred_labs), torch.stack(relation_true_labs), state_pred_dict, relation_pred_dict
+
+def check_alignment_v2(pred_alignment: List[List[Tuple]], segment_labels: List[List], ent_labels):
+    """
+    checks if the predicted (dynamic programming-based) alignment is correct
+    for positively entailed hypotheses
+    """
+    preds_cf = []
+    true_cf = []
+    for ind, (pred, true) in enumerate(zip(pred_alignment, segment_labels)):
+        try:
+            if ent_labels[ind].item() == 1:
+                for step in pred:
+                    pred_action, query, segment_ind, pred_sub_goal = translate_v2(step)
+                    preds_cf.append(action2index(pred_action))
+                    true_cf.append(action2index(true[segment_ind]))
+        except KeyError:
+            continue
+    try:
+        return torch.stack(preds_cf), torch.stack(true_cf)
+    except RuntimeError:  # : stack expects a non-empty TensorList
+        return [], []
 
 
 def clean_str(string):

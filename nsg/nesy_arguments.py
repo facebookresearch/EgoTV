@@ -20,9 +20,9 @@ def Arguments():
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--pretrained_mvit', type=str, default=True,
                         help='if True, load pretrained weights for MViT from Kinetics400 mvit model')
-    parser.add_argument('--visual_feature_extractor', type=str, default='clip', choices=['clip', 'coca'],
+    parser.add_argument('--visual_feature_extractor', type=str, default='clip', choices=['clip', 'coca', 'mvit'],
                         help='clip/coca features for video segments')
-    parser.add_argument('--text_feature_extractor', type=str, default='clip', choices=['clip', 'coca'],
+    parser.add_argument('--text_feature_extractor', type=str, default='clip', choices=['clip', 'coca', 'bert'],
                         help='clip/coca features for query arguments')
     parser.add_argument('--context_encoder', type=str, default=None,
                         help='encoding context into each segment choices=[mha, bilstm]')

@@ -134,11 +134,22 @@ def process_batch(data_batch, label_batch, frames_per_segment, validation=False)
                                               finetune=args.finetune).reshape(1, -1, vid_feat_size)
         # here the factor of '3' comes from
         # there being max 3 bounding box in each frame
-        roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
-                                            feature_extractor=args.visual_feature_extractor,
-                                            feat_size=vid_feat_size,
-                                            finetune=args.finetune).reshape(1, -1, 3*vid_feat_size)
+        if args.visual_feature_extractor == 'mvit':
+            roi_frames = \
+                torch.stack([extract_video_features(roi_frames[:, i, :, :].reshape(-1, 3, 224, 224),
+                                                    model=visual_model,
+                                                    feature_extractor=args.visual_feature_extractor,
+                                                    feat_size=vid_feat_size,
+                                                    finetune=args.finetune).reshape(1, -1, vid_feat_size)
+                             for i in range(3)]).reshape(1, -1, 3 * vid_feat_size)
+        else:
+            roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
+                                                feature_extractor=args.visual_feature_extractor,
+                                                feat_size=vid_feat_size,
+                                                finetune=args.finetune).reshape(1, -1, 3 * vid_feat_size)
         b, t, _ = video_frames.shape
+        if args.visual_feature_extractor == 'mvit':
+            frames_per_segment = 2  # this is actually the number of mvit segment (of len=16 frames) per segment
         num_segments = math.ceil(t / frames_per_segment)
         to_pad = num_segments * frames_per_segment - t
         # zero-padding to match the number of frames per segment
@@ -231,8 +242,14 @@ if __name__ == '__main__':
     else:
         visual_model_ckpt_path = os.path.join(os.getcwd(), "{}.pth".format(args.visual_feature_extractor))
 
-    _, tokenizer_text, text_feat_size = initiate_text_module(args.text_feature_extractor)
-    text_model = visual_model  # for clip/coca model
+    if args.visual_feature_extractor == args.text_feature_extractor:
+        _, tokenizer_text, text_feat_size = initiate_text_module(args.text_feature_extractor)
+        text_model = visual_model  # for clip/coca model
+    else:
+        text_model, tokenizer_text, text_feat_size = initiate_text_module(
+            feature_extractor=args.text_feature_extractor)
+        text_model.cuda()
+        text_model = DDP(text_model, device_ids=[local_rank])
     text_model.eval()
 
     hsize = 150

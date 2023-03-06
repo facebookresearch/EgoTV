@@ -70,7 +70,7 @@ def validate(model, val_loader):
         for video_feats, graphs, labels, segment_labs, task_types in tqdm(iterate(val_loader, validation=True), desc='Validation'):
             preds, labels, pred_alignment, _ = model(video_feats, graphs, labels, task_types, train=False)
             labels = labels.type(torch.int)
-            action_pred_labs, action_true_labs = check_alignment(pred_alignment, segment_labs, labels)
+            action_pred_labs, action_true_labs = check_alignment_v2(pred_alignment, segment_labs, labels)
             val_metrics.update(preds=preds, target=labels)
             if len(action_pred_labs) != 0 and len(action_true_labs) != 0:
                 action_query_metrics.update(preds=action_pred_labs.cuda(), target=action_true_labs.cuda())

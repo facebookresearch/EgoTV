@@ -254,8 +254,6 @@ class NeSyBase(nn.Module):
                 vid_feat = self.multihead_attn(vid_feat, vid_feat, vid_feat, need_weights=False)[0]
             elif self.context_encoder == 'bilstm':
                 vid_feat, (_, _) = self.bilstm(vid_feat)
-            else:
-                continue
 
             # dynamic programming
             try:

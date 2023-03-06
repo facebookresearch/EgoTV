@@ -72,9 +72,9 @@ def process_batch(data_batch, label_batch, frames_per_segment):
     # generate graphs for hypotheses
     with torch.no_grad():
         inputs_tokenized = tokenizer_graph(hypotheses, return_tensors="pt",
-                                     padding="longest",
-                                     max_length=max_source_length,
-                                     truncation=True)
+                                           padding="longest",
+                                           max_length=max_source_length,
+                                           truncation=True)
         graphs_batch = t5_model.module.generate(inputs_tokenized["input_ids"].cuda(),
                                                 attention_mask=inputs_tokenized["attention_mask"].cuda(),
                                                 max_length=max_target_length,
@@ -110,14 +110,25 @@ def process_batch(data_batch, label_batch, frames_per_segment):
         video_frames, roi_frames = torch.stack(video_frames).cuda(), torch.stack(roi_frames).cuda()  # [t, c, h, w]
         # here b=1 since we are processing one video at a time
         video_frames = extract_video_features(video_frames, model=visual_model,
-                                              feature_extractor='clip',
+                                              feature_extractor=args.visual_feature_extractor,
                                               feat_size=vid_feat_size,
                                               finetune=args.finetune).reshape(1, -1, vid_feat_size)
-        roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
-                                            feature_extractor='clip',
-                                            feat_size=vid_feat_size,
-                                            finetune=args.finetune).reshape(1, -1, 3 * vid_feat_size)
+        if args.visual_feature_extractor == 'mvit':
+            roi_frames = \
+                torch.stack([extract_video_features(roi_frames[:, i, :, :].reshape(-1, 3, 224, 224),
+                                                    model=visual_model,
+                                                    feature_extractor=args.visual_feature_extractor,
+                                                    feat_size=vid_feat_size,
+                                                    finetune=args.finetune).reshape(1, -1, vid_feat_size)
+                             for i in range(3)]).reshape(1, -1, 3 * vid_feat_size)
+        else:
+            roi_frames = extract_video_features(roi_frames.reshape(-1, 3, 224, 224), model=visual_model,
+                                                feature_extractor=args.visual_feature_extractor,
+                                                feat_size=vid_feat_size,
+                                                finetune=args.finetune).reshape(1, -1, 3 * vid_feat_size)
         b, t, _ = video_frames.shape
+        if args.visual_feature_extractor == 'mvit':
+            frames_per_segment = 2  # this is actually the number of mvit segment (of len=16 frames) per segment
         num_segments = math.ceil(t / frames_per_segment)
         to_pad = num_segments * frames_per_segment - t
         # zero-padding to match the number of frames per segment
@@ -154,23 +165,24 @@ if __name__ == '__main__':
     # ged = GraphEditDistance()
     path = os.path.join(os.environ['DATA_ROOT'], 'test_splits', args.split_type)
     ckpt_file = 'nesy_{}_{}_{}_best_{}.pth'.format(args.visual_feature_extractor,
-                                                args.text_feature_extractor,
-                                                args.context_encoder if args.context_encoder is not None else 'None',
-                                                str(args.run_id))
+                                                   args.text_feature_extractor,
+                                                   args.context_encoder if args.context_encoder is not None else 'None',
+                                                   str(args.run_id))
+    # ckpt_file = 'nesy_best_101.pth'
     model_ckpt_path = os.path.join(os.getcwd(), ckpt_file)
     logger_filename = 'nesy_{}_{}_{}_{}_log_test_{}.txt'.format(args.visual_feature_extractor,
-                                                          args.text_feature_extractor,
-                                                          args.context_encoder if args.context_encoder is not None else 'None',
-                                                          args.split_type,
-                                                          str(args.run_id))
+                                                                args.text_feature_extractor,
+                                                                args.context_encoder if args.context_encoder is not None else 'None',
+                                                                args.split_type,
+                                                                str(args.run_id))
     logger_path = os.path.join(os.getcwd(), logger_filename)
     log_file = open(logger_path, "w")
     log_file.write(str(args) + '\n')
     cf_filename = 'confusionMat_{}_{}_{}_{}_{}.txt'.format(args.visual_feature_extractor,
-                                                        args.text_feature_extractor,
-                                                        args.context_encoder if args.context_encoder is not None else 'None',
-                                                        args.split_type,
-                                                        str(args.run_id))
+                                                           args.text_feature_extractor,
+                                                           args.context_encoder if args.context_encoder is not None else 'None',
+                                                           args.split_type,
+                                                           str(args.run_id))
     cf_path = os.path.join(os.getcwd(), cf_filename)
 
     if args.preprocess:
@@ -198,8 +210,14 @@ if __name__ == '__main__':
     visual_model = DDP(visual_model, device_ids=[local_rank])
     visual_model.eval()
 
-    _, tokenizer_text, text_feat_size = initiate_text_module(args.visual_feature_extractor)
-    text_model = visual_model  # for clip/coca model
+    if args.visual_feature_extractor == args.text_feature_extractor:
+        _, tokenizer_text, text_feat_size = initiate_text_module(args.text_feature_extractor)
+        text_model = visual_model  # for clip/coca model
+    else:
+        text_model, tokenizer_text, text_feat_size = initiate_text_module(
+            feature_extractor=args.text_feature_extractor)
+        text_model.cuda()
+        text_model = DDP(text_model, device_ids=[local_rank])
     text_model.eval()
 
     hsize = 150  # of the aggregator
