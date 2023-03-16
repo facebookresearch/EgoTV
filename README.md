@@ -1,5 +1,4 @@
-# EgoTV![img_1.png](img_1.png): A  Benchmark for Egocentric Task Tracking and Verification from Natural Language Task Descriptions
-
+# EgoTV![img_1.png](img_1.png): Egocentric Task Verification from Natural Language Task Descriptions
 ******************************************************
 
 ## To set-up the AI2-THOR environment
@@ -78,10 +77,9 @@ $ ff_planner/ff -o planner/domains/PutTaskExtended_domain.pddl -s 3 -f logs_gen/
 dataset/
 ├── test_splits
 │   ├── abstraction
-│   ├── context_goal_composition
-│   ├── context_verb_noun_composition
-│   ├── sub_goal_composition
-│   └── verb_noun_composition
+│   ├── novel scenes
+│   ├── novel tasks
+│   └── novel steps
 └── train
 |   ├── heat_then_clean_then_slice
 |   │   └── Apple-None-None-27
@@ -97,45 +95,36 @@ dataset/
 Note no split (train or test) have overlapping examples.
 
 #### [Scenes: 1-25]
-1. **sub-goal composition**:
+1. **novel tasks**:
     >* all tasks not in train
 
-2. **verb-noun composition**: 
+2. **novel steps**: 
     >* heat(egg)
     >* clean(plate)
     >* slice(lettuce)
     >* place(in, shelf)
-    
-3. **context-verb-noun composition**:
-    >* heat(tomato) in scenes 1-5
-    >* cool(cup) in scenes 6-10
-    >* place(in, coutertop) in scenes 11-15
-    >* slice(potato) in scenes 16-20
-    >* clean(knife, fork, spoon) in scenes 21-25
 
-4. **abstraction**:
+3. **abstraction**:
     >* all train tasks with highly abstracted hypothesis ([$GENERATE_DATA/gen/goal_library_abstraction.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/goal_library_abstraction.py))
     >* for the rest of the splits ([$GENERATE_DATA/gen/goal_library.py](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/alfred/gen/goal_library.py))
     
 #### [Scenes: 26-30]
-5. **context-goal composition**: 
+4. **novel scenes**: 
     >* all train tasks in scenes in 26-30
 
 ## Dataset Stats 
 For details: [ablations/data_analysis.ipynb](https://github.com/rutadesai/VisionLangaugeGrounding/blob/main/ablations/data_analysis.ipynb)
 
-* Total hours: 170 hours
-  * Train: 112 hours
+* Total hours: 168 hours
+  * Train: 110 hours
   * Test: 58 h
-* Average video-length > 1 min
+* Average video-length = 84s
 * Tasks: 82
 * Objects > 130 (with visual variations)
 * Pickup objects: 32 (with visual variations)
-* Receptacles: 13 (excluding movable receptacles)
-* High-level Actions: 7 (GotoLocation, PickupObject, PutObject, SliceObject, CleanObject, HeatObject, CoolObject)
-* Low-level Actions: 12 (LookUp, LookDown, MoveAhead, RotateRight, RotateLeft, OpenObject, CloseObject, ToggleObjectOn, ToggleObjectOff, SliceObject, PickupObject, PutObject)
-* Average number of high-level actions (sub-goals) per sample: 10
-* Average number of low-level actions per sample: > 50
+* Receptacles: 24 (including movable receptacles)
+* Sub-tasks: 6 (pick, place, slice, clean, heat, cool)
+* Average number of sub-tasks per sample: 4.6
 * Scenes: 30 (Kitchens)
 
 For additional details of the collected dataset trajectory, see: [alfred/README.md](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/alfred)
