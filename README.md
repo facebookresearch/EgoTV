@@ -184,7 +184,6 @@ $ ./run_train.sh
 # ./run_test.sh
 ```
 
-![baselines.png](img.png)
 
 ### Run proScript
 * for more details, see [baselines/proScript](https://github.com/rutadesai/VisionLangaugeGrounding/tree/main/baselines/proScript)
