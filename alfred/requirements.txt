@@ -1,0 +1,13 @@
+numpy
+pandas
+opencv-python
+networkx
+h5py
+tqdm
+vocab
+revtok
+Pillow
+tensorboardX
+ai2thor~=4.2.0
+pyyaml
+matplotlib
