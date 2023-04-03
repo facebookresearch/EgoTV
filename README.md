@@ -1,6 +1,8 @@
 # EgoTV: Egocentric Task Verification from Natural Language Task Descriptions
 ******************************************************
 
+This repo has the implementation of our paper:[EgoTV: Egocentric Task Verification from Natural Language Task Descriptions][https://arxiv.org/abs/2303.16975]
+
 ## To set-up the AI2-THOR environment
 
 ### Clone the repository
