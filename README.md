@@ -1,7 +1,7 @@
 # EgoTV: Egocentric Task Verification from Natural Language Task Descriptions
 ******************************************************
 
-![egoTV](egoTV.png)
+![egoTV](nsg-pos.gif)
 
 
 This repo has the implementation of our paper: [EgoTV: Egocentric Task Verification from Natural Language Task Descriptions](https://arxiv.org/abs/2303.16975)
