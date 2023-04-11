@@ -140,16 +140,15 @@ For additional details of the collected dataset trajectory, see: [alfred/README.
 
 ### Setup Baselines:
 
-all baseline models are in the filepath: [baselines/all_train](<some link>)
+all baseline models are in the filepath: [baselines/all_train](https://github.com/facebookresearch/EgoTV/tree/main/baselines/all_train)
 ```
 $ export DATA_ROOT=<path to dataset>
 $ export BASELINES=$(pwd)/EgoTV/baselines
 $ cd $BASELINES
 $ bash install_requirements.sh
-$ pip install -r baseline_requirements.txt # install requirements
 ```
 
-Alternatively, we provide a [Dockerfile](<some link>}) for easier setup.
+Alternatively, we provide a [Dockerfile](https://github.com/facebookresearch/EgoTV/blob/main/Dockerfile) for easier setup.
 
 ### VIOLIN [1] baseline
 * text encoders: GloVe, (Distil)-BERT uncased [10], CLIP [5]
