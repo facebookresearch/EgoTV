@@ -119,6 +119,9 @@ Note, no two splits (train or test) have overlapping examples.
 4. **novel scenes**: 
     >* all train tasks in scenes in 26-30
 
+![egoTV](egoTV.png)
+
+
 ## Dataset Stats 
 For details: [ablations/data_analysis.ipynb](https://github.com/facebookresearch/EgoTV/blob/main/ablations/data_analysis.ipynb)
 
