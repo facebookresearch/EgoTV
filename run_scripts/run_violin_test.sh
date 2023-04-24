@@ -1,8 +1,8 @@
 #!/bin/bash
 
 source activate alfred_env
-export DATA_ROOT=/fb-agios-acai-efs/dataset
-export BASELINES=../EgoTV/baselines
+export DATA_ROOT=$(pwd)/EgoTV/dataset
+export BASELINES=$(pwd)/EgoTV/baselines
 cd $BASELINES/all_train
 
 run_id=1

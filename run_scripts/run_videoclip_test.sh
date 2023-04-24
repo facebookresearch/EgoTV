@@ -1,8 +1,8 @@
 #!/bin/bash
 # videoclip baseline test
 source activate alfred_env
-export DATA_ROOT=/fb-agios-acai-efs/dataset
-export BASELINES=../EgoTV/baselines
+export DATA_ROOT=$(pwd)/EgoTV/dataset
+export BASELINES=$(pwd)/EgoTV/baselines
 export S3D=$BASELINES/S3D
 cd $BASELINES/all_train
 

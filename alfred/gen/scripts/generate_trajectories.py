@@ -5,7 +5,6 @@ import os
 import sys
 from collections import defaultdict
 
-# os.environ['GENERATE_DATA'] = '/mnt/c/Users/rishihazra/PycharmProjects/VisionLangaugeGrounding/alfred'
 sys.path.append(os.path.join(os.environ['GENERATE_DATA']))
 sys.path.append(os.path.join(os.environ['GENERATE_DATA'], 'gen'))
 
@@ -453,25 +452,25 @@ def main(args, goal_candidates):
                 scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
                                            if s in constants.TRAIN_SCENE_NUMBERS])
             scenes_for_goal[g] = set(scenes_for_goal[g])
-    elif args.split_type == 'sub_goal_composition':
-        for g in constants.sub_goal_composition_split:
+    elif args.split_type == 'novel_tasks':
+        for g in constants.novel_tasks_split:
             for st in constants.GOALS_VALID[g]:
                 scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
                                            if s in constants.TRAIN_SCENE_NUMBERS])
             scenes_for_goal[g] = set(scenes_for_goal[g])
-    elif args.split_type == 'verb_noun_composition':
-        for g in constants.verb_noun_composition_split:
+    elif args.split_type == 'novel_steps':
+        for g in constants.novel_steps_split:
             for st in constants.GOALS_VALID[g]:
                 scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
                                            if s in constants.TRAIN_SCENE_NUMBERS])
             scenes_for_goal[g] = set(scenes_for_goal[g])
-    elif args.split_type == 'context_verb_noun_composition':
-        for g in constants.context_verb_noun_composition_split:
-            for st in constants.GOALS_VALID[g]:
-                scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
-                                           if s in constants.TRAIN_SCENE_NUMBERS])
-            scenes_for_goal[g] = set(scenes_for_goal[g])
-    elif args.split_type == 'context_goal_composition':
+    # elif args.split_type == 'context_verb_noun_composition':
+    #     for g in constants.context_verb_noun_composition_split:
+    #         for st in constants.GOALS_VALID[g]:
+    #             scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
+    #                                        if s in constants.TRAIN_SCENE_NUMBERS])
+    #         scenes_for_goal[g] = set(scenes_for_goal[g])
+    elif args.split_type == 'novel_scenes':
         for g in constants.train_split:
             for st in constants.GOALS_VALID[g]:
                 scenes_for_goal[g].extend([str(s) for s in constants.SCENE_TYPE[st]
@@ -486,14 +485,17 @@ def main(args, goal_candidates):
     else:
         raise Exception("Not a valid split type")
 
-
     # scene-type database
     for st in constants.SCENE_TYPE:
         for s in constants.SCENE_TYPE[st]:
             scene_to_type[str(s)] = st
 
     # pre-populate counts in this structure using saved trajectories path.
-    succ_traj, full_traj = load_successes_from_disk(args.save_path, goal_candidates[0], succ_traj, args.just_examine, args.repeats_per_cond)
+    succ_traj, full_traj = load_successes_from_disk(args.save_path,
+                                                    succ_traj,
+                                                    args.just_examine,
+                                                    args.repeats_per_cond)
+
     if args.just_examine:
         print_successes(succ_traj)
         return
@@ -519,8 +521,7 @@ def main(args, goal_candidates):
                             [obj for obj in constants.VAL_ACTION_OBJECTS["Toggleable"]
                              if obj in obj_to_scene_ids and obj != 'StoveKnob']
 
-    if args.split_type in ['train', 'abstraction', 'context_goal_composition', 'sub_goal_composition',
-                           'context_verb_noun_composition']:
+    if args.split_type in ['train', 'abstraction', 'novel_scenes', 'novel_tasks']:
         # receptacle_candidates.remove('Plate')
         # receptacle_candidates.remove('Bowl')
         receptacle_candidates.remove('Shelf')
@@ -551,55 +552,52 @@ def main(args, goal_candidates):
         # TODO: Verify verb_noun and context_verb_noun compositions for simple subgoals (place_simple)
         subgoals = gtype.replace('then', 'and').replace('simple', 'and_').split('_and_')
 
-        if args.split_type in ['train', 'sub_goal_composition', 'context_goal_composition', 'abstraction']:
+        if args.split_type in ['train', 'novel_tasks', 'novel_scenes', 'abstraction']:
             if ('heat' in subgoals and pickup_obj in ['Egg']) or \
-                ('clean' in subgoals and pickup_obj in ['Plate']) or \
-                ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']) or \
-                ('heat' in subgoals and pickup_obj in ['Tomato', 'TomatoSliced'] and sampled_scene in range(1, 6)) or \
-                ('cool' in subgoals and pickup_obj in ['Cup'] and sampled_scene in range(6, 11)) or \
-                ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
-                ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16, 21)) or \
-                ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21, 26)):
+                    ('clean' in subgoals and pickup_obj in ['Plate']) or \
+                    ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']) or \
+                    ('heat' in subgoals and pickup_obj in ['Tomato', 'TomatoSliced'] and sampled_scene in range(1,
+                                                                                                                6)) or \
+                    ('cool' in subgoals and pickup_obj in ['Cup'] and sampled_scene in range(6, 11)) or \
+                    ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
+                    ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16,
+                                                                                                                 21)) or \
+                    ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21,
+                                                                                                                 26)):
                 print("............. Sample does not belong to split {}: Skipping ..............".format(
                     args.split_type))
                 continue
-        elif args.split_type == 'verb_noun_composition':
+        elif args.split_type == 'novel_steps':
             # TODO: verify the conditions
             if ('heat' in subgoals and pickup_obj in ['Tomato', 'TomatoSliced'] and sampled_scene in range(1, 6)) or \
-                ('cool' in subgoals and pickup_obj == ['Cup'] and sampled_scene in range(6, 11)) or \
-                ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
-                ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16, 21)) or \
-                ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21, 26)):
+                    ('cool' in subgoals and pickup_obj == ['Cup'] and sampled_scene in range(6, 11)) or \
+                    ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
+                    ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16,
+                                                                                                                 21)) or \
+                    ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21,
+                                                                                                                 26)):
                 print("............. Sample does not belong to split {}: Skipping ..............".format(
                     args.split_type))
                 continue
-            if  ('heat' in subgoals and pickup_obj in ['Egg']) or \
-                ('clean' in subgoals and pickup_obj in ['Plate']) or \
-                ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']) or \
-                ('place' in subgoals and receptacle_obj == 'Shelf'):
-                print('Proceed')
-            else:
-                print("............. Sample does not belong to split {}: Skipping ..............".format(
-                    args.split_type))
-                continue
-        elif args.split_type == 'context_verb_noun_composition':
             if ('heat' in subgoals and pickup_obj in ['Egg']) or \
-                ('clean' in subgoals and pickup_obj in ['Plate']) or \
-                ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']):
-                print("............. Sample does not belong to split {}: Skipping ..............".format(
-                    args.split_type))
-                continue
-            if ('heat' in subgoals and pickup_obj in ['Tomato', 'TomatoSliced'] and sampled_scene in range(1, 6)) or \
-                ('cool' in subgoals and pickup_obj in ['Cup'] and sampled_scene in range(6, 11)) or \
-                ('place' in subgoals and receptacle_obj == 'CounterTop' and sampled_scene in range(11, 16)) or \
-                ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and sampled_scene in range(16, 21)) or \
-                ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and sampled_scene in range(21, 26)):
+                    ('clean' in subgoals and pickup_obj in ['Plate']) or \
+                    ('slice' in subgoals and pickup_obj in ['Lettuce', 'LettuceSliced']) or \
+                    ('place' in subgoals and receptacle_obj == 'Shelf'):
                 print('Proceed')
             else:
                 print("............. Sample does not belong to split {}: Skipping ..............".format(
                     args.split_type))
                 continue
-
+        # elif args.split_type == 'context_verb_noun_composition': if ('heat' in subgoals and pickup_obj in ['Egg'])
+        # or \ ('clean' in subgoals and pickup_obj in ['Plate']) or \ ('slice' in subgoals and pickup_obj in [
+        # 'Lettuce', 'LettuceSliced']): print("............. Sample does not belong to split {}: Skipping
+        # ..............".format( args.split_type)) continue if ('heat' in subgoals and pickup_obj in ['Tomato',
+        # 'TomatoSliced'] and sampled_scene in range(1, 6)) or \ ('cool' in subgoals and pickup_obj in ['Cup'] and
+        # sampled_scene in range(6, 11)) or \ ('place' in subgoals and receptacle_obj == 'CounterTop' and
+        # sampled_scene in range(11, 16)) or \ ('slice' in subgoals and pickup_obj in ['Potato', 'PotatoSliced'] and
+        # sampled_scene in range(16, 21)) or \ ('clean' in subgoals and pickup_obj in ['Knife', 'Fork', 'Spoon'] and
+        # sampled_scene in range(21, 26)): print('Proceed') else: print("............. Sample does not belong to
+        # split {}: Skipping ..............".format( args.split_type)) continue
 
         print("sampled tuple: " + str((gtype, pickup_obj, movable_obj, receptacle_obj, sampled_scene)))
         # continue
@@ -719,13 +717,13 @@ def main(args, goal_candidates):
                 if len(succ_traj) > args.num_generate_traj:
                     print('==================== Stop ===========================')
                     if not os.path.exists(args.save_path_csv):
-                        #os.mkdir(args.save_path_csv)
+                        # os.mkdir(args.save_path_csv)
                         makedirs(args.save_path_csv)
                     # csv_id = gtype + '|' + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + '.csv'
                     csv_id = args.split_type + '_' + csv_id
-                    #csv_filepath = os.path.join(args.save_path_csv, csv_id)
-                    #succ_traj.to_csv(csv_filepath)
+                    # csv_filepath = os.path.join(args.save_path_csv, csv_id)
+                    # succ_traj.to_csv(csv_filepath)
                     # plot_dataset_stats(succ_traj)
                     return
 
@@ -801,7 +799,8 @@ def main(args, goal_candidates):
             else:
                 print("Reloading trajectories from disk because of parallel processes...")
                 succ_traj = pd.DataFrame(columns=succ_traj.columns)  # Drop all rows.
-                succ_traj, full_traj = load_successes_from_disk(args.save_path, goal_candidates[0], succ_traj, False, args.repeats_per_cond)
+                succ_traj, full_traj = load_successes_from_disk(args.save_path, goal_candidates[0], succ_traj, False,
+                                                                args.repeats_per_cond)
                 print("... Loaded %d trajectories" % len(succ_traj.index))
                 n_until_load_successes = args.async_load_every_n_samples
                 print_successes(succ_traj)
@@ -810,6 +809,7 @@ def main(args, goal_candidates):
                                                   receptacle_candidates, scene_candidates)
                 print("... Created fresh instance of sample_task_params generator")
 
+
 def makedirs(path):
     """Fix to change umask in order for makedirs to work. """
     try:
@@ -817,6 +817,7 @@ def makedirs(path):
         os.makedirs(path, 0o777)
     finally:
         os.umask(original_umask)
+
 
 def create_dirs(gtype, pickup_obj, movable_obj, receptacle_obj, scene_num):
     task_id = 'trial_T' + datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -890,9 +891,9 @@ if __name__ == "__main__":
     # settings
     parser.add_argument('--force_unsave', action='store_true', help="don't save any data (for debugging purposes)")
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--save_path', type=str, required=True, default="/fb-agios-acai-efs/dataset/test_splits/",
+    parser.add_argument('--save_path', type=str, required=False, default="dataset/test_splits/",
                         help="where to save the generated data")
-    parser.add_argument('--save_path_csv', type=str, default="/fb-agios-acai-efs/dataset/test_splits/csv_files",
+    parser.add_argument('--save_path_csv', type=str, default="dataset/test_splits/csv_files",
                         help="where to save the csv files of all generated trajectories for dataset stats")
     parser.add_argument('--domain_root_path', type=str, default="planner/domains", help="PDDL action definitions")
     parser.add_argument('--x_display', type=str, required=False, default=constants.X_DISPLAY, help="x_display id")
@@ -902,9 +903,9 @@ if __name__ == "__main__":
                         help="this collection will run in parallel with others, so load from disk on every new sample")
     parser.add_argument("-n", "--num_threads", type=int, default=1, help="number of processes for parallel mode")
     parser.add_argument('--json_file', type=str, default="", help="path to json file with trajectory dump")
-    parser.add_argument('--split_type', type=str, default="abstraction", help="train-test split type",
-                        choices=["train", "sub_goal_composition", "verb_noun_composition",
-                                 "context_goal_composition", "context_verb_noun_composition", "abstraction"])
+    parser.add_argument('--split_type', type=str, default="novel_steps", help="train-test split type",
+                        choices=["train", "novel_tasks", "novel_steps",
+                                 "novel_scenes", "abstraction"])
 
     # params
     parser.add_argument("--repeats_per_cond", type=int, default=2)
@@ -914,18 +915,18 @@ if __name__ == "__main__":
 
     parse_args = parser.parse_args()
     if parse_args.split_type == 'train':
-        parse_args.save_path = '/fb-agios-acai-efs/dataset/train'
+        parse_args.save_path = 'dataset/train'
     else:
         parse_args.save_path = os.path.join(parse_args.save_path, parse_args.split_type)
 
-    if parse_args.split_type in ['train', 'context_goal_composition']:
+    if parse_args.split_type in ['train', 'novel_scenes']:
         split_goal_candidates = constants.train_split[:]
-    elif parse_args.split_type == 'sub_goal_composition':
-        split_goal_candidates = constants.sub_goal_composition_split[:]
-    elif parse_args.split_type == 'verb_noun_composition':
-        split_goal_candidates = constants.verb_noun_composition_split[:]
-    elif parse_args.split_type == 'context_verb_noun_composition':
-        split_goal_candidates = constants.context_verb_noun_composition_split[:]
+    elif parse_args.split_type == 'novel_tasks':
+        split_goal_candidates = constants.novel_tasks_split[:]
+    elif parse_args.split_type == 'novel_steps':
+        split_goal_candidates = constants.novel_steps_split[:]
+    # elif parse_args.split_type == 'context_verb_noun_composition':
+    #     split_goal_candidates = constants.context_verb_noun_composition_split[:]
     elif parse_args.split_type == 'abstraction':
         split_goal_candidates = constants.abstraction_split[:]
     else:

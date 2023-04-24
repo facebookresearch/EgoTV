@@ -17,7 +17,7 @@ def Arguments():
     # '''<command> --preprocess''' to set preprocess
     parser.add_argument('--preprocess', action='store_true',
                         help='process dataset before training, validation, testing')
-    parser.add_argument('--split_type', type=str, default='context_goal_composition',
+    parser.add_argument('--split_type', type=str, default='train',
                         help='dataset split on which model will run')
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--visual_feature_extractor', type=str, default='resnet',

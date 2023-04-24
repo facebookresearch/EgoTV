@@ -103,7 +103,7 @@ def analyze_trajectories(succ_dir):
                                     high_actions.extend([x['discrete_action']['action']
                                                          for x in traj['plan']['high_pddl']])
                                     low_actions.extend([x['api_action']['action'] for x in traj['plan']['low_actions']])
-                                    vid_lens.append(round(len(traj['images']) / (60*5), 2))  # fps = 5
+                                    vid_lens.append(round(len(traj['images']) / (60 * 5), 2))  # fps = 5
                                     break  # only examine top level
                             break  # only examine top level
         break  # only examine top level
@@ -126,15 +126,74 @@ def object_counter(succ_dir):
                                     traj = json.load(open(trial_path + '/' + _files[traj_filename_ind], 'r'))
                                     for x in traj['images']:
                                         for y in x['bbox']:
-                                           unique_objs.add(y.split('|')[0].split('.')[0].lower())
+                                            unique_objs.add(y.split('|')[0].split('.')[0].lower())
                                     break  # only examine top level
                             break  # only examine top level
         break  # only examine top level
     return unique_objs
 
 
-def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
+def load_successes_from_disk(succ_dir, succ_traj,
+                             prune_trials, target_count,
                              cap_count=None, min_count=None):
+    tuple_counts = {}
+    for root, goals, _ in os.walk(succ_dir):
+        for goal in goals:
+            if goal == 'fails':
+                continue
+            # traj_per_goal_dir = os.path.join(root, g)
+            for traj_root, trials, _ in os.walk(os.path.join(root, goal)):
+                for trial in trials:
+                    if trial.count('-') == 3:
+                        pickup, movable, receptacle, scene_num = trial.split('-')
+                        # Add an entry for every successful trial folder in the directory.
+                        queue_for_delete = []
+                        deleted_all = True
+                        for _, _dirs, _ in os.walk(os.path.join(traj_root, trial)):
+                            # if len(_dirs) == 0:
+                            #     print("Removing unfinished trial '%s'" % os.path.join(traj_root, trial, _d))
+                            #     shutil.rmtree(os.path.join(traj_root, trial, _d))
+                            for _d in _dirs:
+                                for _, _, _files in os.walk(os.path.join(traj_root, trial, _d)):
+                                    if 'video.mp4' in _files:
+                                        k = (goal, pickup, movable, receptacle, scene_num)
+                                        if k not in tuple_counts:
+                                            tuple_counts[k] = 0
+                                        tuple_counts[k] += 1
+                                        deleted_all = False
+                                    else:
+                                        queue_for_delete.append(_d)
+                                    break  # only examine top level
+                            break  # only examine top level
+                        if prune_trials:
+                            # if deleted_all:
+                            #     print("Removing trial-less parent dir '%s'" % os.path.join(traj_root, trial))
+                            #     shutil.rmtree(os.path.join(traj_root, trial))
+                            # else:
+                            for _d in queue_for_delete:
+                                print("Removing unfinished trial '%s'" % os.path.join(traj_root, trial, _d))
+                                shutil.rmtree(os.path.join(traj_root, trial, _d))
+        break  # only examine top level
+
+    # Populate dataframe based on tuple constraints.
+    for k in tuple_counts:
+        if min_count is None or tuple_counts[k] >= min_count:
+            to_add = tuple_counts[k] if cap_count is None else cap_count
+            for _ in range(to_add):
+                succ_traj = succ_traj.append({
+                    "goal": k[0],
+                    "pickup": k[1],
+                    "movable": k[2],
+                    "receptacle": k[3],
+                    "scene": k[4]}, ignore_index=True)
+    tuples_at_target_count = set([t for t in tuple_counts if tuple_counts[t] >= target_count])
+
+    return succ_traj, tuples_at_target_count
+
+
+def analyze_successes_from_disk(succ_dir, succ_traj,
+                                prune_trials, target_count,
+                                cap_count=None, min_count=None):
     tuple_counts = {}
     queue_for_delete = []
     high_actions, low_actions = [], []
@@ -171,7 +230,7 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
                                     num_high_actions.append(len(traj['plan']['high_pddl']))
                                     num_low_actions.append(len(traj['plan']['low_actions']))
                                     low_actions.extend([x['api_action']['action'] for x in traj['plan']['low_actions']])
-                                    vid_lens.append(round(len(traj['images']) / (60*5), 2))  # fps = 5
+                                    vid_lens.append(round(len(traj['images']) / (60 * 5), 2))  # fps = 5
                                     task_type = traj['task_type']
                                     complexity.append(len(task_type.replace('then', 'and').split('_and_')))
                                     ordering.append(task_type.count('then'))
@@ -212,7 +271,8 @@ def load_successes_from_disk(succ_dir, succ_traj, prune_trials, target_count,
     tuples_at_target_count = set([t for t in tuple_counts if tuple_counts[t] >= target_count])
 
     return succ_traj, tuples_at_target_count, Counter(high_actions), \
-           Counter(low_actions), vid_lens, complexity, ordering, num_high_actions, num_low_actions, num_tokens, high_actions, vocab
+        Counter(low_actions), vid_lens, complexity, ordering, num_high_actions, \
+        num_low_actions, num_tokens, high_actions, vocab
 
 
 def load_fails_from_disk(succ_dir, to_write=None):

@@ -1,9 +1,9 @@
 #!/bin/bash
 # nsg
 source activate alfred_env
-export DATA_ROOT=/fb-agios-acai-efs/dataset
+export DATA_ROOT=$(pwd)/EgoTV/dataset
 export BASELINES=$(pwd)/EgoTV/baselines
-cd EgoTV/nsg
+cd $(pwd)/EgoTV/nsg
 
 vis_feat='coca'
 text_feat='coca'
