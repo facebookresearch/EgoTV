@@ -16,6 +16,7 @@ export MKL_THREADING_LAYER=GNU  # fairseq may need this for numpy
 cd examples/MMPT  # MMPT can be in any folder, not necessarily under fairseq/examples.
 pip install -e .
 pip install transformers==3.4
+pip install tensorboardX
 
 # download the checkpoint using
 wget -P runs/retri/videoclip/ "https://dl.fbaipublicfiles.com/MMPT/retri/videoclip/checkpoint_best.pt"
