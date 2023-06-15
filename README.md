@@ -27,6 +27,10 @@ $ bash install_requirements.sh
 
 **************************************************************
 
+## Data Download
+
+The EgoTV data can also be downlowded [here](https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0)
+We also provide data generation insturction below.
 
 ## Data Generation
 
@@ -54,7 +58,7 @@ The data is generated in: *save_path*
 Here, split_type can be one of the following [*"train", "novel_tasks", "novel_steps",
                                  "novel_scenes", "abstraction"*]
 
-The data can also be downlowded [here](https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0)
+
 
 ### Generate Layouts
 If you want to generate new layouts (aside from the generated layouts in [alfred/gen/layouts](https://github.com/facebookresearch/EgoTV/tree/main/alfred/gen/layouts)),
