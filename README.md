@@ -62,6 +62,13 @@ $ cd $GENERATE_DATA/gen
 $ python layouts/precompute_layout_locations.py 
 ```
 
+Alternatively, the pre-built layouts can be downloaded from <https://www.dropbox.com/s/11cvvvcm4v7c5xg/layouts.zip?dl=0> and saved to the path alfred/gen/layouts/
+
+
+### Download pddl files for tasks: 
+The pddl task files can be downloaded from <https://www.dropbox.com/s/yd50ruzqasq6idm/domains.zip?dl=0> and saved to the path alfred/gen/planner/domains/
+
+
 ### Define new goals and generate data corresponding to those goals
 
 * Define the goal conditions in [alfred/gen/goal_library.py](https://github.com/facebookresearch/EgoTV/blob/main/alfred/gen/goal_library.py)
