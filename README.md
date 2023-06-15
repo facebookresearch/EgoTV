@@ -54,6 +54,8 @@ The data is generated in: *save_path*
 Here, split_type can be one of the following [*"train", "novel_tasks", "novel_steps",
                                  "novel_scenes", "abstraction"*]
 
+The data can also be downlowded [here](https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0)
+
 ### Generate Layouts
 If you want to generate new layouts (aside from the generated layouts in [alfred/gen/layouts](https://github.com/facebookresearch/EgoTV/tree/main/alfred/gen/layouts)),
 
@@ -62,11 +64,11 @@ $ cd $GENERATE_DATA/gen
 $ python layouts/precompute_layout_locations.py 
 ```
 
-Alternatively, the pre-built layouts can be downloaded from <https://www.dropbox.com/s/11cvvvcm4v7c5xg/layouts.zip?dl=0> and saved to the path alfred/gen/layouts/
+Alternatively, the pre-built layouts can be downloaded from [here](https://www.dropbox.com/s/11cvvvcm4v7c5xg/layouts.zip?dl=0) and saved to the path alfred/gen/layouts/
 
 
 ### Download pddl files for tasks: 
-The pddl task files can be downloaded from <https://www.dropbox.com/s/yd50ruzqasq6idm/domains.zip?dl=0> and saved to the path alfred/gen/planner/domains/
+The pddl task files can be downloaded from [here](https://www.dropbox.com/s/yd50ruzqasq6idm/domains.zip?dl=0) and saved to the path alfred/gen/planner/domains/
 
 
 ### Define new goals and generate data corresponding to those goals
