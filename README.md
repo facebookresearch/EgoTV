@@ -29,7 +29,7 @@ $ bash install_requirements.sh
 
 ## Data Download
 
-The EgoTV data can also be downlowded [here](https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0)
+The EgoTV data can also be downlowded [here](https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0).
 We also provide data generation insturction below.
 
 ## Data Generation
