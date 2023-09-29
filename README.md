@@ -2,9 +2,11 @@
 ******************************************************
 
 
+[**EgoTV: Egocentric Task Verification from Natural Language Task Descriptions**](https://arxiv.org/abs/2303.16975)                                     
+Rishi Hazra, Brian Chen, Akshara Rai, Nitin Kamra, Ruta Desai             
+ICCV 2023                  
+[arxiv](https://arxiv.org/abs/2303.16975) | [bibtex](#citing-egotv) | [website](https://rishihazra.github.io/EgoTV/)
 
-
-This repo has the implementation of our paper: [EgoTV: Egocentric Task Verification from Natural Language Task Descriptions](https://arxiv.org/abs/2303.16975)
 
 ![egoTV](nsg-pos.gif)
 
@@ -246,6 +248,21 @@ $ ./run_scripts/run_nsg_train.sh  # for nsg train
 $ ./run_scripts/run_nsg_test.sh  # for nsg test
 ```
 **************************************************************
+
+## Citing EgoTV
+If you find this codebase helpful for your work, please cite our paper:
+```BibTeX
+@InProceedings{Hazra_2023_ICCV,
+    author    = {Hazra, Rishi and Chen, Brian and Rai, Akshara and Kamra, Nitin and Desai, Ruta},
+    title     = {EgoTV: Egocentric Task Verification from Natural Language Task Descriptions},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2023},
+    pages     = {15417-15429}
+}
+```
+**************************************************************
+
 
 ## References
 [1] Jingzhou Liu, Wenhu Chen, Yu Cheng, Zhe Gan, Licheng Yu, Yiming Yang, Jingjing Liu ["VIOLIN: A Large-Scale Dataset for Video-and-Language Inference"](https://openaccess.thecvf.com/content_CVPR_2020/papers/Liu_Violin_A_Large-Scale_Dataset_for_Video-and-Language_Inference_CVPR_2020_paper.pdf). In CVPR 2020  
