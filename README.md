@@ -4,16 +4,16 @@ Official code of our ICCV 2023 paper.
 
 <p align="center">
     <a href="https://rishihazra.github.io/EgoTV" target="_blank">
-        <img src="//img.shields.io/website/https/rishihazra.github.io/EgoTV?down_color=red&down_message=offline&up_message=link">
+        <img alt="Documentation" src="https://img.shields.io/website/https/rishihazra.github.io/EgoTV?down_color=red&down_message=offline&up_message=link">
     </a>
     <a href="https://arxiv.org/abs/2303.16975" target="_blank">
-        <img src="//img.shields.io/badge/arXiv-2303.16975-red">
+        <img src="https://img.shields.io/badge/arXiv-2303.16975-red">
     </a>
     <a href="https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0">
-        <img src="//img.shields.io/badge/Downloads-EgoTV Dataset-blue">
+        <img src="https://img.shields.io/badge/Downloads-EgoTV Dataset-blue">
     </a>
     <a href="https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0">
-        <img src="//img.shields.io/badge/Downloads-CTV Dataset-blue">
+        <img src="https://img.shields.io/badge/Downloads-CTV Dataset-blue">
     </a>
 </p>
 
