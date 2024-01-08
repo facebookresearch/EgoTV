@@ -1,100 +1,58 @@
 # EgoTV: Egocentric Task Verification from Natural Language Task Descriptions
 ******************************************************
+Official code of our ICCV 2023 paper.
 
+<p align="center">
+    <a href="//rishihazra.github.io/EgoTV" target="_blank">
+        <img alt="Documentation" src="//img.shields.io/website/https/rishihazra.github.io/EgoTV?down_color=red&down_message=offline&up_message=online">
+    </a>
+    <a href="//arxiv.org/abs/2303.16975" target="_blank">
+        <img src="//img.shields.io/badge/arXiv-2303.16975-red">
+    </a>
+    <a href="//www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0">
+        <img src="//img.shields.io/badge/Downloads-EgoTV Dataset-blue">
+    </a>
+    <a href="//www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0">
+        <img src="//img.shields.io/badge/Downloads-CTV Dataset-blue">
+    </a>
+</p>
 
-[**EgoTV: Egocentric Task Verification from Natural Language Task Descriptions**](https://arxiv.org/abs/2303.16975)                                     
-Rishi Hazra, Brian Chen, Akshara Rai, Nitin Kamra, Ruta Desai             
-ICCV 2023                  
-[arxiv](https://arxiv.org/abs/2303.16975) | [bibtex](#citing-egotv) | [website](https://rishihazra.github.io/EgoTV/)
+<p align="center">
+  <img src="nsg-pos.gif" alt="egoTV">
+</p>
 
-
-![egoTV](nsg-pos.gif)
-
-## To set-up the AI2-THOR environment
-
-### Clone the repository
+## Quickstart
+Clone repo.
+```shell
+git clone https://github.com/facebookresearch/EgoTV.git
 ```
-$ git clone https://github.com/facebookresearch/EgoTV.git
-$ export GENERATE_DATA=$(pwd)/EgoTV/alfred
-$ cd $GENERATE_DATA
-```
-We have build the dataset generation code on top of [ALFRED dataset [3] repository.](https://github.com/askforalfred/alfred)
-
-### Install all requirements
-```
-$ conda create -n <virtual_env> python==3.10.0
-$ source activate <virtual_env>
-$ bash install_requirements.sh
+Download EgoTV dataset and set env paths.
+```shell
+export DATA_ROOT=<path to dataset>
+export BASELINES=$(pwd)/EgoTV/baselines
 ```
 
+Listed below are two ways of setting up the background requirements.
+
+### 1. Using virtual environment
+Install all requirements to run baselines. All baseline models are in the filepath: [baselines/all_train](https://github.com/facebookresearch/EgoTV/tree/main/baselines/all_train)
+```shell
+conda create -n <venv> python==3.10.0  # substitute with your own venv
+source activate <venv>
+bash $BASELINES/install_baseline_requirements.sh
+```
+
+### 2. Using Docker
+Alternatively, we provide a [Dockerfile](https://github.com/facebookresearch/EgoTV/blob/main/Dockerfile) for an easier setup. Ensure you have [Docker](https://docs.docker.com/desktop/install/ubuntu/) installed.
+```shell
+docker pull rishihazra/alfred-dgx:torch-1.11.0
+docker run -it rishihazra/alfred-dgx:torch-1.11.0
+```
+
+You can also generate your custom dataset. See [DATA_GENERATION.md](https://github.com/facebookresearch/EgoTV/tree/main/DATA_GENERATION.md) for details. 
 **************************************************************
 
-## Data Download
-
-The EgoTV data can also be downlowded [here](https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0).
-We also provide data generation insturction below.
-
-## Data Generation
-
-[comment]: <> (Get dependencies and compile the planner)
-
-[comment]: <> (```)
-
-[comment]: <> ($ sudo apt-get install ffmpeg flex bison)
-
-[comment]: <> ($ cd $GENERATE_DATA/gen/ff_planner)
-
-[comment]: <> ($ make)
-
-[comment]: <> (```)
-
-### Generate dataset
-```
-$ cd $GENERATE_DATA/gen
-$ python scripts/generate_trajectories.py --save_path <your save path> --split_type <split_type>
-
-# append the following to generate with multiprocessing for faster generation
-# --num_threads <num_threads> --in_parallel 
-```
-The data is generated in: *save_path*  
-Here, split_type can be one of the following [*"train", "novel_tasks", "novel_steps",
-                                 "novel_scenes", "abstraction"*]
-
-
-
-### Generate Layouts
-If you want to generate new layouts (aside from the generated layouts in [alfred/gen/layouts](https://github.com/facebookresearch/EgoTV/tree/main/alfred/gen/layouts)),
-
-```
-$ cd $GENERATE_DATA/gen
-$ python layouts/precompute_layout_locations.py 
-```
-
-Alternatively, the pre-built layouts can be downloaded from [here](https://www.dropbox.com/s/11cvvvcm4v7c5xg/layouts.zip?dl=0) and saved to the path alfred/gen/layouts/
-
-
-### Download pddl files for tasks: 
-The pddl task files can be downloaded from [here](https://www.dropbox.com/s/yd50ruzqasq6idm/domains.zip?dl=0) and saved to the path alfred/gen/planner/domains/
-
-
-### Define new goals and generate data corresponding to those goals
-
-* Define the goal conditions in [alfred/gen/goal_library.py](https://github.com/facebookresearch/EgoTV/blob/main/alfred/gen/goal_library.py)
-* Add the list of goals in [alfred/gen/constants.py](https://github.com/facebookresearch/EgoTV/blob/main/alfred/gen/constants.py)
-* Add the goal_variables in [alfred/gen/scripts/generate_trajectories.py](https://github.com/facebookresearch/EgoTV/blob/main/alfred/gen/scripts/generate_trajectories.py)
-* Run the following commands:
-```
-$ cd $GENERATE_DATA/gen
-$ python scripts/generate_trajectories.py --save_path <your save path>
-```
-
-To simply run the fastforward planner on the generated pddl problem
-```
-$ cd $GENERATE_DATA/gen
-$ ff_planner/ff -o planner/domains/PutTaskExtended_domain.pddl -s 3 -f logs_gen/planner/generated_problems/problem_<num>.pddl
-```
-
-### Generated dataset tree
+## EgoTV file structure
 ```
 dataset/
 ├── test_splits
@@ -111,141 +69,93 @@ dataset/
 |   │           └── video.mp4
 ```
 
-### Test Splits
+More details of datafiles can be found in [EgoTV/alfred/README.md](https://github.com/facebookresearch/EgoTV/tree/main/alfred).
 
-[$GENERATE_DATA/gen/scripts/generate_trajectories.py](https://github.com/facebookresearch/EgoTV/blob/main/alfred/gen/scripts/generate_trajectories.py)  
-Note, no two splits (train or test) have overlapping examples.
+## Play with EgoTV samples 
+We provide a notebook to download and analyze the EgoTV samples. Refer [ablations/data_analysis.ipynb](https://github.com/facebookresearch/EgoTV/blob/main/ablations/data_analysis.ipynb)
 
-#### [Scenes: 1-25]
-1. **novel tasks**:
-    >* all tasks not in train
-
-2. **novel steps**: 
-    >* heat(egg)
-    >* clean(plate)
-    >* slice(lettuce)
-    >* place(in, shelf)
-
-3. **abstraction**:
-    >* all train tasks with highly abstracted hypothesis ([$GENERATE_DATA/gen/goal_library_abstraction.py](https://github.com/facebookresearch/EgoTV/blob/main/alfred/gen/goal_library_abstraction.py))
-    >* for the rest of the splits ([$GENERATE_DATA/gen/goal_library.py](https://github.com/facebookresearch/EgoTV/blob/main/alfred/gen/goal_library.py))
-    
-#### [Scenes: 26-30]
-4. **novel scenes**: 
-    >* all train tasks in scenes in 26-30
 
 ![egoTV](egoTV.png)
-
-
-## Dataset Stats 
-For details: [ablations/data_analysis.ipynb](https://github.com/facebookresearch/EgoTV/blob/main/ablations/data_analysis.ipynb)
-
-* Total hours: 168 hours
-  * Train: 110 hours
-  * Test: 58 h
-* Average video-length = 84s
-* Tasks: 82
-* Objects > 130 (with visual variations)
-* Pickup objects: 32 (with visual variations)
-* Receptacles: 24 (including movable receptacles)
-* Sub-tasks: 6 (pick, place, slice, clean, heat, cool)
-* Average number of sub-tasks per sample: 4.6
-* Scenes: 30 (Kitchens)
-
-For additional details of the collected dataset trajectory, see: [alfred/README.md](https://github.com/facebookresearch/EgoTV/tree/main/alfred)
 
 **************************************************************
 
 ## Baselines
 
-### Setup Baselines:
+To run baselines. Here <baseline> can be replaced by clip4clip, coca, text2text, videoclip.
 
-all baseline models are in the filepath: [baselines/all_train](https://github.com/facebookresearch/EgoTV/tree/main/baselines/all_train)
-```
-$ export DATA_ROOT=<path to dataset>
-$ export BASELINES=$(pwd)/EgoTV/baselines
-$ cd $BASELINES
-$ bash install_requirements.sh
-```
-
-Alternatively, we provide a [Dockerfile](https://github.com/facebookresearch/EgoTV/blob/main/Dockerfile) for easier setup.
-
-### VIOLIN [1] baseline
-* text encoders: GloVe, (Distil)-BERT uncased [10], CLIP [5]
-* visual_encoders: ResNet18, I3D [4], S3D [7], MViT [6], CLIP [5]
-```
-$ ./run_scripts/run_violin_train.sh  # for train
-$ ./run_scripts/run_violin_test.sh  # for test
+```shell
+./run_scripts/run_<baseline>_train.sh  # for train
+./run_scripts/run_<baseline>_test.sh  # for test
 # if data split not preprocessed, specify "--preprocess" in the run instruction
 # for attention-based models, specify "--attention" in the run instruction
 # to resume training from a previously stored checkpoint, specify "--resume" in the run instruction
 ```
 
-Note: to run the I3D and S3D models, download the pretrained model (rgb_imagenet.pt, S3D_kinetics400.pt) from these repositories respectively: 
+**1. VIOLIN**
+* text encoders: GloVe, (Distil)-BERT uncased [10], CLIP [5]
+* visual_encoders: ResNet18, I3D [4], S3D [7], MViT [6], CLIP [5]
+
+Note: To run the I3D and S3D models, download the pretrained model (rgb_imagenet.pt, S3D_kinetics400.pt) from these repositories respectively: 
 * [https://github.com/piergiaj/pytorch-i3d/tree/master/models](https://github.com/piergiaj/pytorch-i3d/tree/master/models)
 * [https://github.com/kylemin/S3D](https://github.com/kylemin/S3D)
-```
-$ mkdir $BASELINES/i3d/models
-$ wget -P $BASELINES/i3d/models "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_imagenet.pt" "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_charades.pt"
-$ wget -P $BASELINES/s3d "https://drive.google.com/uc?export=download&id=1HJVDBOQpnTMDVUM3SsXLy0HUkf_wryGO"
+```shell
+mkdir $BASELINES/i3d/models
+wget -P $BASELINES/i3d/models "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_imagenet.pt" "https://github.com/piergiaj/pytorch-i3d/tree/master/models/rgb_charades.pt"
+wget -P $BASELINES/s3d "https://drive.google.com/uc?export=download&id=1HJVDBOQpnTMDVUM3SsXLy0HUkf_wryGO"
 ```
 
-### Other baselines
-clip4clip (Clip4Clip [14]), coca [12], text2text (Socratic [15]), videoclip [13], modify and run from root:
-```
-$ ./run_scripts/run_<baseline>_train.sh
-$ ./run_scripts/run_<baseline>_test.sh
-```
-#### CoCa setup [12]
-* download [CoCa model](https://github.com/mlfoundations/open_clip) from OpenCLIP (coca_ViT-B-32 finetuned on mscoco_finetuned_laion2B-s13B-b90k)
+**2. CoCa**
 
-#### VideoCLIP setup [13]
+Download [CoCa model](https://github.com/mlfoundations/open_clip) from OpenCLIP (coca_ViT-B-32 finetuned on mscoco_finetuned_laion2B-s13B-b90k)
+
+**3. VideoCLIP**
+
 The VideoCLIP has conflicting packages with EgoTV, hence we setup a new environment for it.
 
 * create a new conda env since the packages used are different from EgoTV packages
-```
+```shell
 conda create -n videoclip python=3.8.8
 source activate videoclip
 ```
 * clone the repo and run the following installations
+```shell
+git clone https://github.com/pytorch/fairseq
+cd fairseq
+pip install -e .  # also optionally follow fairseq README for apex installation for fp16 training.
+export MKL_THREADING_LAYER=GNU  # fairseq may need this for numpy
+cd examples/MMPT  # MMPT can be in any folder, not necessarily under fairseq/examples.
+pip install -e .
+pip install transformers==3.4
 ```
-$ git clone https://github.com/pytorch/fairseq
-$ cd fairseq
-$ pip install -e .  # also optionally follow fairseq README for apex installation for fp16 training.
-$ export MKL_THREADING_LAYER=GNU  # fairseq may need this for numpy
-$ cd examples/MMPT  # MMPT can be in any folder, not necessarily under fairseq/examples.
-$ pip install -e .
-$ pip install transformers==3.4
-```
-
 * download the checkpoint using
 ```
 wget -P runs/retri/videoclip/ "https://dl.fbaipublicfiles.com/MMPT/retri/videoclip/checkpoint_best.pt"	
 ```
 
 ### Run proScript
-* for more details, see [baselines/proScript](https://github.com/facebookresearch/EgoTV/tree/main/baselines/proScript)
-```
-$ source activate alfred_env
-$ export DATA_ROOT=<path to dataset>
-$ export BASELINES=$(pwd)/EgoTV/baselines
-$ cd $BASELINES/proScript
-
-# train
-$ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 train_supervised.py --num_workers 4 --batch_size 32 --preprocess --test_split <> --run_id <> --epochs 20
-# test
-$ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 test.py --num_workers 4 --batch_size 32 --preprocess --test_split <> --run_id <>
-```
-<--output_type 'nl'> for natural language graph output; 
-<--output_type 'dsl'> for domain-specific language graph output (default: dsl)
 
 **************************************************************
 
 ## NSG Model
 
+Setup proScript. Details of proScript can be found in [baselines/proScript](https://github.com/facebookresearch/EgoTV/tree/main/baselines/proScript). <--output_type 'nl'> for natural language graph output; 
+<--output_type 'dsl'> for domain-specific language graph output (default: dsl)
+```shell
+source activate alfred_env
+export DATA_ROOT=<path to dataset>
+export BASELINES=$(pwd)/EgoTV/baselines
+cd $BASELINES/proScript
+
+# train
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 train_supervised.py --num_workers 4 --batch_size 32 --preprocess --test_split <> --run_id <> --epochs 20
+# test
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -m torch.distributed.launch --nproc_per_node=8 test.py --num_workers 4 --batch_size 32 --preprocess --test_split <> --run_id <>
 ```
-$ ./run_scripts/run_nsg_train.sh  # for nsg train
-$ ./run_scripts/run_nsg_test.sh  # for nsg test
+
+Run NSG.
+```shell
+./run_scripts/run_nsg_train.sh  # for nsg train
+./run_scripts/run_nsg_test.sh  # for nsg test
 ```
 **************************************************************
 
