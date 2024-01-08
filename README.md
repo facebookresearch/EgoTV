@@ -12,7 +12,7 @@ Official code of our ICCV 2023 paper.
     <a href="https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0">
         <img src="https://img.shields.io/badge/Downloads-EgoTV Dataset-blue">
     </a>
-    <a href="https://www.dropbox.com/s/6ac5yslze5mct1k/EgoTV.zip?dl=0">
+    <a href="https://www.dropbox.com/scl/fi/bbrqxvgb2vqbmjb64otop/CrossTask_Verification.zip?rlkey=w49wtztbwnsduhgalukpb25fx&dl=0">
         <img src="https://img.shields.io/badge/Downloads-CTV Dataset-blue">
     </a>
 </p>
