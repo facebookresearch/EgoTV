@@ -4,7 +4,7 @@ Official code of our ICCV 2023 paper.
 
 <p align="center">
     <a href="//rishihazra.github.io/EgoTV" target="_blank">
-        <img alt="Documentation" src="//img.shields.io/website/https/rishihazra.github.io/EgoTV?down_color=red&down_message=offline&up_message=online">
+        <img src="//img.shields.io/website/https/rishihazra.github.io/EgoTV?down_color=red&down_message=offline&up_message=link">
     </a>
     <a href="//arxiv.org/abs/2303.16975" target="_blank">
         <img src="//img.shields.io/badge/arXiv-2303.16975-red">
